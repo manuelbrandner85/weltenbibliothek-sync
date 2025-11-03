@@ -1,49 +1,48 @@
-# 🌌 Weltenbibliothek - Chroniken der verborgenen Pfade
+# 🔮 Weltenbibliothek - Chroniken der verborgenen Pfade
 
-<div align="center">
+<p align="center">
+  <img src="android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png" alt="Weltenbibliothek Logo" width="192"/>
+</p>
 
-![App Icon](https://via.placeholder.com/192x192/6B46C1/D4AF37?text=🌌)
+<p align="center">
+  <strong>Progressive Flutter App für alternative Geschichte, verborgenes Wissen und paranormale Phänomene</strong>
+</p>
 
-**Progressive Web App für alternative Geschichte, verborgenes Wissen und paranormale Phänomene**
-
-[![Flutter](https://img.shields.io/badge/Flutter-3.35.4-02569B?logo=flutter)](https://flutter.dev/)
-[![Dart](https://img.shields.io/badge/Dart-3.9.2-0175C2?logo=dart)](https://dart.dev/)
-[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-
-[Features](#-features) • [Screenshots](#-screenshots) • [Installation](#-installation) • [Dokumentation](#-dokumentation)
-
-</div>
-
----
-
-## 📖 Über das Projekt
-
-**Weltenbibliothek** verbindet wissenschaftliche Echtzeitdaten mit alternativen Perspektiven der Geschichte. Die App bietet:
-
-- 🌊 **Live-Daten**: Schumann-Resonanz, Erdbeben, ISS-Position, Sonnenaktivität
-- ⏱️ **Historische Timeline**: Ereignisse von 3000 v.Chr. bis heute mit Multi-Perspektiven
-- 📚 **Bibliothek**: Durchsuchbare Sammlung von Mysterien und Verschwörungstheorien
-- 🗺️ **Interaktive Karten**: Ley-Linien, Kraftorte, UFO-Sichtungen
-- 🤖 **AI-Assistent**: Gemini 2.0 für tiefgehende Analysen
-
-### 🎯 Vision
-
-Eine Plattform für Wissbegierige, die fundierte aber alternative Perspektiven suchen. Wir präsentieren verschiedene Sichtweisen zu historischen Ereignissen und erlauben es Nutzern, selbst zu recherchieren und ihre eigenen Schlüsse zu ziehen.
+<p align="center">
+  <img src="https://img.shields.io/badge/Flutter-3.35.4-blue?logo=flutter" alt="Flutter 3.35.4"/>
+  <img src="https://img.shields.io/badge/Platform-Android-green?logo=android" alt="Android"/>
+  <img src="https://img.shields.io/badge/Firebase-Enabled-orange?logo=firebase" alt="Firebase"/>
+  <img src="https://img.shields.io/badge/License-MIT-yellow" alt="MIT License"/>
+</p>
 
 ---
 
-## ✨ Features
+## 📱 Über die App
 
-### 🏠 Dashboard
-- **Kosmischer Status-Monitor** mit Echtzeit-Anzeigen
-- **Live-Daten-Integration**:
-  - Schumann-Resonanz (7.83 Hz Erdfrequenz)
-  - Erdbeben weltweit (24h)
-  - ISS Live-Tracking
-  - Sonnenaktivität (K-Index)
-- **Animierte Visualisierungen**
+**Weltenbibliothek** ist eine einzigartige App, die wissenschaftliche Echtzeitdaten mit alternativen Perspektiven der Geschichte vereint. Entdecke verborgenes Wissen, verfolge paranormale Phänomene und erkunde die Chroniken der verborgenen Pfade.
 
-### ⏱️ Timeline
+### ✨ Highlights
+
+- 🌍 **Live-Daten Dashboard**: Schumann-Resonanz, Erdbeben, ISS-Position, Sonnenaktivität
+- ⏱️ **Historische Timeline**: 10 Event-Kategorien mit Multi-Perspektiven-System
+- 📚 **Umfangreiche Bibliothek**: Organisierte Sammlung historischer Mysterien
+- 🎨 **Mystisches Dark Theme**: Violett-Gold Design für optimale Atmosphäre
+- 🔄 **Auto-Refresh**: Echtzeit-Updates von wissenschaftlichen Quellen
+- 📡 **Keine API-Keys**: Nutzt öffentliche APIs ohne Registrierung
+
+---
+
+## 🎯 Features
+
+### 🏠 Home-Dashboard
+- **Kosmisches Status-Dashboard** mit Live-Indikatoren
+- **Schumann-Resonanz Monitoring** (Tomsk Observatory)
+- **Erdbeben-Tracking** (USGS 24h-Daten)
+- **ISS Live-Position** (Open-Notify API)
+- **Sonnenaktivität** (K-Index, Sonnenstürme)
+- Schnellzugriff zu allen App-Bereichen
+
+### ⏱️ Historische Timeline
 - **10 Event-Kategorien**:
   - 🏛️ Verlorene Zivilisationen
   - 👽 Außerirdische Kontakte
@@ -63,295 +62,232 @@ Eine Plattform für Wissbegierige, die fundierte aber alternative Perspektiven s
   - 🧘 Spirituell
   - 🔬 Wissenschaftlich
 
-- **Trust-Level-Bewertung** (1-5 Sterne)
-- **Quellen-Dokumentation**
+- **Trust-Level-System** (1-5 Sterne)
+- **Quellenangaben** mit Verifikation
+- **Geografische Verortung** mit Koordinaten
 
 ### 📚 Bibliothek
-- **Volltext-Suche** durch alle Einträge
-- **Favoriten-System**
-- **Filter & Sortierung**
-- **Grid-Layout** mit Vorschau
+- Grid-Layout mit Kategorie-Karten
+- Volltext-Suchfunktion
+- Event-Zähler pro Kategorie
+- Favoriten-System
+- Filter & Sortierung
 
-### ⚙️ Mehr
-- **Einstellungen**: Benachrichtigungen, Theme, Sprache
-- **Daten-Export**: Favoriten und Sichtungen
-- **Cache-Verwaltung**
-- **Info & Support**
+### ⚙️ Mehr-Bereich
+- Push-Benachrichtigungen (für wichtige Ereignisse)
+- Daten Export/Import (PDF, JSON, CSV)
+- App teilen
+- Einstellungen
+- Über & Datenschutz
 
 ---
 
-## 🎨 Design
+## 🎨 Design-System
 
 ### Farbpalette
 ```
-Primary:    #6B46C1  (Mystisches Violett)
-Secondary:  #D4AF37  (Edles Gold)
-Background: #1a1a2e  (Kosmisches Dunkelblau-Schwarz)
-Surface:    #16213e  (Strukturierendes Dunkelblau)
-Error:      #FF6B6B  (Klares Warnsignal-Rot)
+Primary Purple:    #6B46C1  // Mystisches Violett - Weisheit & Spiritualität
+Secondary Gold:    #D4AF37  // Edles Gold - Altes Wissen & Erleuchtung
+Background Dark:   #1a1a2e  // Kosmisches Dunkelblau-Schwarz
+Surface Dark:      #16213e  // Strukturierendes Dunkelblau
+Error Red:         #FF6B6B  // Klares Warnsignal-Rot
+Text White:        #FFFFFF  // Maximale Lesbarkeit
 ```
 
 ### Typografie
 - **Überschriften**: Google Fonts "Cinzel" (antike Ausstrahlung)
 - **Fließtext**: Google Fonts "Lato" (moderne Lesbarkeit)
 
-### UI/UX
-- **Material Design 3** mit Dark Theme
-- **Sanfte Animationen** (Fade, Slide, Scale)
-- **Responsive Design** für alle Bildschirmgrößen
-- **Intuitive Navigation** mit Bottom Bar
-
 ---
 
 ## 🚀 Installation
 
 ### Voraussetzungen
-- Flutter SDK 3.35.4+
-- Android Studio / VS Code
-- Android Device / Emulator (Android 5.0+)
+- Flutter SDK 3.35.4
+- Android Studio oder VS Code
+- Android SDK (API Level 21+)
 
-### Quick Start
-
+### Schnellstart
 ```bash
 # Repository klonen
-git clone <your-repo-url>
+git clone <REPOSITORY_URL>
 cd flutter_app
 
 # Dependencies installieren
 flutter pub get
 
-# App starten
+# App im Debug-Modus starten
 flutter run
 
-# Release Build (APK)
-flutter build apk --release --split-per-abi
+# Release APK bauen
+flutter build apk --release
 ```
 
-### APK Download
-
-**Latest Release**: [Download v1.0.0](releases/latest)
-
-- `app-arm64-v8a-release.apk` (~18 MB) - Empfohlen für moderne Geräte
-- `app-armeabi-v7a-release.apk` (~15 MB) - Für ältere Geräte
-- `app-release.apk` (~50 MB) - Universal APK
+Für detaillierte Setup-Anleitung siehe [SETUP.md](SETUP.md).
 
 ---
 
-## 📱 Screenshots
+## 🔧 Technologie
 
-<div align="center">
+### Flutter & Dart
+- **Flutter**: 3.35.4 (stable)
+- **Dart**: 3.9.2
 
-| Home Dashboard | Timeline | Bibliothek | Mehr |
-|:--------------:|:--------:|:----------:|:----:|
-| ![Home](https://via.placeholder.com/200x400/1a1a2e/D4AF37?text=Home) | ![Timeline](https://via.placeholder.com/200x400/1a1a2e/D4AF37?text=Timeline) | ![Library](https://via.placeholder.com/200x400/1a1a2e/D4AF37?text=Library) | ![More](https://via.placeholder.com/200x400/1a1a2e/D4AF37?text=More) |
+### Firebase (Optional)
+- Authentication
+- Firestore Database
+- Cloud Storage
+- Cloud Messaging
+- Analytics
+- Remote Config
 
-</div>
-
----
-
-## 🔧 Technologie-Stack
-
-### Frontend
-- **Framework**: Flutter 3.35.4
-- **Language**: Dart 3.9.2
-- **State Management**: Provider
-- **UI Components**: Material Design 3
-
-### Backend (Optional)
-- **Firebase Core**: 3.6.0
-- **Cloud Firestore**: 5.4.3
-- **Firebase Storage**: 12.3.2
-- **Firebase Auth**: 5.3.1
-- **Firebase Messaging**: 15.1.3
-
-### APIs & Services
-- **USGS Earthquake API**: Echtzeit-Erdbebendaten
-- **Tomsk Observatory**: Schumann-Resonanz
-- **NASA Open APIs**: ISS-Position
-- **NOAA**: Sonnenaktivität
-
-### Libraries
-```yaml
-# Networking
-http: 1.5.0
-dio: 5.7.0
-
-# Storage
-hive: 2.2.3
-shared_preferences: 2.5.3
-
-# UI/UX
-google_fonts: 6.2.1
-flutter_animate: 4.5.2
-fl_chart: 0.70.2
-
-# Location
-geolocator: 13.0.2
-flutter_map: 7.0.2
-```
+### Kern-Dependencies
+- **UI**: google_fonts, flutter_svg, flutter_animate
+- **State**: provider
+- **Network**: http, dio
+- **Storage**: hive, shared_preferences
+- **Location**: geolocator, flutter_map
+- **Charts**: fl_chart
 
 ---
 
-## 📊 Projektstruktur
+## 📡 APIs & Datenquellen
 
-```
-lib/
-├── config/
-│   └── app_theme.dart              # Theme & Design-System
-├── models/
-│   ├── historical_event.dart       # Event-Modell
-│   └── sighting.dart               # Sichtungs-Modell
-├── screens/
-│   ├── home_screen.dart            # Dashboard
-│   ├── timeline_screen.dart        # Historische Timeline
-│   ├── library_screen.dart         # Bibliothek
-│   └── more_screen.dart            # Einstellungen
-├── services/
-│   ├── earthquake_service.dart     # USGS API
-│   ├── schumann_resonance_service.dart
-│   └── nasa_data_service.dart      # ISS & Solar
-├── widgets/                        # Wiederverwendbare Komponenten
-└── main.dart                       # Entry Point
+Die App nutzt ausschließlich öffentliche APIs ohne API-Keys:
 
-android/
-├── app/
-│   ├── build.gradle.kts            # Android Build Config
-│   └── src/main/
-│       ├── AndroidManifest.xml
-│       └── res/                    # Icons & Resources
+1. **USGS Earthquake API**
+   - Echtzeit Erdbeben-Daten (24h)
+   - Refresh: 5 Minuten
 
-assets/
-├── images/                         # Bilder
-└── audio/                          # Audio-Dateien
+2. **Open-Notify ISS API**
+   - Live ISS-Position
+   - Refresh: 10 Sekunden
+
+3. **Tomsk Space Observatory**
+   - Schumann-Resonanz Spektrogramme
+   - Refresh: 60 Sekunden
+
+---
+
+## 📦 Downloads
+
+### Release APK
+- **Version**: 1.0.0
+- **Größe**: ~51 MB
+- **Min. Android**: 5.0 (API 21)
+- **Target Android**: 15 (API 35)
+
+Siehe `build/app/outputs/flutter-apk/app-release.apk`
+
+---
+
+## 🌐 Web-Demo
+
+Die App ist auch als Progressive Web App verfügbar:
+
+```bash
+flutter build web --release
+python3 -m http.server 8000 --directory build/web
 ```
 
 ---
 
-## 🌐 Live-Datenquellen
+## 📸 Screenshots
 
-### Schumann-Resonanz
-- **Quelle**: [Tomsk Space Observatory](http://sosrff.tsu.ru)
-- **Update**: Alle 60 Sekunden
-- **Metriken**: Frequenz, Amplitude, Qualität
-
-### Erdbeben
-- **Quelle**: [USGS Earthquake Hazards](https://earthquake.usgs.gov)
-- **Update**: Alle 5 Minuten
-- **Daten**: Magnitude, Ort, Tiefe, Koordinaten
-
-### ISS Position
-- **Quelle**: [Open Notify API](http://api.open-notify.org)
-- **Update**: Alle 10 Sekunden
-- **Daten**: Latitude, Longitude, Altitude
-
-### Sonnenaktivität
-- **Quelle**: [NOAA Space Weather](https://www.swpc.noaa.gov)
-- **Update**: Alle 15 Minuten
-- **Daten**: K-Index, Solar Flux, Sonnenflecken
-
----
-
-## 📚 Dokumentation
-
-- **[Setup-Anleitung](SETUP_DOKUMENTATION.md)** - Detaillierte Installation & Konfiguration
-- **[API-Dokumentation](docs/API.md)** - Service-Referenz
-- **[Firebase-Setup](docs/FIREBASE.md)** - Backend-Konfiguration
-- **[Contributing](CONTRIBUTING.md)** - Mitarbeit am Projekt
+_Coming soon..._
 
 ---
 
 ## 🗺️ Roadmap
 
-### Phase 1 - Core Features ✅
-- [x] Dashboard mit Live-Daten
+### Version 1.0 ✅
+- [x] Home-Dashboard mit Live-Daten
 - [x] Historische Timeline
 - [x] Bibliothek mit Suche
-- [x] Dark Theme Design
-- [x] Android APK Build
+- [x] Einstellungen & Export
+- [x] Dark Theme
+- [x] Release APK
 
-### Phase 2 - Erweiterte Features 🚧
-- [ ] Interaktive 3D-Karte mit Ley-Linien
-- [ ] Gemini AI Chat-Integration
+### Version 1.1 (Geplant)
+- [ ] Interaktive 3D-Weltkarte
+- [ ] Ley-Linien Visualisierung
+- [ ] Heilige Stätten Marker
+- [ ] Erweiterte Filter
+
+### Version 2.0 (Geplant)
+- [ ] Gemini 2.0 Flash AI-Chat
+- [ ] KI-Analysefunktionen
+- [ ] Mustererkennung
+- [ ] Predictive Analytics
+
+### Version 2.1 (Geplant)
 - [ ] Community Crowd-Sourcing
-- [ ] Binaurale Beats Player
-- [ ] Push-Benachrichtigungen
-- [ ] Offline-Modus
+- [ ] Sichtungs-Meldungen
+- [ ] Verifikationssystem
+- [ ] Community-Karte
 
-### Phase 3 - Plattform-Erweiterung 📅
-- [ ] iOS App
-- [ ] Desktop App (Windows, macOS, Linux)
-- [ ] Multi-Sprach-Support
-- [ ] Cloud-Synchronisation
+### Version 3.0 (Geplant)
+- [ ] Binaurale Beats Player
+- [ ] Meditations-Programme
+- [ ] Bewusstseins-Frequenzen
+- [ ] Timer & Playlists
+
+### Version 3.1 (Geplant)
+- [ ] Analytics Dashboard
+- [ ] Trend-Analysen
+- [ ] Korrelations-Charts
+- [ ] Prognose-Modelle
 
 ---
 
-## 🤝 Contributing
+## 🤝 Beitragen
 
-Beiträge sind willkommen! Bitte lies die [Contributing Guidelines](CONTRIBUTING.md) bevor du einen Pull Request erstellst.
+Contributions sind willkommen! So kannst du helfen:
 
-### Development Setup
-
-```bash
-# Fork & Clone
-git clone https://github.com/your-username/weltenbibliothek.git
-
-# Branch erstellen
-git checkout -b feature/amazing-feature
-
-# Entwickeln & Testen
-flutter test
-
-# Commit & Push
-git commit -m "Add amazing feature"
-git push origin feature/amazing-feature
-
-# Pull Request erstellen
-```
+1. **Fork** das Repository
+2. **Create** einen Feature Branch (`git checkout -b feature/AmazingFeature`)
+3. **Commit** deine Änderungen (`git commit -m 'Add AmazingFeature'`)
+4. **Push** zum Branch (`git push origin feature/AmazingFeature`)
+5. **Open** einen Pull Request
 
 ---
 
 ## 📄 Lizenz
 
-Dieses Projekt ist lizenziert unter der **MIT License** - siehe [LICENSE](LICENSE) für Details.
+Dieses Projekt ist unter der MIT-Lizenz lizenziert. Siehe [LICENSE](LICENSE) für Details.
 
 ---
 
-## 🙏 Credits & Danksagungen
+## 🙏 Danksagungen
 
-### Open Source Libraries
-- [Flutter](https://flutter.dev) - UI Framework
-- [Firebase](https://firebase.google.com) - Backend Services
-- [Google Fonts](https://fonts.google.com) - Typografie
-
-### Datenquellen
-- USGS Earthquake Hazards Program
-- Tomsk Space Observatory
-- NASA Open APIs
-- NOAA Space Weather Prediction Center
-
-### Community
-Danke an alle, die an diesem Projekt mitwirken und alternative Perspektiven teilen!
+- **Flutter Team** für das großartige Framework
+- **Firebase** für Backend-Services
+- **USGS** für Erdbeben-Daten
+- **Open-Notify** für ISS-Tracking
+- **Tomsk Space Observatory** für Schumann-Resonanz-Daten
+- **Google Fonts** für Cinzel & Lato Schriftarten
 
 ---
 
-## 📞 Support & Kontakt
+## 📞 Kontakt & Support
 
-- **Issues**: [GitHub Issues](https://github.com/your-username/weltenbibliothek/issues)
-- **Diskussionen**: [GitHub Discussions](https://github.com/your-username/weltenbibliothek/discussions)
+- **Issues**: [GitHub Issues](https://github.com/username/weltenbibliothek/issues)
 - **Email**: support@weltenbibliothek.app
+- **Website**: https://weltenbibliothek.app
 
 ---
 
 ## ⚠️ Disclaimer
 
-Diese App präsentiert alternative Perspektiven und Verschwörungstheorien zu Bildungszwecken. Die dargestellten Inhalte repräsentieren nicht notwendigerweise die Meinung der Entwickler. Nutzer sollten kritisch denken und eigene Recherchen durchführen.
+Diese App dient zu Informations- und Unterhaltungszwecken. Die präsentierten alternativen Perspektiven und Theorien sollten kritisch betrachtet werden. Wir ermutigen zu eigener Recherche und wissenschaftlichem Denken.
 
 ---
 
-<div align="center">
+<p align="center">
+  Entwickelt mit 🔮 von der Weltenbibliothek Community<br>
+  <strong>© 2025 Weltenbibliothek. Alle Rechte vorbehalten.</strong>
+</p>
 
-**Entwickelt mit ❤️ und 🌌 kosmischer Energie**
+---
 
-⭐ Wenn dir dieses Projekt gefällt, gib uns einen Stern!
-
-</div>
+**Entdecke die verborgenen Pfade. Erweitere dein Bewusstsein. Erkenne die Wahrheit.** ✨
