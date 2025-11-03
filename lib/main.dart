@@ -1,13 +1,26 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
 import 'config/app_theme.dart';
 import 'screens/home_screen.dart';
 import 'screens/timeline_screen.dart';
 import 'screens/library_screen.dart';
 import 'screens/more_screen.dart';
 
-void main() {
-  // Debug Banner ausschalten
+void main() async {
+  // Flutter Engine initialisieren
   WidgetsFlutterBinding.ensureInitialized();
+  
+  // Firebase initialisieren (mit Fehlerbehandlung)
+  try {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+    debugPrint('✅ Firebase erfolgreich initialisiert');
+  } catch (e) {
+    debugPrint('⚠️ Firebase Initialisierung übersprungen: $e');
+    debugPrint('💡 Tipp: Konfiguriere firebase_options.dart für Firebase-Features');
+  }
   
   runApp(const MyApp());
 }
