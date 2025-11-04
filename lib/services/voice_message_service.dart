@@ -2,11 +2,11 @@ import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
-import 'multi_audio_service.dart';
+import 'audio_upload_service.dart';
 
 /// Voice Message Service - Audio Upload und Management (Phase 5A)
-/// Verwendet Multi-Audio-Service mit automatischem Fallback
-/// (Catbox → File.io → 0x0.st)
+/// Verwendet Ultra-Robust Audio Upload Service mit 5-stufigem Fallback
+/// (Catbox → File.io → 0x0.st → Uguu.se → ImgBB)
 class VoiceMessageService {
   static final VoiceMessageService _instance = VoiceMessageService._internal();
   factory VoiceMessageService() => _instance;
@@ -18,42 +18,57 @@ class VoiceMessageService {
   String? get currentUserId => _auth.currentUser?.uid;
   String get currentUserName => _auth.currentUser?.displayName ?? 'Anonym';
 
-  /// Upload Audio-Datei mit automatischem Fallback
+  /// Upload Audio-Datei mit intelligentem 5-Stufen-Fallback
   Future<String> uploadAudio(String filePath, String chatRoomId) async {
     try {
       final file = File(filePath);
       final fileName = 'voice_${chatRoomId}_${DateTime.now().millisecondsSinceEpoch}.m4a';
 
       if (kDebugMode) {
-        debugPrint('🔊 Uploading audio with fallback system...');
+        debugPrint('🔊 Starting ultra-robust audio upload...');
         debugPrint('   File: $filePath');
         debugPrint('   Name: $fileName');
-        debugPrint('   File exists: ${await file.exists()}');
       }
 
       // Validierung: Datei muss existieren
       if (!await file.exists()) {
+        if (kDebugMode) {
+          debugPrint('❌ File does not exist at path: $filePath');
+        }
         throw Exception('Audio-Datei existiert nicht: $filePath');
       }
 
-      // Upload mit automatischem Fallback (Catbox → File.io → 0x0.st)
-      final audioUrl = await MultiAudioService.uploadAudio(
+      final fileSize = await file.length();
+      if (kDebugMode) {
+        debugPrint('   File exists: ✅');
+        debugPrint('   File size: ${(fileSize / 1024).toStringAsFixed(2)} KB');
+      }
+
+      // Upload mit intelligentem 5-Stufen-Fallback
+      final audioUrl = await AudioUploadService.uploadAudio(
         audioFile: file,
         fileName: fileName,
       );
 
       if (audioUrl == null) {
-        throw Exception('Alle Audio-Upload-Services fehlgeschlagen. Bitte Internetverbindung prüfen.');
+        if (kDebugMode) {
+          debugPrint('❌ All 5 upload services failed');
+        }
+        throw Exception(
+          'Alle Audio-Upload-Services fehlgeschlagen.\n'
+          'Bitte überprüfe deine Internetverbindung und versuche es erneut.'
+        );
       }
 
       if (kDebugMode) {
-        debugPrint('✅ Audio uploaded successfully: $audioUrl');
+        debugPrint('✅ Audio uploaded successfully!');
+        debugPrint('   URL: $audioUrl');
       }
 
       return audioUrl;
     } catch (e) {
       if (kDebugMode) {
-        debugPrint('❌ Audio upload error: $e');
+        debugPrint('❌ Upload failed with error: $e');
       }
       rethrow;
     }
