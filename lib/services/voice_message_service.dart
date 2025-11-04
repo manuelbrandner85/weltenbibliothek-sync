@@ -2,9 +2,10 @@ import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
+import 'catbox_audio_service.dart';
 
 /// Voice Message Service - Audio Upload und Management (Phase 5A)
-/// DEAKTIVIERT - Firebase Storage entfernt, ImgBB unterstützt nur Bilder
+/// Verwendet Catbox.moe als kostenlosen Audio-Hosting-Service
 class VoiceMessageService {
   static final VoiceMessageService _instance = VoiceMessageService._internal();
   factory VoiceMessageService() => _instance;
@@ -16,14 +17,39 @@ class VoiceMessageService {
   String? get currentUserId => _auth.currentUser?.uid;
   String get currentUserName => _auth.currentUser?.displayName ?? 'Anonym';
 
-  /// Upload Audio-Datei - DEAKTIVIERT (Firebase Storage entfernt)
-  /// Hinweis: ImgBB unterstützt nur Bilder, nicht Audio-Dateien
-  /// Für Voice Messages wird ein anderer Service benötigt
+  /// Upload Audio-Datei zu Catbox (kostenlos & unbegrenzt)
   Future<String> uploadAudio(String filePath, String chatRoomId) async {
-    throw UnimplementedError(
-      'Voice Message Upload deaktiviert - Firebase Storage wurde entfernt. '
-      'ImgBB unterstützt nur Bilder. Für Audio-Upload wird ein anderer Service benötigt.'
-    );
+    try {
+      final file = File(filePath);
+      final fileName = 'voice_${chatRoomId}_${DateTime.now().millisecondsSinceEpoch}.m4a';
+
+      if (kDebugMode) {
+        debugPrint('🔊 Uploading audio to Catbox...');
+        debugPrint('   File: $filePath');
+        debugPrint('   Name: $fileName');
+      }
+
+      // Upload to Catbox
+      final audioUrl = await CatboxAudioService.uploadAudio(
+        audioFile: file,
+        fileName: fileName,
+      );
+
+      if (audioUrl == null) {
+        throw Exception('Catbox audio upload failed - returned null');
+      }
+
+      if (kDebugMode) {
+        debugPrint('✅ Audio uploaded to Catbox: $audioUrl');
+      }
+
+      return audioUrl;
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('❌ Audio upload error: $e');
+      }
+      rethrow;
+    }
   }
 
   /// Sende Voice Message
