@@ -1,51 +1,29 @@
 import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/foundation.dart';
 
 /// Voice Message Service - Audio Upload und Management (Phase 5A)
+/// DEAKTIVIERT - Firebase Storage entfernt, ImgBB unterstützt nur Bilder
 class VoiceMessageService {
   static final VoiceMessageService _instance = VoiceMessageService._internal();
   factory VoiceMessageService() => _instance;
   VoiceMessageService._internal();
 
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final FirebaseStorage _storage = FirebaseStorage.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
   String? get currentUserId => _auth.currentUser?.uid;
   String get currentUserName => _auth.currentUser?.displayName ?? 'Anonym';
 
-  /// Upload Audio-Datei zu Firebase Storage
+  /// Upload Audio-Datei - DEAKTIVIERT (Firebase Storage entfernt)
+  /// Hinweis: ImgBB unterstützt nur Bilder, nicht Audio-Dateien
+  /// Für Voice Messages wird ein anderer Service benötigt
   Future<String> uploadAudio(String filePath, String chatRoomId) async {
-    try {
-      final file = File(filePath);
-      final fileName = 'voice_${DateTime.now().millisecondsSinceEpoch}.m4a';
-      final storageRef = _storage.ref().child('voice_messages/$chatRoomId/$fileName');
-
-      if (kDebugMode) {
-        debugPrint('📤 Uploading audio: $fileName');
-      }
-
-      // Upload file
-      final uploadTask = storageRef.putFile(file);
-      final snapshot = await uploadTask;
-
-      // Get download URL
-      final downloadUrl = await snapshot.ref.getDownloadURL();
-
-      if (kDebugMode) {
-        debugPrint('✅ Audio uploaded: $downloadUrl');
-      }
-
-      return downloadUrl;
-    } catch (e) {
-      if (kDebugMode) {
-        debugPrint('❌ Audio upload error: $e');
-      }
-      rethrow;
-    }
+    throw UnimplementedError(
+      'Voice Message Upload deaktiviert - Firebase Storage wurde entfernt. '
+      'ImgBB unterstützt nur Bilder. Für Audio-Upload wird ein anderer Service benötigt.'
+    );
   }
 
   /// Sende Voice Message

@@ -136,61 +136,6 @@ class ImgBBService {
     }
   }
   
-  /// Hilfsmethode: Bild mit image_picker auswählen und hochladen
-  /// 
-  /// [pickFromGallery] - true = Galerie, false = Kamera
-  /// 
-  /// Returns: URL des hochgeladenen Bildes oder null
-  static Future<String?> pickAndUploadImage({
-    bool pickFromGallery = true,
-  }) async {
-    try {
-      // Note: image_picker muss in pubspec.yaml sein
-      final picker = await _getImagePicker();
-      if (picker == null) return null;
-      
-      final pickedFile = await picker.pickImage(
-        source: pickFromGallery ? ImageSource.gallery : ImageSource.camera,
-        maxWidth: 1920,
-        maxHeight: 1920,
-        imageQuality: 85, // Komprimierung für schnelleren Upload
-      );
-      
-      if (pickedFile != null) {
-        final imageFile = File(pickedFile.path);
-        return await uploadImage(imageFile: imageFile);
-      }
-      
-      return null;
-    } catch (e) {
-      if (kDebugMode) {
-        debugPrint('❌ Pick & Upload Error: $e');
-      }
-      return null;
-    }
-  }
-  
-  /// Hilfsmethode: ImagePicker laden (lazy loading)
-  static Future<dynamic> _getImagePicker() async {
-    try {
-      // Dynamic import um Compilation-Fehler zu vermeiden wenn image_picker fehlt
-      return await Future.value(
-        // ignore: avoid_dynamic_calls
-        (await import('package:image_picker/image_picker.dart') as dynamic).ImagePicker(),
-      );
-    } catch (e) {
-      if (kDebugMode) {
-        debugPrint('⚠️  image_picker nicht verfügbar: $e');
-      }
-      return null;
-    }
-  }
-}
-
-/// Enum für image_picker Source (zur Vermeidung von Import-Fehlern)
-enum ImageSource {
-  camera,
-  gallery,
 }
 
 /// Extension für einfachere Verwendung

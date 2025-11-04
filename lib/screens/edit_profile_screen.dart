@@ -1,9 +1,9 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 import '../config/app_theme.dart';
 import '../services/auth_service.dart';
+import '../services/imgbb_service.dart';
 
 /// Edit Profile Screen - Benutzername, Bio, Profilbild
 class EditProfileScreen extends StatefulWidget {
@@ -100,33 +100,29 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
     try {
       final userId = _authService.currentUserId!;
-      final fileName = 'profile_${DateTime.now().millisecondsSinceEpoch}.jpg';
+      final fileName = 'profile_$userId';
       
-      print('🔄 Uploading profile image...');
+      print('🔄 Uploading profile image to ImgBB...');
       print('   User ID: $userId');
       print('   File path: ${_selectedImage!.path}');
-      print('   Storage path: profile_images/$userId/$fileName');
+      print('   Image name: $fileName');
       
-      final storageRef = FirebaseStorage.instance
-          .ref()
-          .child('profile_images/$userId/$fileName');
-
-      print('📤 Starting upload...');
-      final uploadTask = storageRef.putFile(_selectedImage!);
+      print('📤 Starting upload to ImgBB...');
       
-      // Monitor upload progress
-      uploadTask.snapshotEvents.listen((TaskSnapshot snapshot) {
-        final progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-        print('   Upload progress: ${progress.toStringAsFixed(1)}%');
-      });
+      // Upload using ImgBB service
+      final imageUrl = await ImgBBService.uploadImage(
+        imageFile: _selectedImage!,
+        name: fileName,
+      );
       
-      await uploadTask;
-      print('✅ Upload completed!');
-      
-      final downloadURL = await storageRef.getDownloadURL();
-      print('✅ Download URL: $downloadURL');
-      
-      return downloadURL;
+      if (imageUrl != null) {
+        print('✅ Upload completed!');
+        print('✅ ImgBB URL: $imageUrl');
+        return imageUrl;
+      } else {
+        print('❌ Upload failed - ImgBB returned null');
+        throw Exception('ImgBB Upload failed');
+      }
     } catch (e, stackTrace) {
       print('❌ ERROR uploading profile image:');
       print('   Error: $e');
@@ -134,18 +130,16 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       
       if (mounted) {
         // Show detailed error message
-        String errorMessage = 'Fehler beim Hochladen';
+        String errorMessage = 'Fehler beim Hochladen zu ImgBB';
         
-        if (e.toString().contains('permission-denied')) {
-          errorMessage = 'Zugriff verweigert! Prüfe Firebase Storage Rules.';
-        } else if (e.toString().contains('unauthorized')) {
-          errorMessage = 'Nicht autorisiert! Bitte erneut anmelden.';
-        } else if (e.toString().contains('object-not-found')) {
-          errorMessage = 'Datei nicht gefunden! Wähle ein anderes Bild.';
-        } else if (e.toString().contains('quota-exceeded')) {
-          errorMessage = 'Speicherplatz voll! Kontaktiere den Administrator.';
+        if (e.toString().contains('timeout')) {
+          errorMessage = 'Upload-Timeout! Prüfe deine Internetverbindung.';
+        } else if (e.toString().contains('SocketException')) {
+          errorMessage = 'Keine Internetverbindung!';
+        } else if (e.toString().contains('400')) {
+          errorMessage = 'Ungültiges Bildformat! Bitte ein anderes Bild wählen.';
         } else {
-          errorMessage = 'Fehler: ${e.toString()}';
+          errorMessage = 'Upload fehlgeschlagen: ${e.toString()}';
         }
         
         ScaffoldMessenger.of(context).showSnackBar(

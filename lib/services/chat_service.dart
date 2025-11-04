@@ -1,9 +1,9 @@
 import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/foundation.dart';
 import '../models/chat_models.dart';
+import 'imgbb_service.dart';
 
 /// Chat Service für Firebase Realtime Chat
 class ChatService {
@@ -477,33 +477,40 @@ class ChatService {
   // PHASE 2: ERWEITERTE FEATURES
   // ========================================
 
-  /// Bild hochladen zu Firebase Storage (NEU - Phase 2)
+  /// Bild hochladen zu ImgBB (NEU - Phase 2)
   Future<String> uploadImage(String filePath, String chatRoomId) async {
     if (currentUserId == null) {
       throw Exception('Nicht angemeldet');
     }
 
     try {
-      final fileName = '${DateTime.now().millisecondsSinceEpoch}_${currentUserId}.jpg';
-      final ref = FirebaseStorage.instance
-          .ref()
-          .child('chat_images')
-          .child(chatRoomId)
-          .child(fileName);
+      final fileName = 'chat_${chatRoomId}_${DateTime.now().millisecondsSinceEpoch}';
+      
+      if (kDebugMode) {
+        debugPrint('🔄 Uploading image to ImgBB...');
+        debugPrint('   File: $filePath');
+        debugPrint('   Name: $fileName');
+      }
 
-      // Web-Unterstützung
+      // Upload to ImgBB
       final file = File(filePath);
-      final uploadTask = await ref.putFile(file);
-      final downloadUrl = await uploadTask.ref.getDownloadURL();
+      final downloadUrl = await ImgBBService.uploadImage(
+        imageFile: file,
+        name: fileName,
+      );
+
+      if (downloadUrl == null) {
+        throw Exception('ImgBB upload failed - returned null');
+      }
 
       if (kDebugMode) {
-        debugPrint('✅ Bild hochgeladen: $downloadUrl');
+        debugPrint('✅ Bild hochgeladen zu ImgBB: $downloadUrl');
       }
 
       return downloadUrl;
     } catch (e) {
       if (kDebugMode) {
-        debugPrint('❌ Fehler beim Upload: $e');
+        debugPrint('❌ Fehler beim ImgBB Upload: $e');
       }
       rethrow;
     }
