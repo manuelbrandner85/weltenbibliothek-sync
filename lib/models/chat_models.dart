@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 
 /// Chat Message Model
 class ChatMessage {
@@ -179,18 +180,44 @@ class ChatRoom {
   });
 
   factory ChatRoom.fromFirestore(Map<String, dynamic> data, String id) {
+    // Safe parsing of lastMessage - handle both Map and String types
+    ChatMessage? lastMessage;
+    try {
+      if (data['lastMessage'] != null) {
+        // Check if it's a Map
+        if (data['lastMessage'] is Map<String, dynamic>) {
+          lastMessage = ChatMessage.fromFirestore(
+            data['lastMessage'] as Map<String, dynamic>,
+            data['lastMessageId'] as String? ?? '',
+          );
+        } else if (data['lastMessage'] is String) {
+          // If it's just a string, create a simple text message
+          lastMessage = ChatMessage(
+            id: data['lastMessageId'] as String? ?? '',
+            chatRoomId: id,
+            senderId: '',
+            senderName: 'System',
+            senderAvatar: '',
+            text: data['lastMessage'] as String,
+            timestamp: (data['lastActivity'] as Timestamp?)?.toDate() ?? DateTime.now(),
+          );
+        }
+      }
+    } catch (e) {
+      // If parsing fails, leave lastMessage as null
+      if (kDebugMode) {
+        print('⚠️ Failed to parse lastMessage: $e');
+      }
+      lastMessage = null;
+    }
+    
     return ChatRoom(
       id: id,
       name: data['name'] as String? ?? 'Chat',
       description: data['description'] as String? ?? '',
       avatarUrl: data['avatarUrl'] as String? ?? '',
       participants: List<String>.from(data['participants'] ?? []),
-      lastMessage: data['lastMessage'] != null
-          ? ChatMessage.fromFirestore(
-              data['lastMessage'] as Map<String, dynamic>,
-              data['lastMessageId'] as String? ?? '',
-            )
-          : null,
+      lastMessage: lastMessage,
       createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
       lastActivity: (data['lastActivity'] as Timestamp?)?.toDate() ?? DateTime.now(),
       unreadCount: data['unreadCount'] as int? ?? 0,
