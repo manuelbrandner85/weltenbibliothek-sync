@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../config/app_theme.dart';
 import '../models/historical_event.dart';
+import '../widgets/glass_card.dart';
+import '../widgets/category_icon.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:intl/intl.dart';
 
@@ -351,37 +353,50 @@ class _TimelineScreenState extends State<TimelineScreen> {
         ? '${event.date.year.abs()} v.Chr.'
         : dateFormat.format(event.date);
     
-    return Card(
-      margin: const EdgeInsets.only(bottom: 16),
-      elevation: 4,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: InkWell(
-        onTap: () => _showEventDetails(event),
-        borderRadius: BorderRadius.circular(16),
-        child: Container(
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Hero(
+        tag: 'event_${event.id}',
+        child: GlassCard(
           padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                AppTheme.surfaceDark,
-                _getCategoryColor(event.category).withValues(alpha: 0.15),
-              ],
-            ),
+          borderRadius: BorderRadius.circular(16),
+          blur: 12,
+          opacity: 0.1,
+          border: Border.all(
+            color: _getCategoryColor(event.category).withValues(alpha: 0.4),
+            width: 1.5,
           ),
+          boxShadow: [
+            BoxShadow(
+              color: _getCategoryColor(event.category).withValues(alpha: 0.2),
+              blurRadius: 15,
+              spreadRadius: 1,
+            ),
+          ],
+          child: InkWell(
+          onTap: () => _showEventDetails(event),
+          borderRadius: BorderRadius.circular(14),
+          child: Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(14),
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Colors.transparent,
+                  _getCategoryColor(event.category).withValues(alpha: 0.08),
+                ],
+              ),
+            ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Header mit Kategorie und Trust-Level
               Row(
                 children: [
-                  Text(
-                    event.categoryEmoji,
-                    style: const TextStyle(fontSize: 24),
+                  CategoryIconCompact(
+                    category: event.category,
+                    size: 28,
                   ),
                   const SizedBox(width: 8),
                   Expanded(
@@ -486,6 +501,8 @@ class _TimelineScreenState extends State<TimelineScreen> {
             ],
           ),
         ),
+      ),
+      ),
       ),
     ).animate()
       .fadeIn(delay: Duration(milliseconds: 100 * index))
@@ -594,9 +611,9 @@ class _TimelineScreenState extends State<TimelineScreen> {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Text(
-                          event.categoryEmoji,
-                          style: const TextStyle(fontSize: 16),
+                        CategoryIconCompact(
+                          category: event.category,
+                          size: 24,
                         ),
                         const SizedBox(width: 8),
                         Text(

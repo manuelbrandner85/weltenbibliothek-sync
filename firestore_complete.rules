@@ -1,0 +1,286 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // ========================================
+    // AUTHENTICATION HELPER FUNCTIONS
+    // ========================================
+    
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return request.auth != null && request.auth.uid == userId;
+    }
+    
+    // ========================================
+    // CHAT COLLECTIONS (NEU)
+    // ========================================
+    
+    // Chat Rooms Collection
+    match /chat_rooms/{chatRoomId} {
+      // Jeder authentifizierte User kann Chat-Räume lesen
+      allow read: if isAuthenticated();
+      
+      // Jeder authentifizierte User kann Chat-Räume erstellen
+      allow create: if isAuthenticated();
+      
+      // Nur Teilnehmer können Chat-Räume aktualisieren
+      allow update: if isAuthenticated() && 
+                       request.auth.uid in resource.data.participants;
+      
+      // Nur Ersteller können Chat-Räume löschen
+      allow delete: if isAuthenticated();
+      
+      // Messages Sub-Collection
+      match /messages/{messageId} {
+        // Jeder authentifizierte User kann Nachrichten lesen
+        allow read: if isAuthenticated();
+        
+        // Jeder authentifizierte User kann Nachrichten senden
+        allow create: if isAuthenticated() &&
+                         request.auth.uid == request.resource.data.senderId;
+        
+        // Nur Sender kann eigene Nachrichten aktualisieren
+        allow update: if isAuthenticated() &&
+                         request.auth.uid == resource.data.senderId;
+        
+        // Nur Sender kann eigene Nachrichten löschen
+        allow delete: if isAuthenticated() &&
+                         request.auth.uid == resource.data.senderId;
+      }
+    }
+    
+    // ========================================
+    // EVENT COLLECTIONS
+    // ========================================
+    
+    // Events Collection (Erdbeben, Sonnenstürme, UFO-Sichtungen)
+    match /events/{eventId} {
+      allow read: if true;  // Jeder kann Events lesen
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated();
+      allow delete: if isAuthenticated();
+    }
+    
+    // ========================================
+    // USER COLLECTIONS
+    // ========================================
+    
+    // Users Collection
+    match /users/{userId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && request.auth.uid == userId;
+      allow update: if isOwner(userId);
+      allow delete: if isOwner(userId);
+    }
+    
+    // ========================================
+    // CATEGORY COLLECTIONS
+    // ========================================
+    
+    // Categories Collection (Verschwörungstheorien, etc.)
+    match /categories/{categoryId} {
+      allow read: if true;  // Jeder kann Kategorien lesen
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated();
+      allow delete: if isAuthenticated();
+    }
+    
+    // Articles/Content within Categories
+    match /categories/{categoryId}/articles/{articleId} {
+      allow read: if true;
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated();
+      allow delete: if isAuthenticated();
+    }
+    
+    // ========================================
+    // SCHUMANN RESONANCE COLLECTIONS
+    // ========================================
+    
+    // Schumann Resonance History
+    match /schumann_history/{documentId} {
+      allow read: if true;  // Jeder kann Schumann-Daten lesen
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated();
+      allow delete: if isAuthenticated();
+    }
+    
+    // Schumann Frequency Data
+    match /schumann_frequency/{documentId} {
+      allow read: if true;
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated();
+      allow delete: if isAuthenticated();
+    }
+    
+    // ========================================
+    // POPULATION COLLECTIONS
+    // ========================================
+    
+    // Population History
+    match /population_history/{documentId} {
+      allow read: if true;  // Jeder kann Bevölkerungsdaten lesen
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated();
+      allow delete: if isAuthenticated();
+    }
+    
+    // Population Data
+    match /population_data/{documentId} {
+      allow read: if true;
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated();
+      allow delete: if isAuthenticated();
+    }
+    
+    // ========================================
+    // CORRELATION ANALYSIS COLLECTIONS
+    // ========================================
+    
+    // Correlation Analysis Results
+    match /correlation_analysis/{documentId} {
+      allow read: if true;  // Jeder kann Korrelationen lesen
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated();
+      allow delete: if isAuthenticated();
+    }
+    
+    // ========================================
+    // ANCIENT KNOWLEDGE COLLECTIONS
+    // ========================================
+    
+    // Ancient Texts Collection
+    match /ancient_texts/{textId} {
+      allow read: if true;
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated();
+      allow delete: if isAuthenticated();
+    }
+    
+    // Ancient Artifacts Collection
+    match /ancient_artifacts/{artifactId} {
+      allow read: if true;
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated();
+      allow delete: if isAuthenticated();
+    }
+    
+    // ========================================
+    // CONSPIRACY THEORY COLLECTIONS
+    // ========================================
+    
+    // Conspiracy Theories
+    match /conspiracy_theories/{theoryId} {
+      allow read: if true;
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated();
+      allow delete: if isAuthenticated();
+      
+      // Evidence Sub-Collection
+      match /evidence/{evidenceId} {
+        allow read: if true;
+        allow create: if isAuthenticated();
+        allow update: if isAuthenticated();
+        allow delete: if isAuthenticated();
+      }
+      
+      // Comments Sub-Collection
+      match /comments/{commentId} {
+        allow read: if true;
+        allow create: if isAuthenticated();
+        allow update: if isAuthenticated() && 
+                         request.auth.uid == resource.data.authorId;
+        allow delete: if isAuthenticated() && 
+                         request.auth.uid == resource.data.authorId;
+      }
+    }
+    
+    // ========================================
+    // UFO SIGHTING COLLECTIONS
+    // ========================================
+    
+    // UFO Sightings
+    match /ufo_sightings/{sightingId} {
+      allow read: if true;
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated();
+      allow delete: if isAuthenticated();
+    }
+    
+    // ========================================
+    // SOLAR ACTIVITY COLLECTIONS
+    // ========================================
+    
+    // Solar Activity Data
+    match /solar_activity/{documentId} {
+      allow read: if true;
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated();
+      allow delete: if isAuthenticated();
+    }
+    
+    // Solar Storms
+    match /solar_storms/{stormId} {
+      allow read: if true;
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated();
+      allow delete: if isAuthenticated();
+    }
+    
+    // ========================================
+    // EARTHQUAKE COLLECTIONS
+    // ========================================
+    
+    // Earthquake Data
+    match /earthquakes/{earthquakeId} {
+      allow read: if true;
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated();
+      allow delete: if isAuthenticated();
+    }
+    
+    // ========================================
+    // NOTIFICATIONS COLLECTIONS
+    // ========================================
+    
+    // User Notifications
+    match /notifications/{notificationId} {
+      allow read: if isAuthenticated() && 
+                     request.auth.uid == resource.data.userId;
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated() && 
+                       request.auth.uid == resource.data.userId;
+      allow delete: if isAuthenticated() && 
+                       request.auth.uid == resource.data.userId;
+    }
+    
+    // ========================================
+    // SETTINGS COLLECTIONS
+    // ========================================
+    
+    // User Settings
+    match /user_settings/{userId} {
+      allow read: if isOwner(userId);
+      allow write: if isOwner(userId);
+    }
+    
+    // App Settings (Global)
+    match /app_settings/{settingId} {
+      allow read: if true;
+      allow write: if isAuthenticated();
+    }
+    
+    // ========================================
+    // WILDCARD MATCH (FALLBACK)
+    // ========================================
+    
+    // Alle anderen Collections - restrictive Standardregel
+    match /{document=**} {
+      allow read: if true;
+      allow write: if isAuthenticated();
+    }
+  }
+}

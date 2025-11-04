@@ -3,6 +3,7 @@ import '../config/app_theme.dart';
 import '../services/earthquake_service.dart';
 import '../services/schumann_resonance_service.dart';
 import '../services/nasa_data_service.dart';
+import '../widgets/glass_card.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -135,68 +136,90 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildCosmicDashboard() {
-    return Container(
+    return GlassCard(
       padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: AppTheme.cosmicGradient,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: AppTheme.primaryPurple.withValues(alpha: 0.3),
-            blurRadius: 20,
-            spreadRadius: 2,
-          ),
-        ],
+      borderRadius: BorderRadius.circular(20),
+      blur: 20,
+      opacity: 0.08,
+      border: Border.all(
+        color: AppTheme.primaryPurple.withValues(alpha: 0.4),
+        width: 2,
       ),
-      child: Column(
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                Icons.public,
-                size: 48,
-                color: AppTheme.secondaryGold,
-              ),
-              const SizedBox(width: 12),
-              Text(
-                '🌍 Globaler Status',
-                style: TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
+      boxShadow: [
+        BoxShadow(
+          color: AppTheme.primaryPurple.withValues(alpha: 0.3),
+          blurRadius: 30,
+          spreadRadius: 5,
+        ),
+        BoxShadow(
+          color: AppTheme.secondaryGold.withValues(alpha: 0.2),
+          blurRadius: 20,
+          spreadRadius: 2,
+        ),
+      ],
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              AppTheme.primaryPurple.withValues(alpha: 0.15),
+              AppTheme.secondaryGold.withValues(alpha: 0.1),
+            ],
+          ),
+          borderRadius: BorderRadius.circular(18),
+        ),
+        padding: const EdgeInsets.all(4),
+        child: Column(
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.public,
+                  size: 48,
                   color: AppTheme.secondaryGold,
                 ),
-              ),
-            ],
-          ),
-          
-          const SizedBox(height: 20),
+                const SizedBox(width: 12),
+                Text(
+                  '🌍 Globaler Status',
+                  style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    color: AppTheme.secondaryGold,
+                  ),
+                ),
+              ],
+            ),
+            
+            const SizedBox(height: 20),
 
-          // Status-Indikatoren
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _buildStatusIndicator(
-                '⚡',
-                'Schumann',
-                _schumannData?.frequencyStatus ?? 'Laden...',
-                AppTheme.energyPhenomena,
-              ),
-              _buildStatusIndicator(
-                '🌋',
-                'Erdbeben',
-                '${_recentEarthquakes.length}',
-                AppTheme.errorRed,
-              ),
-              _buildStatusIndicator(
-                '☀️',
-                'Solar',
-                _solarData?.activityLevel ?? 'Laden...',
-                AppTheme.secondaryGold,
-              ),
-            ],
-          ),
-        ],
+            // Status-Indikatoren
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _buildStatusIndicator(
+                  '⚡',
+                  'Schumann',
+                  _schumannData?.frequencyStatus ?? 'Laden...',
+                  AppTheme.energyPhenomena,
+                ),
+                _buildStatusIndicator(
+                  '🌋',
+                  'Erdbeben',
+                  '${_recentEarthquakes.length}',
+                  AppTheme.errorRed,
+                ),
+                _buildStatusIndicator(
+                  '☀️',
+                  'Solar',
+                  _solarData?.activityLevel ?? 'Laden...',
+                  AppTheme.secondaryGold,
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     ).animate()
       .fadeIn(delay: 400.ms)
@@ -275,52 +298,45 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildLiveDataCard(String emoji, String title, String value, Color accentColor) {
-    return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: BorderSide(color: accentColor.withValues(alpha: 0.3), width: 1),
+    return GlassCard(
+      padding: const EdgeInsets.all(16),
+      borderRadius: BorderRadius.circular(16),
+      opacity: 0.12,
+      blur: 15,
+      border: Border.all(
+        color: accentColor.withValues(alpha: 0.3),
+        width: 1.5,
       ),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              AppTheme.surfaceDark,
-              accentColor.withValues(alpha: 0.1),
-            ],
+      boxShadow: [
+        BoxShadow(
+          color: accentColor.withValues(alpha: 0.2),
+          blurRadius: 20,
+          spreadRadius: 2,
+        ),
+      ],
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(
+            emoji,
+            style: const TextStyle(fontSize: 36),
           ),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              emoji,
-              style: const TextStyle(fontSize: 36),
+          const SizedBox(height: 8),
+          Text(
+            title,
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: accentColor,
             ),
-            const SizedBox(height: 8),
-            Text(
-              title,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 12,
-                color: AppTheme.textWhite.withValues(alpha: 0.7),
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              value,
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: accentColor,
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     ).animate()
       .fadeIn(delay: 600.ms)
@@ -346,6 +362,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           onTap: () {
             // Navigation zur Timeline
+            DefaultTabController.of(context).animateTo(1); // Timeline ist Tab 1
           },
         ),
         
@@ -360,6 +377,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           onTap: () {
             // Navigation zur Karte
+            DefaultTabController.of(context).animateTo(2); // Karte ist Tab 2
           },
         ),
         
@@ -373,7 +391,41 @@ class _HomeScreenState extends State<HomeScreen> {
             colors: [AppTheme.techMysteries, AppTheme.alienContact],
           ),
           onTap: () {
-            // Navigation zum AI-Chat
+            // Zeige Info-Dialog über künftige Features
+            showDialog(
+              context: context,
+              builder: (context) => AlertDialog(
+                backgroundColor: AppTheme.surfaceDark,
+                title: Row(
+                  children: [
+                    Icon(Icons.auto_awesome, color: AppTheme.secondaryGold),
+                    const SizedBox(width: 12),
+                    const Text(
+                      'AI-Assistent',
+                      style: TextStyle(color: AppTheme.textWhite),
+                    ),
+                  ],
+                ),
+                content: Text(
+                  'Der KI-gestützte Gemini 2.0 Assistent wird in einem künftigen Update verfügbar sein.\n\n'
+                  'Features:\n'
+                  '• Event-Analyse & Zusammenhänge\n'
+                  '• Persönliche Empfehlungen\n'
+                  '• Multi-perspektivische Erklärungen\n'
+                  '• Echtzeit-Datenauswertung',
+                  style: TextStyle(color: AppTheme.textWhite.withValues(alpha: 0.9)),
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: Text(
+                      'Verstanden',
+                      style: TextStyle(color: AppTheme.secondaryGold),
+                    ),
+                  ),
+                ],
+              ),
+            );
           },
         ),
       ],

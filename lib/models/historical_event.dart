@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/material.dart';
 
 enum EventCategory {
   lostCivilizations,
@@ -117,6 +118,31 @@ class HistoricalEvent {
         return '⚡';
       case EventCategory.globalConspiracies:
         return '🌍';
+    }
+  }
+
+  IconData get categoryIcon {
+    switch (category) {
+      case EventCategory.lostCivilizations:
+        return Icons.account_balance; // Temple/Civilization
+      case EventCategory.alienContact:
+        return Icons.space_dashboard; // Space/Alien
+      case EventCategory.secretSocieties:
+        return Icons.security; // Secret/Hidden
+      case EventCategory.techMysteries:
+        return Icons.radar; // Technology
+      case EventCategory.dimensionalAnomalies:
+        return Icons.grain; // Dimensional/Portal
+      case EventCategory.occultEvents:
+        return Icons.auto_awesome; // Mystical/Occult
+      case EventCategory.forbiddenKnowledge:
+        return Icons.menu_book; // Ancient Knowledge
+      case EventCategory.ufoFleets:
+        return Icons.flight; // UFO/Flying
+      case EventCategory.energyPhenomena:
+        return Icons.flash_on; // Energy
+      case EventCategory.globalConspiracies:
+        return Icons.public; // Global
     }
   }
 

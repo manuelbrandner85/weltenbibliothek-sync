@@ -44,21 +44,21 @@ class DefaultFirebaseOptions {
   // Anleitung: https://firebase.google.com/docs/flutter/setup
   
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'YOUR_WEB_API_KEY',
-    appId: '1:YOUR_APP_ID:web:YOUR_WEB_APP_ID',
-    messagingSenderId: 'YOUR_SENDER_ID',
-    projectId: 'weltenbibliothek',
-    authDomain: 'weltenbibliothek.firebaseapp.com',
-    storageBucket: 'weltenbibliothek.appspot.com',
-    measurementId: 'G-YOUR_MEASUREMENT_ID',
+    apiKey: 'AIzaSyAPU-uR_ZLFndfSv1FM1g449i-3y9QByig',
+    appId: '1:405004251683:web:9e264742f934d6d24e3796',
+    messagingSenderId: '405004251683',
+    projectId: 'weltenbibliothek-5d21f',
+    authDomain: 'weltenbibliothek-5d21f.firebaseapp.com',
+    storageBucket: 'weltenbibliothek-5d21f.firebasestorage.app',
+    measurementId: 'G-MEASUREMENT_ID',
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'YOUR_ANDROID_API_KEY',
-    appId: '1:YOUR_APP_ID:android:YOUR_ANDROID_APP_ID',
-    messagingSenderId: 'YOUR_SENDER_ID',
-    projectId: 'weltenbibliothek',
-    storageBucket: 'weltenbibliothek.appspot.com',
+    apiKey: 'AIzaSyAPU-uR_ZLFndfSv1FM1g449i-3y9QByig',
+    appId: '1:405004251683:android:9e264742f934d6d24e3796',
+    messagingSenderId: '405004251683',
+    projectId: 'weltenbibliothek-5d21f',
+    storageBucket: 'weltenbibliothek-5d21f.firebasestorage.app',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(

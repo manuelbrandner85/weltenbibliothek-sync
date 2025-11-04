@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import '../config/app_theme.dart';
 import '../models/historical_event.dart';
+import '../widgets/glass_card.dart';
+import '../widgets/category_icon.dart';
+import '../widgets/comment_section.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
 class LibraryScreen extends StatefulWidget {
@@ -309,15 +312,10 @@ class _LibraryScreenState extends State<LibraryScreen> {
   }
 
   Widget _buildStatCard(String emoji, String label, String value) {
-    return Container(
+    return GlassContainer(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      decoration: BoxDecoration(
-        color: AppTheme.surfaceDark,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: AppTheme.primaryPurple.withValues(alpha: 0.3),
-        ),
-      ),
+      borderRadius: BorderRadius.circular(12),
+      opacity: 0.15,
       child: Column(
         children: [
           Row(
@@ -327,17 +325,14 @@ class _LibraryScreenState extends State<LibraryScreen> {
               const SizedBox(width: 4),
               Text(
                 label,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: AppTheme.textWhite.withValues(alpha: 0.7),
-                ),
+                style: Theme.of(context).textTheme.bodySmall,
               ),
             ],
           ),
           const SizedBox(height: 4),
           Text(
             value,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
               color: AppTheme.secondaryGold,
@@ -351,14 +346,17 @@ class _LibraryScreenState extends State<LibraryScreen> {
   Widget _buildEventGridCard(HistoricalEvent event) {
     final isFavorite = _favorites.contains(event.id);
     
-    return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: InkWell(
+    return Hero(
+      tag: 'event_${event.id}',
+      child: Card(
+        elevation: 4,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: InkWell(
         onTap: () {
           // Detail-Ansicht öffnen
+          _showEventDetails(event);
         },
         borderRadius: BorderRadius.circular(16),
         child: Container(
@@ -382,16 +380,9 @@ class _LibraryScreenState extends State<LibraryScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // Kategorie Badge
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: _getCategoryColor(event.category),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        event.categoryEmoji,
-                        style: const TextStyle(fontSize: 16),
-                      ),
+                    CategoryIconCompact(
+                      category: event.category,
+                      size: 32,
                     ),
                     
                     const SizedBox(height: 8),
@@ -458,6 +449,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
           ),
         ),
       ),
+      ),
     ).animate()
       .fadeIn(duration: 400.ms)
       .scale(begin: const Offset(0.8, 0.8), end: const Offset(1, 1));
@@ -485,6 +477,319 @@ class _LibraryScreenState extends State<LibraryScreen> {
         return AppTheme.energyPhenomena;
       case EventCategory.globalConspiracies:
         return AppTheme.globalConspiracies;
+    }
+  }
+  
+  /// EVENT-DETAILS MODAL ANZEIGEN
+  void _showEventDetails(HistoricalEvent event) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => DraggableScrollableSheet(
+        initialChildSize: 0.85,
+        minChildSize: 0.5,
+        maxChildSize: 0.95,
+        builder: (context, scrollController) => Container(
+          decoration: BoxDecoration(
+            color: AppTheme.surfaceDark,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+            border: Border.all(color: _getCategoryColor(event.category)),
+          ),
+          child: Column(
+            children: [
+              // Drag Handle
+              Container(
+                margin: const EdgeInsets.only(top: 12),
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: AppTheme.textWhite.withValues(alpha: 0.3),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              
+              Expanded(
+                child: SingleChildScrollView(
+                  controller: scrollController,
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Kategorie Badge
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: _getCategoryColor(event.category),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            CategoryIconCompact(
+                              category: event.category,
+                              size: 24,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              event.categoryName,
+                              style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                                color: AppTheme.textWhite,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      
+                      const SizedBox(height: 16),
+                      
+                      // Titel
+                      Text(
+                        event.title,
+                        style: const TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: AppTheme.secondaryGold,
+                        ),
+                      ),
+                      
+                      const SizedBox(height: 16),
+                      
+                      // Datum und Ort
+                      Row(
+                        children: [
+                          Icon(Icons.calendar_today, size: 18, color: AppTheme.secondaryGold),
+                          const SizedBox(width: 8),
+                          Text(
+                            event.date.year < 0 
+                                ? '${event.date.year.abs()} v.Chr.'
+                                : '${event.date.day}.${event.date.month}.${event.date.year}',
+                            style: const TextStyle(fontSize: 16, color: AppTheme.textWhite),
+                          ),
+                        ],
+                      ),
+                      
+                      if (event.locationName != null) ...[
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            Icon(Icons.location_on, size: 18, color: AppTheme.secondaryGold),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                event.locationName!,
+                                style: const TextStyle(fontSize: 16, color: AppTheme.textWhite),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                      
+                      const SizedBox(height: 24),
+                      
+                      // Beschreibung
+                      Text(
+                        'Beschreibung',
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: AppTheme.secondaryGold,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        event.description,
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: AppTheme.textWhite.withValues(alpha: 0.9),
+                          height: 1.5,
+                        ),
+                      ),
+                      
+                      const SizedBox(height: 24),
+                      
+                      // Trust Level
+                      Text(
+                        'Vertrauensstufe',
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: AppTheme.secondaryGold,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          ...List.generate(5, (index) {
+                            return Icon(
+                              index < event.trustLevel ? Icons.star : Icons.star_border,
+                              size: 28,
+                              color: AppTheme.secondaryGold,
+                            );
+                          }),
+                          const SizedBox(width: 12),
+                          Text(
+                            '${event.trustLevel}/5',
+                            style: const TextStyle(fontSize: 16, color: AppTheme.textWhite),
+                          ),
+                        ],
+                      ),
+                      
+                      const SizedBox(height: 24),
+                      
+                      // Perspektiven
+                      Text(
+                        'Perspektiven',
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: AppTheme.secondaryGold,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Wrap(
+                        spacing: 12,
+                        runSpacing: 12,
+                        children: event.perspectives.map((p) {
+                          return Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                            decoration: BoxDecoration(
+                              color: AppTheme.primaryPurple.withValues(alpha: 0.3),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                color: AppTheme.primaryPurple.withValues(alpha: 0.5),
+                              ),
+                            ),
+                            child: Text(
+                              _getPerspectiveName(p),
+                              style: const TextStyle(fontSize: 14, color: AppTheme.textWhite),
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                      
+                      const SizedBox(height: 24),
+                      
+                      // Quellen
+                      Text(
+                        'Quellen (${event.sources.length})',
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: AppTheme.secondaryGold,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      ...event.sources.asMap().entries.map((entry) {
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 8),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                '${entry.key + 1}. ',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: AppTheme.textWhite.withValues(alpha: 0.7),
+                                ),
+                              ),
+                              Expanded(
+                                child: Text(
+                                  entry.value,
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: AppTheme.textWhite.withValues(alpha: 0.9),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      }),
+                      
+                      const SizedBox(height: 32),
+                      
+                      // Divider
+                      Divider(
+                        color: AppTheme.primaryPurple.withValues(alpha: 0.3),
+                        height: 1,
+                      ),
+                      
+                      const SizedBox(height: 24),
+                      
+                      // Comment Section
+                      CommentSection(eventId: event.id),
+                      
+                      const SizedBox(height: 32),
+                      
+                      // Action Buttons
+                      Row(
+                        children: [
+                          Expanded(
+                            child: ElevatedButton.icon(
+                              onPressed: () {
+                                _toggleFavorite(event.id);
+                                Navigator.pop(context);
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      _favorites.contains(event.id)
+                                          ? 'Zu Favoriten hinzugefügt'
+                                          : 'Aus Favoriten entfernt',
+                                    ),
+                                    duration: const Duration(seconds: 2),
+                                  ),
+                                );
+                              },
+                              icon: Icon(
+                                _favorites.contains(event.id) ? Icons.favorite : Icons.favorite_border,
+                                size: 18,
+                              ),
+                              label: Text(
+                                _favorites.contains(event.id) ? 'Favorit' : 'Favorisieren',
+                              ),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppTheme.primaryPurple,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          ElevatedButton(
+                            onPressed: () => Navigator.pop(context),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppTheme.surfaceDark,
+                              side: BorderSide(color: AppTheme.primaryPurple),
+                            ),
+                            child: const Icon(Icons.close, size: 18),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+  
+  /// Perspektiven-Namen Helper
+  String _getPerspectiveName(PerspectiveType type) {
+    switch (type) {
+      case PerspectiveType.mainstream:
+        return '🏛️ Mainstream';
+      case PerspectiveType.alternative:
+        return '🔍 Alternativ';
+      case PerspectiveType.conspiracy:
+        return '🕵️ Verschwörung';
+      case PerspectiveType.spiritual:
+        return '🧘 Spirituell';
+      case PerspectiveType.scientific:
+        return '🔬 Wissenschaftlich';
     }
   }
 }

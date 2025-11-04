@@ -1,0 +1,71 @@
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Chat Rooms Collection
+    match /chat_rooms/{chatRoomId} {
+      // Jeder authentifizierte User kann Chat-Räume lesen
+      allow read: if request.auth != null;
+      
+      // Jeder authentifizierte User kann Chat-Räume erstellen
+      allow create: if request.auth != null;
+      
+      // Nur Teilnehmer können Chat-Räume aktualisieren
+      allow update: if request.auth != null && 
+                       request.auth.uid in resource.data.participants;
+      
+      // Nur Ersteller können Chat-Räume löschen
+      allow delete: if request.auth != null;
+      
+      // Messages Sub-Collection
+      match /messages/{messageId} {
+        // Jeder Teilnehmer kann Nachrichten lesen
+        allow read: if request.auth != null;
+        
+        // Jeder authentifizierte User kann Nachrichten senden
+        allow create: if request.auth != null &&
+                         request.auth.uid == request.resource.data.senderId;
+        
+        // Nur Sender kann eigene Nachrichten aktualisieren
+        allow update: if request.auth != null &&
+                         request.auth.uid == resource.data.senderId;
+        
+        // Nur Sender kann eigene Nachrichten löschen
+        allow delete: if request.auth != null &&
+                         request.auth.uid == resource.data.senderId;
+      }
+    }
+    
+    // Alle anderen Collections (bestehende Rules)
+    match /events/{document=**} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+    
+    match /users/{userId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    match /categories/{document=**} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+    
+    match /schumann_history/{document=**} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+    
+    match /population_history/{document=**} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+    
+    match /correlation_analysis/{document=**} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+  }
+}

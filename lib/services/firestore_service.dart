@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import '../models/historical_event.dart';
@@ -297,19 +298,19 @@ class FirestoreService {
     final dLat = _degreesToRadians(lat2 - lat1);
     final dLon = _degreesToRadians(lon2 - lon1);
     
-    final a = (dLat / 2).sin() * (dLat / 2).sin() +
-        _degreesToRadians(lat1).cos() *
-            _degreesToRadians(lat2).cos() *
-            (dLon / 2).sin() *
-            (dLon / 2).sin();
+    final a = sin(dLat / 2) * sin(dLat / 2) +
+        cos(_degreesToRadians(lat1)) *
+            cos(_degreesToRadians(lat2)) *
+            sin(dLon / 2) *
+            sin(dLon / 2);
     
-    final c = 2 * (a.sqrt().asin());
+    final c = 2 * asin(sqrt(a));
     
     return earthRadiusKm * c;
   }
 
   double _degreesToRadians(double degrees) {
-    return degrees * 3.141592653589793 / 180.0;
+    return degrees * pi / 180.0;
   }
 
   // ==================== STREAM LISTENERS ====================
