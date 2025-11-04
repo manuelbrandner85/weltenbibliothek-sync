@@ -4,14 +4,12 @@ import '../config/app_theme.dart';
 import '../models/chat_models.dart';
 import '../services/chat_service.dart';
 import '../services/typing_indicator_service.dart';
-import '../services/voice_message_service.dart';
 import '../services/admin_service.dart';
 import '../widgets/enhanced_message_bubble.dart';
 import '../widgets/typing_indicator_widget.dart';
 import '../widgets/pinned_messages_bar.dart';
 import '../widgets/message_search_bar.dart';
 import '../widgets/message_action_sheet.dart';
-import '../widgets/simple_voice_recorder.dart';
 import 'user_profile_screen.dart';
 
 /// Complete Chat Room Screen mit ALLEN Phase 5 Features
@@ -30,7 +28,6 @@ class ChatRoomScreen extends StatefulWidget {
 class _ChatRoomScreenState extends State<ChatRoomScreen> {
   final ChatService _chatService = ChatService();
   final TypingIndicatorService _typingService = TypingIndicatorService();
-  final VoiceMessageService _voiceService = VoiceMessageService();
   final AdminService _adminService = AdminService();
   
   final TextEditingController _messageController = TextEditingController();
@@ -40,7 +37,6 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
   bool _isSending = false;
   bool _showScrollToBottom = false;
   bool _isSearching = false;
-  bool _isRecordingVoice = false;
   ChatMessage? _replyingTo;
   ChatMessage? _editingMessage;
   
@@ -241,38 +237,6 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
         ),
       ),
     );
-  }
-
-  // ========== VOICE MESSAGE HANDLING ==========
-  
-  Future<void> _handleVoiceMessageSent(String audioPath, int duration) async {
-    try {
-      // Upload audio
-      final audioUrl = await _voiceService.uploadAudio(audioPath, widget.chatRoom.id);
-      
-      // Send voice message
-      await _voiceService.sendVoiceMessage(
-        chatRoomId: widget.chatRoom.id,
-        audioUrl: audioUrl,
-        duration: duration,
-      );
-      
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('✓ Sprachnachricht gesendet'),
-            backgroundColor: Colors.green,
-            duration: Duration(seconds: 2),
-          ),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Fehler: $e'), backgroundColor: Colors.red),
-        );
-      }
-    }
   }
 
   // ========== MESSAGE ACTIONS ==========
@@ -1066,12 +1030,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
         ),
       ),
       child: SafeArea(
-        child: _isRecordingVoice
-            ? SimpleVoiceRecorder(
-                onRecordComplete: _handleVoiceMessageSent,
-                onCancel: () => setState(() => _isRecordingVoice = false),
-              )
-            : Row(
+        child: Row(
                 children: [
                   // Image Button
                   IconButton(
@@ -1104,14 +1063,8 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                   ),
                   const SizedBox(width: 8),
                   
-                  // Voice / Send Button
-                  if (_messageController.text.trim().isEmpty)
-                    IconButton(
-                      onPressed: () => setState(() => _isRecordingVoice = true),
-                      icon: const Icon(Icons.mic, color: AppTheme.secondaryGold),
-                    )
-                  else
-                    Container(
+                  // Send Button (Voice Messages entfernt)
+                  Container(
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
                           colors: [AppTheme.primaryPurple, AppTheme.secondaryGold],
