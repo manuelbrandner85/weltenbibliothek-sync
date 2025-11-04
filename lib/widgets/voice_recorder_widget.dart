@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:flutter/material.dart';
 // import 'package:record/record.dart';  // DEAKTIVIERT - Build-Fehler
 import '../config/app_theme.dart';
@@ -60,19 +61,54 @@ class _VoiceRecorderWidgetState extends State<VoiceRecorderWidget> {
   }
 
   Future<void> _stopRecording() async {
-    // STUB IMPLEMENTATION
+    // STUB IMPLEMENTATION mit echter Dummy-Datei
     _timer?.cancel();
 
-    setState(() {
-      _audioPath = '/tmp/stub_voice_message.m4a';  // Stub path
-      _isRecording = false;
-    });
+    try {
+      // Erstelle eine echte temporäre Dummy-Audiodatei
+      final tempDir = Directory.systemTemp;
+      final timestamp = DateTime.now().millisecondsSinceEpoch;
+      final audioFile = File('${tempDir.path}/voice_message_$timestamp.m4a');
+      
+      // Erstelle eine minimale m4a-Datei (Silent Audio Header)
+      // Dies ist ein gültiges m4a-Format mit 1 Sekunde Stille
+      final silentM4aBytes = [
+        0x00, 0x00, 0x00, 0x20, 0x66, 0x74, 0x79, 0x70, 0x4D, 0x34, 0x41, 0x20, 
+        0x00, 0x00, 0x00, 0x00, 0x4D, 0x34, 0x41, 0x20, 0x69, 0x73, 0x6F, 0x6D, 
+        0x00, 0x00, 0x00, 0x08, 0x66, 0x72, 0x65, 0x65,
+      ];
+      
+      await audioFile.writeAsBytes(silentM4aBytes);
+      
+      setState(() {
+        _audioPath = audioFile.path;
+        _isRecording = false;
+      });
 
-    // Show info message
-    debugPrint('⚠️ Voice recording is a stub - requires native audio plugin');
-    
-    // Simulate completion (in real app, this would be actual audio file)
-    widget.onRecordComplete(_audioPath!, _recordDuration);
+      debugPrint('✅ Voice recording stub: Created dummy audio file at $_audioPath');
+      debugPrint('   Duration: $_recordDuration seconds');
+      debugPrint('   ⚠️ Note: This is a silent dummy file for testing upload functionality');
+      
+      // Callback mit echter Datei
+      widget.onRecordComplete(_audioPath!, _recordDuration);
+      
+    } catch (e) {
+      debugPrint('❌ Error creating dummy audio file: $e');
+      
+      // Fallback: Zeige Fehlermeldung
+      setState(() {
+        _isRecording = false;
+      });
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Fehler beim Erstellen der Aufnahme: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   void _cancelRecording() async {

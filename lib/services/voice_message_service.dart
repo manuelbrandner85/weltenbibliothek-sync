@@ -2,10 +2,11 @@ import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
-import 'catbox_audio_service.dart';
+import 'multi_audio_service.dart';
 
 /// Voice Message Service - Audio Upload und Management (Phase 5A)
-/// Verwendet Catbox.moe als kostenlosen Audio-Hosting-Service
+/// Verwendet Multi-Audio-Service mit automatischem Fallback
+/// (Catbox → File.io → 0x0.st)
 class VoiceMessageService {
   static final VoiceMessageService _instance = VoiceMessageService._internal();
   factory VoiceMessageService() => _instance;
@@ -17,30 +18,36 @@ class VoiceMessageService {
   String? get currentUserId => _auth.currentUser?.uid;
   String get currentUserName => _auth.currentUser?.displayName ?? 'Anonym';
 
-  /// Upload Audio-Datei zu Catbox (kostenlos & unbegrenzt)
+  /// Upload Audio-Datei mit automatischem Fallback
   Future<String> uploadAudio(String filePath, String chatRoomId) async {
     try {
       final file = File(filePath);
       final fileName = 'voice_${chatRoomId}_${DateTime.now().millisecondsSinceEpoch}.m4a';
 
       if (kDebugMode) {
-        debugPrint('🔊 Uploading audio to Catbox...');
+        debugPrint('🔊 Uploading audio with fallback system...');
         debugPrint('   File: $filePath');
         debugPrint('   Name: $fileName');
+        debugPrint('   File exists: ${await file.exists()}');
       }
 
-      // Upload to Catbox
-      final audioUrl = await CatboxAudioService.uploadAudio(
+      // Validierung: Datei muss existieren
+      if (!await file.exists()) {
+        throw Exception('Audio-Datei existiert nicht: $filePath');
+      }
+
+      // Upload mit automatischem Fallback (Catbox → File.io → 0x0.st)
+      final audioUrl = await MultiAudioService.uploadAudio(
         audioFile: file,
         fileName: fileName,
       );
 
       if (audioUrl == null) {
-        throw Exception('Catbox audio upload failed - returned null');
+        throw Exception('Alle Audio-Upload-Services fehlgeschlagen. Bitte Internetverbindung prüfen.');
       }
 
       if (kDebugMode) {
-        debugPrint('✅ Audio uploaded to Catbox: $audioUrl');
+        debugPrint('✅ Audio uploaded successfully: $audioUrl');
       }
 
       return audioUrl;
