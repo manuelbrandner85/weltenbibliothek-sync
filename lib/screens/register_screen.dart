@@ -5,7 +5,9 @@ import 'home_container.dart';
 
 /// Register Screen mit Email/Password
 class RegisterScreen extends StatefulWidget {
-  const RegisterScreen({super.key});
+  final String? prefilledEmail; // ⚠️ FIX: Vorbefüllte Email vom Login-Screen
+  
+  const RegisterScreen({super.key, this.prefilledEmail});
 
   @override
   State<RegisterScreen> createState() => _RegisterScreenState();
@@ -22,6 +24,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
   bool _isLoading = false;
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
+
+  @override
+  void initState() {
+    super.initState();
+    // ⚠️ FIX: Befülle Email-Feld wenn vom Login weitergeleitet
+    if (widget.prefilledEmail != null) {
+      _emailController.text = widget.prefilledEmail!;
+    }
+  }
 
   @override
   void dispose() {

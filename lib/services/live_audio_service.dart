@@ -267,4 +267,38 @@ class LiveAudioService {
       }
     }
   }
+
+  /// Delete Audio Room completely from Firebase (Host only)
+  Future<void> deleteAudioRoom(String roomId) async {
+    if (currentUserId == null) return;
+
+    try {
+      if (kDebugMode) {
+        debugPrint('🗑️ Deleting audio room completely: $roomId');
+      }
+
+      // 1. Delete all participants
+      final participantsSnapshot = await _firestore
+          .collection('audio_rooms')
+          .doc(roomId)
+          .collection('participants')
+          .get();
+
+      for (var doc in participantsSnapshot.docs) {
+        await doc.reference.delete();
+      }
+
+      // 2. Delete the room itself
+      await _firestore.collection('audio_rooms').doc(roomId).delete();
+
+      if (kDebugMode) {
+        debugPrint('✅ Audio room deleted completely: $roomId');
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('❌ Error deleting audio room: $e');
+      }
+      rethrow;
+    }
+  }
 }

@@ -643,7 +643,8 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
     if (selectedDuration == null) return;
     
     try {
-      await _adminService.muteUser(
+      // ✨ NEU: Verwende muteUserWithNotification für Benachrichtigung
+      await _adminService.muteUserWithNotification(
         targetUserId: targetUserId,
         moderatorId: _chatService.currentUserId!,
         reason: 'Stummgeschaltet durch Moderator',
@@ -724,7 +725,8 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
         : reasonController.text.trim();
     
     try {
-      await _adminService.blockUser(
+      // ✨ NEU: Verwende blockUserWithNotification für Benachrichtigung
+      await _adminService.blockUserWithNotification(
         targetUserId: targetUserId,
         adminUserId: _chatService.currentUserId!,
         reason: reason,

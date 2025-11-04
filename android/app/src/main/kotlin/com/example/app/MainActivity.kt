@@ -1,4 +1,4 @@
-package com.weltenbibliothek.chroniken
+package com.example.app
 
 import io.flutter.embedding.android.FlutterActivity
 

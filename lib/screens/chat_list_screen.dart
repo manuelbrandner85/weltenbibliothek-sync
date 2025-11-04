@@ -94,22 +94,56 @@ class _ChatListScreenState extends State<ChatListScreen> with SingleTickerProvid
 
         if (snapshot.hasError) {
           return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(Icons.error, color: Colors.red, size: 48),
-                const SizedBox(height: 16),
-                Text(
-                  'Fehler beim Laden der Chats',
-                  style: AppTheme.bodyMedium,
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  snapshot.error.toString(),
-                  style: AppTheme.bodySmall.copyWith(color: Colors.red),
-                  textAlign: TextAlign.center,
-                ),
-              ],
+            child: Padding(
+              padding: const EdgeInsets.all(24.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.error, color: Colors.red, size: 48),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Fehler beim Laden der Chats',
+                    style: AppTheme.bodyMedium,
+                  ),
+                  const SizedBox(height: 12),
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.red.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.red.withValues(alpha: 0.3)),
+                    ),
+                    child: Column(
+                      children: [
+                        Text(
+                          'Fehler-Details:',
+                          style: AppTheme.bodySmall.copyWith(
+                            color: Colors.red,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          snapshot.error.toString(),
+                          style: AppTheme.bodySmall.copyWith(color: Colors.red.withValues(alpha: 0.8)),
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  ElevatedButton.icon(
+                    onPressed: () {
+                      setState(() {}); // Trigger reload
+                    },
+                    icon: const Icon(Icons.refresh),
+                    label: const Text('Erneut versuchen'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTheme.primaryPurple,
+                    ),
+                  ),
+                ],
+              ),
             ),
           );
         }
@@ -118,25 +152,93 @@ class _ChatListScreenState extends State<ChatListScreen> with SingleTickerProvid
 
         if (chatRooms.isEmpty) {
           return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.chat_bubble_outline,
-                  size: 64,
-                  color: Colors.grey[600],
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  'Keine Community-Chats verfügbar',
-                  style: AppTheme.bodyLarge,
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Chats werden automatisch erstellt',
-                  style: AppTheme.bodySmall.copyWith(color: Colors.grey),
-                ),
-              ],
+            child: Padding(
+              padding: const EdgeInsets.all(24.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.chat_bubble_outline,
+                    size: 64,
+                    color: Colors.grey[600],
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Keine Community-Chats verfügbar',
+                    style: AppTheme.bodyLarge,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Community-Chats werden beim ersten Start automatisch erstellt.',
+                    style: AppTheme.bodySmall.copyWith(color: Colors.grey),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 20),
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: AppTheme.primaryPurple.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: AppTheme.primaryPurple.withValues(alpha: 0.3)),
+                    ),
+                    child: Column(
+                      children: [
+                        const Icon(Icons.info_outline, color: AppTheme.secondaryGold, size: 32),
+                        const SizedBox(height: 12),
+                        const Text(
+                          'Mögliche Ursachen:',
+                          style: TextStyle(
+                            color: AppTheme.secondaryGold,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          '• Firestore Datenbank ist leer\n'
+                          '• Firestore Security Rules blockieren Zugriff\n'
+                          '• Netzwerkverbindung prüfen',
+                          style: AppTheme.bodySmall.copyWith(color: Colors.white70),
+                          textAlign: TextAlign.left,
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  ElevatedButton.icon(
+                    onPressed: () async {
+                      try {
+                        // Force reinitialize
+                        await _chatService.initializeDefaultChatRooms();
+                        setState(() {}); // Trigger reload
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('✅ Community-Chats werden erstellt...'),
+                              backgroundColor: Colors.green,
+                            ),
+                          );
+                        }
+                      } catch (e) {
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('Fehler: $e'),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
+                        }
+                      }
+                    },
+                    icon: const Icon(Icons.refresh),
+                    label: const Text('Chats erstellen'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTheme.secondaryGold,
+                      foregroundColor: AppTheme.backgroundDark,
+                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                    ),
+                  ),
+                ],
+              ),
             ),
           );
         }
@@ -588,14 +690,28 @@ class _ChatListScreenState extends State<ChatListScreen> with SingleTickerProvid
           TextButton(
             onPressed: () async {
               Navigator.pop(context);
-              await _audioService.endAudioRoom(roomId);
-              if (mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('✓ Raum gelöscht'),
-                    backgroundColor: Colors.green,
-                  ),
-                );
+              
+              try {
+                // Delete audio room completely from Firebase
+                await _audioService.deleteAudioRoom(roomId);
+                
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('✓ Raum vollständig gelöscht'),
+                      backgroundColor: Colors.green,
+                    ),
+                  );
+                }
+              } catch (e) {
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Fehler: $e'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
               }
             },
             child: const Text('Löschen', style: TextStyle(color: Colors.red)),

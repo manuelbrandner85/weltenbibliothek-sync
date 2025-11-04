@@ -52,6 +52,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
   Future<void> _pickImage() async {
     try {
+      print('📸 Opening image picker...');
       final XFile? image = await _imagePicker.pickImage(
         source: ImageSource.gallery,
         maxWidth: 512,
@@ -59,13 +60,36 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         imageQuality: 85,
       );
 
-      if (image != null && mounted) {
-        setState(() => _selectedImage = File(image.path));
+      if (image != null) {
+        print('✅ Image selected: ${image.path}');
+        print('   File size: ${await image.length()} bytes');
+        
+        if (mounted) {
+          setState(() => _selectedImage = File(image.path));
+          
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('✓ Bild ausgewählt'),
+              backgroundColor: Colors.green,
+              duration: Duration(seconds: 1),
+            ),
+          );
+        }
+      } else {
+        print('ℹ️ No image selected (user cancelled)');
       }
-    } catch (e) {
+    } catch (e, stackTrace) {
+      print('❌ ERROR picking image:');
+      print('   Error: $e');
+      print('   Stack trace: $stackTrace');
+      
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Fehler beim Auswählen des Bildes: $e'), backgroundColor: Colors.red),
+          SnackBar(
+            content: Text('Fehler beim Auswählen: $e'),
+            backgroundColor: Colors.red,
+            duration: Duration(seconds: 3),
+          ),
         );
       }
     }
@@ -77,16 +101,68 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     try {
       final userId = _authService.currentUserId!;
       final fileName = 'profile_${DateTime.now().millisecondsSinceEpoch}.jpg';
+      
+      print('🔄 Uploading profile image...');
+      print('   User ID: $userId');
+      print('   File path: ${_selectedImage!.path}');
+      print('   Storage path: profile_images/$userId/$fileName');
+      
       final storageRef = FirebaseStorage.instance
           .ref()
           .child('profile_images/$userId/$fileName');
 
-      await storageRef.putFile(_selectedImage!);
-      return await storageRef.getDownloadURL();
-    } catch (e) {
+      print('📤 Starting upload...');
+      final uploadTask = storageRef.putFile(_selectedImage!);
+      
+      // Monitor upload progress
+      uploadTask.snapshotEvents.listen((TaskSnapshot snapshot) {
+        final progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+        print('   Upload progress: ${progress.toStringAsFixed(1)}%');
+      });
+      
+      await uploadTask;
+      print('✅ Upload completed!');
+      
+      final downloadURL = await storageRef.getDownloadURL();
+      print('✅ Download URL: $downloadURL');
+      
+      return downloadURL;
+    } catch (e, stackTrace) {
+      print('❌ ERROR uploading profile image:');
+      print('   Error: $e');
+      print('   Stack trace: $stackTrace');
+      
       if (mounted) {
+        // Show detailed error message
+        String errorMessage = 'Fehler beim Hochladen';
+        
+        if (e.toString().contains('permission-denied')) {
+          errorMessage = 'Zugriff verweigert! Prüfe Firebase Storage Rules.';
+        } else if (e.toString().contains('unauthorized')) {
+          errorMessage = 'Nicht autorisiert! Bitte erneut anmelden.';
+        } else if (e.toString().contains('object-not-found')) {
+          errorMessage = 'Datei nicht gefunden! Wähle ein anderes Bild.';
+        } else if (e.toString().contains('quota-exceeded')) {
+          errorMessage = 'Speicherplatz voll! Kontaktiere den Administrator.';
+        } else {
+          errorMessage = 'Fehler: ${e.toString()}';
+        }
+        
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Fehler beim Hochladen: $e'), backgroundColor: Colors.red),
+          SnackBar(
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('❌ Upload fehlgeschlagen', 
+                  style: TextStyle(fontWeight: FontWeight.bold)),
+                SizedBox(height: 4),
+                Text(errorMessage),
+              ],
+            ),
+            backgroundColor: Colors.red,
+            duration: Duration(seconds: 5),
+          ),
         );
       }
       return null;
@@ -97,32 +173,72 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     setState(() => _isLoading = true);
 
     try {
+      print('💾 Saving profile...');
+      
       // Upload image if selected
       String? photoURL = _currentPhotoURL;
       if (_selectedImage != null) {
+        print('📸 Image selected, starting upload...');
         photoURL = await _uploadProfileImage();
+        
+        if (photoURL == null) {
+          print('❌ Image upload failed, aborting profile save');
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('⚠️ Bild konnte nicht hochgeladen werden. Profil wurde nicht gespeichert.'),
+                backgroundColor: Colors.orange,
+                duration: Duration(seconds: 4),
+              ),
+            );
+          }
+          return; // Don't save profile if image upload failed
+        }
+        print('✅ Image uploaded successfully: $photoURL');
+      } else {
+        print('ℹ️ No image selected, keeping current photo');
       }
 
       // Update profile
+      print('📝 Updating Firestore profile...');
       await _authService.updateUserProfile(
         username: _usernameController.text.trim(),
         bio: _bioController.text.trim(),
         photoURL: photoURL,
       );
+      print('✅ Profile updated successfully');
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('✓ Profil gespeichert'),
+            content: Text('✅ Profil erfolgreich gespeichert!'),
             backgroundColor: Colors.green,
+            duration: Duration(seconds: 2),
           ),
         );
         Navigator.pop(context);
       }
-    } catch (e) {
+    } catch (e, stackTrace) {
+      print('❌ ERROR saving profile:');
+      print('   Error: $e');
+      print('   Stack trace: $stackTrace');
+      
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Fehler: $e'), backgroundColor: Colors.red),
+          SnackBar(
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('❌ Fehler beim Speichern', 
+                  style: TextStyle(fontWeight: FontWeight.bold)),
+                SizedBox(height: 4),
+                Text(e.toString()),
+              ],
+            ),
+            backgroundColor: Colors.red,
+            duration: Duration(seconds: 5),
+          ),
         );
       }
     } finally {
