@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';  // v2.23.0 - Firestore Integration
 import 'dart:convert';
 import 'dart:async';
 
@@ -56,6 +57,9 @@ class TelegramBotService extends ChangeNotifier {
 
   // Polling Timer
   Timer? _pollingTimer;
+  
+  // Firestore Instance (v2.23.0 - für historische Daten)
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   // Getters
   bool get isInitialized => _isInitialized;
@@ -182,10 +186,63 @@ class TelegramBotService extends ChangeNotifier {
     }
   }
 
+  /// Load Messages from Firestore (v2.23.0)
+  /// 
+  /// Lädt historische Nachrichten aus Firestore
+  /// Dies umgeht Permission-Probleme und lädt echte Telegram-Daten
+  Future<List<Map<String, dynamic>>> _loadFromFirestore({
+    required String channelUsername,
+    int limit = 100,
+  }) async {
+    try {
+      debugPrint('🔥 Lade aus Firestore: $channelUsername');
+      
+      // Query Firestore for telegram_messages
+      final querySnapshot = await _firestore
+          .collection('telegram_messages')
+          .where('channel', isEqualTo: channelUsername)
+          .orderBy('date', descending: true)
+          .limit(limit)
+          .get();
+      
+      final messages = querySnapshot.docs.map((doc) {
+        final data = doc.data();
+        return {
+          'message_id': doc.id,
+          'text': data['text'] ?? '',
+          'date': data['date'] is Timestamp 
+              ? (data['date'] as Timestamp).seconds 
+              : data['date'] ?? 0,
+          'from': data['from'] ?? {},
+          'chat': data['chat'] ?? {},
+          'channel': channelUsername,
+          // Medien-Felder
+          'photo': data['photo'],
+          'video': data['video'],
+          'document': data['document'],
+          'audio': data['audio'],
+          'voice': data['voice'],
+        };
+      }).toList();
+      
+      debugPrint('✅ ${messages.length} Nachrichten aus Firestore geladen');
+      
+      // Cache die Nachrichten für spätere Verwendung
+      _channelMessages[channelUsername] = messages;
+      
+      return messages;
+      
+    } catch (e) {
+      debugPrint('❌ Firestore Load Error: $e');
+      debugPrint('💡 Hinweis: Überprüfe Firestore Security Rules!');
+      return [];
+    }
+  }
+
   /// Load Channel History
   /// 
   /// Lädt gespeicherte Nachrichten aus Channel
-  /// Bot API empfängt automatisch neue Nachrichten
+  /// v2.23.0: Lädt zuerst aus Firestore, dann aus Bot API Polling
   Future<List<Map<String, dynamic>>> loadChannelHistory({
     required String channelUsername,
     int limit = 100,
@@ -198,9 +255,21 @@ class TelegramBotService extends ChangeNotifier {
     try {
       debugPrint('📜 Lade History von $channelUsername');
 
-      // Hole gespeicherte Nachrichten aus Bot API Polling
+      // 🔥 NEU v2.23.0: Lade zuerst aus Firestore
+      final firestoreMessages = await _loadFromFirestore(
+        channelUsername: channelUsername,
+        limit: limit,
+      );
+      
+      if (firestoreMessages.isNotEmpty) {
+        debugPrint('✅ ${firestoreMessages.length} Nachrichten aus Firestore');
+        notifyListeners();  // Update UI
+        return firestoreMessages;
+      }
+
+      // Fallback: Hole gespeicherte Nachrichten aus Bot API Polling
       final messages = _channelMessages[channelUsername] ?? [];
-      debugPrint('📊 Gespeicherte Nachrichten: ${messages.length}');
+      debugPrint('📊 Gespeicherte Nachrichten (Polling): ${messages.length}');
       
       // Sortiere nach Datum (neueste zuerst)
       messages.sort((a, b) {

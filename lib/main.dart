@@ -15,7 +15,9 @@ import 'screens/timeline_screen.dart';
 import 'screens/live_dashboard_screen.dart';
 import 'screens/more_screen.dart';
 import 'screens/chat_list_screen.dart';
-import 'screens/modern_channel_feed_screen.dart'; // NEU: Moderner Channel Feed
+// import 'screens/modern_channel_feed_screen.dart'; // NEU: Moderner Channel Feed
+// import 'screens/telegram_unified_screen.dart'; // v2.22.0 - Vereinheitlichter Telegram Screen
+import 'screens/telegram_library_screen.dart'; // v2.30.0 - Telegram Library mit Web Embed
 import 'widgets/modern_bottom_nav.dart'; // v3.0.0 - Moderne Bottom Navigation
 import 'package:shared_preferences/shared_preferences.dart';
 import 'services/fcm_service.dart';
@@ -27,9 +29,6 @@ import 'services/telegram_background_service.dart'; // v2.14.5 - Background Serv
 import 'services/telegram_bot_service.dart'; // v2.21.0 - Bot API Integration (Phase 6.2)
 import 'services/audio_player_service.dart'; // Phase 4 - Background Audio
 // ✅ NEU: Live-Data Services
-import 'services/earthquake_service.dart';
-import 'services/nasa_data_service.dart';
-import 'services/enhanced_schumann_service.dart';
 import 'services/telegram_channel_loader.dart'; // NEU: Automatischer Channel Content Loader
 
 // NEU: Background Message Handler (Phase 3)
@@ -57,28 +56,7 @@ void main() async {
     await FCMService().initialize();
     await PresenceService().initialize();
     
-    // ✅ NEU: Starte Live-Data Services für Echtzeit-Daten
-    try {
-      // Earthquake Service - Alle 5 Minuten
-      final earthquakeService = EarthquakeService();
-      earthquakeService.startMonitoring(interval: const Duration(minutes: 5));
-      debugPrint('🌍 Earthquake Monitoring gestartet (alle 5 Min)');
-      
-      // NASA Service - ISS Position alle 10 Sekunden
-      final nasaService = NASADataService();
-      nasaService.startISSMonitoring(interval: const Duration(seconds: 10));
-      nasaService.startSolarMonitoring(interval: const Duration(minutes: 15));
-      debugPrint('🛰️ NASA ISS Monitoring gestartet (alle 10 Sek)');
-      
-      // Schumann Service - Erster Datenabruf
-      final schumannService = EnhancedSchumannService();
-      schumannService.getEnhancedSchumannData();
-      debugPrint('📡 Schumann Service initialisiert');
-      
-      debugPrint('✅ Alle Live-Data Services gestartet');
-    } catch (e) {
-      debugPrint('⚠️ Live-Data Services Fehler: $e');
-    }
+    // Live-Data Services entfernt - nicht für Telegram relevant
     
     // v2.13.0: Telegram Service initialisieren
     try {
@@ -294,7 +272,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   final List<Widget> _screens = const [
     ModernHomeScreen(), // 🎨 Moderner Home Screen (stabil)
     MapScreen(),
-    ModernChannelFeedScreen(), // NEU: Moderner Channel Feed
+    TelegramLibraryScreen(), // v2.30.0 - Telegram Library mit Web Embed & Kategorisierung
     LiveDashboardScreen(),
     TimelineScreen(),
     ChatListScreen(),

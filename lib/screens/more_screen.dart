@@ -15,6 +15,7 @@ import 'search_screen.dart';
 import 'enhanced_dashboard_screen.dart';
 import 'edit_profile_screen.dart';
 import 'admin_panel_screen.dart';
+import 'unified_media_library_screen.dart'; // ✅ NEU: Telegram Media Library
 // import 'favorites_screen.dart';
 // import 'settings_screen.dart';
 
@@ -144,6 +145,18 @@ class _MoreScreenState extends State<MoreScreen> {
                 context,
                 title: 'Features',
                 items: [
+                  _buildMenuItem(
+                    icon: Icons.video_library,
+                    title: 'Telegram Media-Bibliothek',
+                    subtitle: 'Videos, PDFs, Podcasts, Bilder, Hörbücher',
+                    color: AppTheme.secondaryGold,
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const UnifiedMediaLibraryScreen()),
+                      );
+                    },
+                  ),
                   _buildMenuItem(
                     icon: Icons.search,
                     title: 'Erweiterte Suche',

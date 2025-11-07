@@ -395,6 +395,11 @@ class EarthquakeData {
     if (magnitude >= 4.0) return 'Leichtes Erdbeben';
     return 'Geringes Erdbeben';
   }
+  
+  // Zusätzliche Getter für earthquake_detail_screen und earthquake_detail_card
+  String get type => magnitudeClass;
+  bool get tsunami => magnitude >= 7.0; // Tsunami-Warnung bei großen Beben
+  String get location => place; // Alias für place
 }
 
 /// ISS Position Model

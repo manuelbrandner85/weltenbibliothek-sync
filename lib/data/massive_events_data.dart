@@ -5,7 +5,7 @@ import 'categories/lost_civilizations_events.dart';
 import 'categories/alien_contact_events.dart';
 import 'categories/secret_societies_events.dart';
 import 'categories/tech_mysteries_events.dart';
-import 'categories/dimensional_anomalies_events.dart';
+// import 'categories/dimensional_anomalies_events.dart'; // Entfernt - nicht mehr vorhanden
 import 'categories/occult_events.dart';
 import 'categories/forbidden_knowledge_events.dart';
 import 'categories/ufo_fleets_events.dart';
@@ -46,7 +46,7 @@ class MassiveEventsData {
     allEvents.addAll(TechMysteriesEvents.getEvents());
     
     // Dimensional Anomalies (15 events)
-    allEvents.addAll(DimensionalAnomaliesEvents.getEvents());
+    // allEvents.addAll(DimensionalAnomaliesEvents.getEvents()); // Entfernt
     
     // Occult Events (15 events)
     allEvents.addAll(OccultEventsData.getEvents());
@@ -81,7 +81,7 @@ class MassiveEventsData {
       case EventCategory.techMysteries:
         return TechMysteriesEvents.getEvents();
       case EventCategory.dimensionalAnomalies:
-        return DimensionalAnomaliesEvents.getEvents();
+        return []; // Kategorie entfernt - keine Events mehr vorhanden
       case EventCategory.occultEvents:
         return OccultEventsData.getEvents();
       case EventCategory.forbiddenKnowledge:
@@ -109,7 +109,7 @@ class MassiveEventsData {
         'alien_contact': AlienContactEvents.getEvents().length,
         'secret_societies': SecretSocietiesEvents.getEvents().length,
         'tech_mysteries': TechMysteriesEvents.getEvents().length,
-        'dimensional_anomalies': DimensionalAnomaliesEvents.getEvents().length,
+        'dimensional_anomalies': 0, // Kategorie entfernt
         'occult_events': OccultEventsData.getEvents().length,
         'forbidden_knowledge': ForbiddenKnowledgeEvents.getEvents().length,
         'ufo_fleets': UfoFleetsEvents.getEvents().length,

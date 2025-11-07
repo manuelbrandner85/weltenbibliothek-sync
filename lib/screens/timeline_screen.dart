@@ -33,11 +33,11 @@ class _TimelineScreenState extends State<TimelineScreen> {
     // Simuliere Laden von Beispiel-Events
     await Future.delayed(const Duration(milliseconds: 800));
     
-    final sampleEvents = _generateSampleEvents();
+    // Sample events entfernt - nur echte Firestore-Daten
     
     if (mounted) {
       setState(() {
-        _events.addAll(sampleEvents);
+        // Nur Firestore-Daten werden geladen
         _isLoading = false;
       });
     }

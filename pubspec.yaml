@@ -2,7 +2,7 @@ name: weltenbibliothek
 description: "Weltenbibliothek - Chroniken der verborgenen Pfade. Progressive App für alternative Geschichte, verborgenes Wissen und paranormale Phänomene."
 publish_to: 'none'
 
-version: 2.21.0+68
+version: 2.32.0+80  # Telegram-Style In-App Viewing (kein Download), Deduplizierung
 
 environment:
   sdk: ^3.9.2
@@ -31,12 +31,12 @@ dependencies:
   provider: 6.1.5+1
 
   # UI & Design
-  google_fonts: 6.2.1
-  flutter_svg: 2.0.15
+  google_fonts: 6.3.2  # Updated from 6.2.1 - New fonts + bug fixes
+  flutter_svg: 2.2.2  # Updated from 2.0.15 - SVG rendering improvements
   
   # Networking
   http: 1.5.0
-  dio: 5.7.0
+  dio: 5.9.0  # Updated from 5.7.0 - Performance improvements
   
   # Local Storage
   hive: 2.2.3
@@ -50,15 +50,18 @@ dependencies:
   latlong2: 0.9.1
   
   # Media & Audio
-  audioplayers: 6.1.0
-  url_launcher: 6.3.1
-  image_picker: 1.1.2  # Phase 2: Bild-Upload
-  flutter_slidable: 3.1.1  # Phase 5A: Swipe Actions
+  audioplayers: 6.5.1  # Updated from 6.1.0 - Audio playback improvements
+  url_launcher: 6.3.2  # Updated from 6.3.1 - Bug fixes
+  image_picker: 1.2.0  # Updated from 1.1.2 - Phase 2: Bild-Upload
+  # flutter_slidable: 3.1.1  # REMOVED - Incompatible with Flutter 3.35.4 (hashValues error)
   # record: 5.1.2  # Phase 5A: Voice Messages (DEAKTIVIERT - Build-Fehler)
   # just_audio: 0.9.40  # Phase 5A: Audio Playback (DEAKTIVIERT - Dependency)
   video_player: 2.9.2  # Phase 5B: Video-Wiedergabe
   file_picker: 8.1.4  # Phase 5B: Datei-Auswahl
   # flutter_sound: 9.16.3  # Phase 5A: Alternative (DEAKTIVIERT - Build-Fehler)
+  permission_handler: 11.3.1  # Android Permissions (Kamera, Storage, etc.)
+  path: 1.9.1  # Pfad-Operationen für Datei-Verwaltung
+  webview_flutter: 4.13.0  # v2.30.0 - Telegram Web Embed Support
   
   # ✅ Telegram Bot API Integration (Phase 6.2) - FUNKTIONIERT GARANTIERT!
   # Web + Android kompatibel via HTTP
@@ -66,7 +69,7 @@ dependencies:
   # API-ID: 25697241 | API-Hash: 19cfb3819684da4571a91874ee22603a
   
   # Utils
-  intl: 0.20.1
+  intl: 0.20.2  # Updated from 0.20.1 - Internationalization fixes
   share_plus: 10.1.2
   cached_network_image: 3.4.1
   flutter_animate: 4.5.2
