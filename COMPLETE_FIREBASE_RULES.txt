@@ -1,0 +1,524 @@
+================================================================================
+WELTENBIBLIOTHEK V2.14.4 - KOMPLETTE FIREBASE SECURITY RULES
+================================================================================
+
+PROJEKT: weltenbibliothek-5d21f
+VERSION: 2.14.4 (Build 51)
+TELEGRAM SERVICE: V4
+DATUM: 2025-11-05
+
+================================================================================
+OPTION 1: DEVELOPMENT RULES (Einfach - EMPFOHLEN für Testing)
+================================================================================
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Erlaubt ALLEN Zugriff auf ALLE Dokumente
+    // ⚠️ NUR FÜR DEVELOPMENT/TESTING!
+    match /{document=**} {
+      allow read, write: if true;
+    }
+  }
+}
+
+VORTEILE:
+✅ Keine Permission-Fehler
+✅ Sofort funktional
+✅ Einfach zu verstehen
+
+NACHTEILE:
+❌ Keine Sicherheit
+❌ Jeder kann lesen/schreiben
+❌ Nicht für Production
+
+================================================================================
+OPTION 2: PRODUCTION RULES (Differenziert - Für Live-Deployment)
+================================================================================
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // ========== HELPER FUNCTIONS ==========
+    
+    // Prüft ob User authentifiziert ist
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    // Prüft ob User der Owner ist
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+    
+    // Prüft ob User Admin ist
+    function isAdmin() {
+      return isSignedIn() && 
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+    
+    // ========== TELEGRAM COLLECTIONS ==========
+    
+    // Telegram Videos - Public Read, Authenticated Write
+    match /telegram_videos/{videoId} {
+      allow read: if true;  // Jeder kann lesen
+      allow create: if isSignedIn();
+      allow update, delete: if isSignedIn();
+    }
+    
+    // Telegram Photos - Public Read, Authenticated Write
+    match /telegram_photos/{photoId} {
+      allow read: if true;
+      allow create: if isSignedIn();
+      allow update, delete: if isSignedIn();
+    }
+    
+    // Telegram Documents - Public Read, Authenticated Write
+    match /telegram_documents/{documentId} {
+      allow read: if true;
+      allow create: if isSignedIn();
+      allow update, delete: if isSignedIn();
+    }
+    
+    // Telegram Audio - Public Read, Authenticated Write
+    match /telegram_audio/{audioId} {
+      allow read: if true;
+      allow create: if isSignedIn();
+      allow update, delete: if isSignedIn();
+    }
+    
+    // Telegram Feed/Posts - Public Read, Authenticated Write
+    match /telegram_feed/{postId} {
+      allow read: if true;
+      allow create: if isSignedIn();
+      allow update, delete: if isSignedIn();
+    }
+    
+    // Telegram Messages (V4 Features: Edit, Pin, Favoriten, etc.)
+    match /telegram_messages/{messageId} {
+      allow read: if true;  // Public read
+      allow create: if isSignedIn();
+      allow update: if isSignedIn() && (
+        // User kann eigene Favoriten/Read-Status ändern
+        request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['favorite_by', 'read_by', 'reminder_at', 'reminder_status'])
+        // Oder Admin kann alles ändern
+        || isAdmin()
+      );
+      allow delete: if isAdmin();
+    }
+    
+    // ========== LIVE CHAT ==========
+    
+    // Live Chat Messages - Authenticated Only
+    match /live_chat_messages/{messageId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update: if isSignedIn() && 
+                     (isOwner(resource.data.user_id) || isAdmin());
+      allow delete: if isAdmin();
+    }
+    
+    // Live Chat Participants - Authenticated Only
+    match /live_chat_participants/{participantId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update: if isSignedIn() && 
+                     (isOwner(resource.data.user_id) || isAdmin());
+      allow delete: if isSignedIn() && isOwner(resource.data.user_id);
+    }
+    
+    // ========== USER MANAGEMENT ==========
+    
+    // User Profiles - Own data editable
+    match /users/{userId} {
+      allow read: if true;  // Profile sind public
+      allow create: if isSignedIn() && request.auth.uid == userId;
+      allow update: if isOwner(userId) || isAdmin();
+      allow delete: if isAdmin();
+    }
+    
+    // User Settings - Private
+    match /user_settings/{userId} {
+      allow read, write: if isOwner(userId);
+    }
+    
+    // User Favorites - Private
+    match /user_favorites/{userId} {
+      allow read, write: if isOwner(userId);
+    }
+    
+    // ========== CONFIGURATION ==========
+    
+    // Telegram Config - Public Read, Admin Write
+    match /telegram_config/{configId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    
+    // App Config - Public Read, Admin Write
+    match /app_config/{configId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    
+    // ========== ANALYTICS & LOGS ==========
+    
+    // Analytics Events - Write-only
+    match /analytics_events/{eventId} {
+      allow create: if isSignedIn();
+      allow read: if isAdmin();
+    }
+    
+    // Error Logs - Write-only
+    match /error_logs/{logId} {
+      allow create: if true;  // Auch unauthentifizierte können Fehler loggen
+      allow read: if isAdmin();
+    }
+    
+    // ========== SCHUMANN RESONANCE DATA ==========
+    
+    // Schumann Resonance - Public Read, Admin Write
+    match /schumann_resonance/{dataId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    
+    // ========== NOTIFICATIONS ==========
+    
+    // User Notifications - Own notifications only
+    match /notifications/{notificationId} {
+      allow read: if isSignedIn() && 
+                   resource.data.user_id == request.auth.uid;
+      allow create: if isSignedIn();
+      allow update: if isSignedIn() && 
+                     resource.data.user_id == request.auth.uid;
+      allow delete: if isSignedIn() && 
+                     resource.data.user_id == request.auth.uid;
+    }
+    
+    // ========== DEFAULT FALLBACK ==========
+    
+    // Alle anderen Collections - Authenticated only
+    match /{document=**} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+  }
+}
+
+VORTEILE:
+✅ Differenzierte Berechtigungen
+✅ Sicher für Production
+✅ Role-basierte Zugriffskontrolle
+✅ Audit-Trail möglich
+
+NACHTEILE:
+❌ Komplexer zu verstehen
+❌ Benötigt User-Authentication
+❌ Admin-Role muss in users/{uid}.role gesetzt sein
+
+================================================================================
+OPTION 3: HYBRID RULES (Balance zwischen Sicherheit & Usability)
+================================================================================
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper Functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    // ========== PUBLIC CONTENT ==========
+    
+    // Telegram Content - Public Read, Authenticated Write
+    match /telegram_videos/{document=**} {
+      allow read: if true;
+      allow write: if isSignedIn();
+    }
+    
+    match /telegram_photos/{document=**} {
+      allow read: if true;
+      allow write: if isSignedIn();
+    }
+    
+    match /telegram_documents/{document=**} {
+      allow read: if true;
+      allow write: if isSignedIn();
+    }
+    
+    match /telegram_audio/{document=**} {
+      allow read: if true;
+      allow write: if isSignedIn();
+    }
+    
+    match /telegram_feed/{document=**} {
+      allow read: if true;
+      allow write: if isSignedIn();
+    }
+    
+    match /telegram_messages/{document=**} {
+      allow read: if true;
+      allow write: if isSignedIn();
+    }
+    
+    // ========== AUTHENTICATED CONTENT ==========
+    
+    // Live Chat - Authenticated Only
+    match /live_chat_messages/{document=**} {
+      allow read, write: if isSignedIn();
+    }
+    
+    match /live_chat_participants/{document=**} {
+      allow read, write: if isSignedIn();
+    }
+    
+    // User Data - Own data only
+    match /users/{userId} {
+      allow read: if true;
+      allow write: if isSignedIn() && request.auth.uid == userId;
+    }
+    
+    match /user_settings/{userId} {
+      allow read, write: if isSignedIn() && request.auth.uid == userId;
+    }
+    
+    // ========== CONFIGURATION ==========
+    
+    // Config - Public Read, Authenticated Write
+    match /telegram_config/{document=**} {
+      allow read: if true;
+      allow write: if isSignedIn();
+    }
+    
+    match /app_config/{document=**} {
+      allow read: if true;
+      allow write: if isSignedIn();
+    }
+    
+    // Schumann Data - Public Read, Authenticated Write
+    match /schumann_resonance/{document=**} {
+      allow read: if true;
+      allow write: if isSignedIn();
+    }
+    
+    // ========== DEFAULT ==========
+    
+    match /{document=**} {
+      allow read: if isSignedIn();
+      allow write: if isSignedIn();
+    }
+  }
+}
+
+VORTEILE:
+✅ Balance zwischen Sicherheit und Usability
+✅ Public Content zugänglich
+✅ Private Daten geschützt
+✅ Einfacher als Option 2
+
+NACHTEILE:
+❌ Keine feingranulare Kontrolle
+❌ Keine Admin-Rolle
+❌ User können sich gegenseitig lesen
+
+================================================================================
+EMPFEHLUNG FÜR DEIN PROJEKT
+================================================================================
+
+JETZT (Development/Testing):
+→ Verwende OPTION 1 (Development Rules)
+→ Schnell, einfach, keine Probleme
+
+SPÄTER (Beta/Testing mit echten Usern):
+→ Wechsel zu OPTION 3 (Hybrid Rules)
+→ Gute Balance, noch flexibel
+
+PRODUCTION (Live-Deployment):
+→ Wechsel zu OPTION 2 (Production Rules)
+→ Maximum Sicherheit, differenzierte Kontrolle
+
+================================================================================
+WIE RULES SETZEN?
+================================================================================
+
+1. Öffne Firebase Console:
+   https://console.firebase.google.com/project/weltenbibliothek-5d21f/firestore/rules
+
+2. Klicke auf "Rules" Tab
+
+3. Kopiere eine der 3 Optionen oben
+
+4. Ersetze den GESAMTEN Inhalt im Editor
+
+5. Klicke auf "Publish" (oben rechts)
+
+6. Warte 30 Sekunden
+
+7. Starte deine App neu
+
+================================================================================
+COLLECTIONS IN DEINER APP
+================================================================================
+
+Die folgenden Collections existieren und werden verwendet:
+
+TELEGRAM CONTENT:
+- telegram_videos          (Videos nach Thema kategorisiert)
+- telegram_photos          (Fotos/Bilder)
+- telegram_documents       (PDFs, Dokumente)
+- telegram_audio           (Audio-Dateien, Sprachnachrichten)
+- telegram_feed            (Text-Posts, Feed-Einträge)
+- telegram_messages        (V4: Alle Nachrichten mit Extended Features)
+
+LIVE CHAT:
+- live_chat_messages       (Chat-Nachrichten)
+- live_chat_participants   (Teilnehmer-Liste)
+
+USER DATA:
+- users                    (User-Profile)
+- user_settings            (User-Einstellungen)
+- user_favorites           (User-Favoriten)
+
+CONFIGURATION:
+- telegram_config          (Telegram Bot Config)
+- app_config               (App-Konfiguration)
+
+SCHUMANN RESONANCE:
+- schumann_resonance       (Schumann-Resonanz-Daten)
+
+ANALYTICS:
+- analytics_events         (Analytics-Events)
+- error_logs              (Fehler-Logs)
+
+NOTIFICATIONS:
+- notifications           (Push-Benachrichtigungen)
+
+================================================================================
+FIRESTORE INDEXES
+================================================================================
+
+Für die folgenden Queries werden Composite Indexes benötigt:
+
+INDEX 1:
+Collection: telegram_videos
+Fields: 
+  - topic (Ascending)
+  - timestamp (Descending)
+
+INDEX 2:
+Collection: telegram_messages
+Fields:
+  - is_pinned (Ascending)
+  - pinned_at (Descending)
+
+INDEX 3:
+Collection: telegram_messages
+Fields:
+  - favorite_by (Array)
+  - timestamp (Descending)
+
+INDEX 4:
+Collection: telegram_messages
+Fields:
+  - thread_id (Ascending)
+  - timestamp (Ascending)
+
+INDEX 5:
+Collection: live_chat_messages
+Fields:
+  - room_id (Ascending)
+  - timestamp (Ascending)
+
+ERSTELLEN:
+Option A: Klicke auf die Auto-generierten Links in Fehlermeldungen
+Option B: Manuell unter: https://console.firebase.google.com/project/weltenbibliothek-5d21f/firestore/indexes
+
+================================================================================
+FIREBASE STORAGE RULES (falls verwendet)
+================================================================================
+
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    
+    // User Uploads - Own folder only
+    match /users/{userId}/{allPaths=**} {
+      allow read: if true;
+      allow write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // Telegram Media - Public Read, Authenticated Write
+    match /telegram/{allPaths=**} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+    
+    // Public Assets
+    match /public/{allPaths=**} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+    
+    // Default - Authenticated only
+    match /{allPaths=**} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null;
+    }
+  }
+}
+
+HINWEIS: Deine App verwendet aktuell ImgBB statt Firebase Storage
+
+================================================================================
+TESTING DER RULES
+================================================================================
+
+Nach dem Setzen der Rules, teste folgende Funktionen:
+
+✅ Telegram-Archiv → Videos laden (Public Read)
+✅ Telegram-Archiv → Filter "Verlorene Zivilisationen" (Index)
+✅ Live Chat → Teilnehmer anzeigen (Authenticated Read)
+✅ Live Chat → Nachricht senden (Authenticated Write)
+✅ User Profile → Eigenes Profil bearbeiten (Owner Write)
+✅ Favoriten → Nachricht favorisieren (Update eigene Daten)
+✅ Pin Message → Admin-Funktion (falls implementiert)
+
+================================================================================
+TROUBLESHOOTING
+================================================================================
+
+FEHLER: "Permission Denied"
+→ Prüfe ob Rules publiziert sind
+→ Warte 30 Sekunden nach Publish
+→ Starte App neu
+→ Prüfe Console-Logs für Details
+
+FEHLER: "Missing Index"
+→ Klicke auf den Auto-generierten Link im Fehler
+→ Oder erstelle manuell in Firebase Console
+→ Warte 2-5 Minuten bis Index gebaut ist
+
+FEHLER: "Auth not found"
+→ Prüfe ob Firebase Auth aktiviert ist
+→ Prüfe ob User eingeloggt ist
+→ Verwende Development Rules (Option 1) für Tests
+
+================================================================================
+KONTAKT & SUPPORT
+================================================================================
+
+Firebase Projekt: weltenbibliothek-5d21f
+App Version: 2.14.4 (Build 51)
+Telegram Service: V4
+Package: com.example.app
+
+Firebase Console:
+https://console.firebase.google.com/project/weltenbibliothek-5d21f
+
+================================================================================
+ENDE DER RULES-DOKUMENTATION
+================================================================================

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../config/app_theme.dart';
 import '../services/auth_service.dart';
+import '../services/telegram_bot_service.dart';
 import 'home_container.dart';
 
 /// Register Screen mit Email/Password
@@ -49,11 +50,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
     setState(() => _isLoading = true);
 
     try {
+      final displayName = _displayNameController.text.trim();
+      
       await _authService.registerWithEmailPassword(
         email: _emailController.text.trim(),
         password: _passwordController.text,
-        displayName: _displayNameController.text.trim(),
+        displayName: displayName,
       );
+
+      // ✅ Setze Benutzername für Telegram-Integration
+      final telegramService = TelegramBotService();
+      await telegramService.setCurrentUserName(displayName);
 
       if (mounted) {
         // Navigate to home

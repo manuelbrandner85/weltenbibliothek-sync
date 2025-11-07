@@ -1,0 +1,75 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    match /telegram_videos/{document=**} {
+      allow read: if true;
+      allow write: if isSignedIn();
+    }
+    
+    match /telegram_photos/{document=**} {
+      allow read: if true;
+      allow write: if isSignedIn();
+    }
+    
+    match /telegram_documents/{document=**} {
+      allow read: if true;
+      allow write: if isSignedIn();
+    }
+    
+    match /telegram_audio/{document=**} {
+      allow read: if true;
+      allow write: if isSignedIn();
+    }
+    
+    match /telegram_feed/{document=**} {
+      allow read: if true;
+      allow write: if isSignedIn();
+    }
+    
+    match /telegram_messages/{document=**} {
+      allow read: if true;
+      allow write: if isSignedIn();
+    }
+    
+    match /live_chat_messages/{document=**} {
+      allow read, write: if isSignedIn();
+    }
+    
+    match /live_chat_participants/{document=**} {
+      allow read, write: if isSignedIn();
+    }
+    
+    match /users/{userId} {
+      allow read: if true;
+      allow write: if isSignedIn() && request.auth.uid == userId;
+    }
+    
+    match /user_settings/{userId} {
+      allow read, write: if isSignedIn() && request.auth.uid == userId;
+    }
+    
+    match /telegram_config/{document=**} {
+      allow read: if true;
+      allow write: if isSignedIn();
+    }
+    
+    match /app_config/{document=**} {
+      allow read: if true;
+      allow write: if isSignedIn();
+    }
+    
+    match /schumann_resonance/{document=**} {
+      allow read: if true;
+      allow write: if isSignedIn();
+    }
+    
+    match /{document=**} {
+      allow read, write: if isSignedIn();
+    }
+  }
+}

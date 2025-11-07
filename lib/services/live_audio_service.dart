@@ -210,6 +210,7 @@ class LiveAudioService {
         .where('isActive', isEqualTo: true)
         .snapshots()
         .map((snapshot) {
+      debugPrint('🎤 Aktive Audio-Räume geladen: ${snapshot.docs.length}');
       return snapshot.docs.map((doc) {
         final data = doc.data();
         data['id'] = doc.id;

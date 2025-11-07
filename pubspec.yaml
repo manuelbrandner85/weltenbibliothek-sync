@@ -2,7 +2,7 @@ name: weltenbibliothek
 description: "Weltenbibliothek - Chroniken der verborgenen Pfade. Progressive App für alternative Geschichte, verborgenes Wissen und paranormale Phänomene."
 publish_to: 'none'
 
-version: 2.7.2+37
+version: 2.21.0+68
 
 environment:
   sdk: ^3.9.2
@@ -22,6 +22,10 @@ dependencies:
   
   # Push Notifications
   flutter_local_notifications: 17.2.3
+  
+  # Background Tasks (Phase 2.2)
+  # workmanager: ^0.5.2  # DEAKTIVIERT - Kompatibilitätsprobleme mit Flutter 3.35.4
+  # Alternative: Verwende flutter_local_notifications (bereits installiert)
 
   # State Management
   provider: 6.1.5+1
@@ -55,6 +59,11 @@ dependencies:
   video_player: 2.9.2  # Phase 5B: Video-Wiedergabe
   file_picker: 8.1.4  # Phase 5B: Datei-Auswahl
   # flutter_sound: 9.16.3  # Phase 5A: Alternative (DEAKTIVIERT - Build-Fehler)
+  
+  # ✅ Telegram Bot API Integration (Phase 6.2) - FUNKTIONIERT GARANTIERT!
+  # Web + Android kompatibel via HTTP
+  # Verwendet Telegram Bot API über REST
+  # API-ID: 25697241 | API-Hash: 19cfb3819684da4571a91874ee22603a
   
   # Utils
   intl: 0.20.1

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../config/app_theme.dart';
 import '../models/notification_model.dart';
 import '../services/notification_service.dart';
-import '../services/live_data_monitor_service.dart';
+// ❌ ENTFERNT: import '../services/live_data_monitor_service.dart';
 
 class NotificationSettingsScreen extends StatefulWidget {
   const NotificationSettingsScreen({super.key});
@@ -13,7 +13,7 @@ class NotificationSettingsScreen extends StatefulWidget {
 
 class _NotificationSettingsScreenState extends State<NotificationSettingsScreen> {
   final NotificationService _notificationService = NotificationService();
-  final LiveDataMonitorService _monitorService = LiveDataMonitorService();
+  // ❌ ENTFERNT: final LiveDataMonitorService _monitorService = LiveDataMonitorService();
   
   AppNotificationSettings? _settings;
   bool _isLoading = true;
@@ -263,25 +263,25 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
     );
   }
 
+  // ❌ ENTFERNT: LiveDataMonitorService - Monitoring läuft automatisch in main.dart
   Widget _buildMonitoringStatus() {
-    final isMonitoring = _monitorService.isMonitoring;
+    // Monitoring läuft immer automatisch über main.dart Services
+    final isMonitoring = true;
     
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: isMonitoring 
-            ? AppTheme.secondaryGold.withValues(alpha: 0.1)
-            : AppTheme.errorRed.withValues(alpha: 0.1),
+        color: AppTheme.secondaryGold.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: isMonitoring ? AppTheme.secondaryGold : AppTheme.errorRed,
+          color: AppTheme.secondaryGold,
         ),
       ),
       child: Row(
         children: [
           Icon(
-            isMonitoring ? Icons.sensors : Icons.sensors_off,
-            color: isMonitoring ? AppTheme.secondaryGold : AppTheme.errorRed,
+            Icons.sensors,
+            color: AppTheme.secondaryGold,
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -289,16 +289,14 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  isMonitoring ? 'Monitoring Aktiv' : 'Monitoring Inaktiv',
+                  'Monitoring Aktiv',
                   style: TextStyle(
                     color: AppTheme.textWhite,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
                 Text(
-                  isMonitoring 
-                      ? 'Live-Daten werden überwacht (alle 5 Minuten)'
-                      : 'Aktiviere Monitoring in den Einstellungen',
+                  'Live-Daten werden automatisch überwacht\n(Erdbeben alle 5 Min, ISS alle 10 Sek)',
                   style: TextStyle(
                     color: AppTheme.textWhite.withValues(alpha: 0.7),
                     fontSize: 12,
@@ -307,19 +305,20 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
               ],
             ),
           ),
-          ElevatedButton(
-            onPressed: () {
-              if (isMonitoring) {
-                _monitorService.stopMonitoring();
-              } else {
-                _monitorService.startMonitoring();
-              }
-              setState(() {});
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: isMonitoring ? AppTheme.errorRed : AppTheme.secondaryGold,
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: AppTheme.secondaryGold,
+              borderRadius: BorderRadius.circular(12),
             ),
-            child: Text(isMonitoring ? 'Stop' : 'Start'),
+            child: Text(
+              'AKTIV',
+              style: TextStyle(
+                color: AppTheme.backgroundDark,
+                fontWeight: FontWeight.bold,
+                fontSize: 12,
+              ),
+            ),
           ),
         ],
       ),

@@ -178,7 +178,7 @@ class EnhancedSchumannService {
       final cutoffTime = DateTime.now().subtract(Duration(hours: hours));
       
       final snapshot = await _firestore
-          .collection('schumann_history')
+          .collection('schumann_data')
           .where('timestamp', isGreaterThan: Timestamp.fromDate(cutoffTime))
           .get();
 
@@ -212,11 +212,13 @@ class EnhancedSchumannService {
   /// Speichere Datenpunkt in Firestore
   Future<void> _saveDataPoint(SchumannDataPoint dataPoint) async {
     try {
-      await _firestore.collection('schumann_history').add({
+      await _firestore.collection('schumann_data').add({
         'frequency': dataPoint.frequency,
         'amplitude': dataPoint.amplitude,
         'quality': dataPoint.quality,
         'timestamp': Timestamp.fromDate(dataPoint.timestamp),
+        'source': 'tomsk_api', // Markiere Datenquelle
+        'synced_at': FieldValue.serverTimestamp(),
       });
 
       if (kDebugMode) {
@@ -239,7 +241,7 @@ class EnhancedSchumannService {
       final cutoffTime = DateTime.now().subtract(const Duration(days: 90));
       
       final oldDocs = await _firestore
-          .collection('schumann_history')
+          .collection('schumann_data')
           .where('timestamp', isLessThan: Timestamp.fromDate(cutoffTime))
           .limit(100) // Batch delete
           .get();

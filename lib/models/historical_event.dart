@@ -20,6 +20,8 @@ enum PerspectiveType {
   conspiracy,
   spiritual,
   scientific,
+  alien,
+  occult,
 }
 
 class HistoricalEvent {

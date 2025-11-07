@@ -416,28 +416,42 @@ class _MapScreenState extends State<MapScreen> {
                 ),
               ),
               
-              // Hauptmarker
+              // Hauptmarker mit Premium-Gradient
               Container(
                 width: isSelected ? 50 : 40,
                 height: isSelected ? 50 : 40,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   gradient: RadialGradient(
-                    colors: [
-                      color.withValues(alpha: 1.0),
-                      color.withValues(alpha: 0.8),
-                    ],
+                    colors: isSelected 
+                      ? [
+                          color,
+                          color.withValues(alpha: 0.9),
+                          color.withValues(alpha: 0.7),
+                        ]
+                      : [
+                          color.withValues(alpha: 1.0),
+                          color.withValues(alpha: 0.8),
+                        ],
+                    stops: isSelected ? [0.0, 0.6, 1.0] : [0.0, 1.0],
                   ),
                   border: Border.all(
-                    color: AppTheme.textWhite,
+                    color: isSelected ? AppTheme.secondaryGold : AppTheme.textWhite,
                     width: isSelected ? 3 : 2,
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: color.withValues(alpha: 0.6),
-                      blurRadius: isSelected ? 20 : 10,
-                      spreadRadius: isSelected ? 5 : 2,
+                      color: color.withValues(alpha: isSelected ? 0.8 : 0.6),
+                      blurRadius: isSelected ? 25 : 10,
+                      spreadRadius: isSelected ? 6 : 2,
                     ),
+                    // Zusätzlicher innerer Schatten-Effekt
+                    if (isSelected)
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.3),
+                        blurRadius: 8,
+                        spreadRadius: -2,
+                      ),
                   ],
                 ),
                 child: Center(
@@ -888,20 +902,33 @@ class _MapScreenState extends State<MapScreen> {
                 .scale(begin: const Offset(0.8, 0.8), end: const Offset(1.3, 1.3), duration: 1500.ms)
                 .fade(begin: 1, end: 0, duration: 1500.ms),
             
-            // Hauptmarker
+            // Hauptmarker mit Premium-Gradient
             Container(
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: color.withValues(alpha: isSelected ? 0.9 : 0.7),
+                gradient: RadialGradient(
+                  colors: [
+                    color,
+                    color.withValues(alpha: 0.8),
+                    color.withValues(alpha: isSelected ? 0.9 : 0.6),
+                  ],
+                  stops: const [0.0, 0.5, 1.0],
+                ),
                 border: Border.all(
                   color: isSelected ? AppTheme.secondaryGold : Colors.white,
                   width: isSelected ? 3 : 2,
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: color.withValues(alpha: 0.5),
-                    blurRadius: isSelected ? 15 : 10,
-                    spreadRadius: isSelected ? 5 : 3,
+                    color: color.withValues(alpha: 0.7),
+                    blurRadius: isSelected ? 20 : 12,
+                    spreadRadius: isSelected ? 6 : 3,
+                  ),
+                  // Innerer Glanz-Effekt
+                  BoxShadow(
+                    color: Colors.white.withValues(alpha: 0.3),
+                    blurRadius: 5,
+                    spreadRadius: -2,
                   ),
                 ],
               ),
@@ -1565,6 +1592,10 @@ class _MapScreenState extends State<MapScreen> {
         return '🧘 Spirituell';
       case PerspectiveType.scientific:
         return '🔬 Wissenschaftlich';
+      case PerspectiveType.alien:
+        return '👽 Alien';
+      case PerspectiveType.occult:
+        return '🔮 Okkult';
     }
   }
   

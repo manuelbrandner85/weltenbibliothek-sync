@@ -1,0 +1,101 @@
+═══════════════════════════════════════════════════════════════════════
+🔧 POSTS INDEXES ERSTELLEN - TELEGRAM MESSAGES
+═══════════════════════════════════════════════════════════════════════
+
+⚠️  PROBLEM: Posts Tab zeigt "Missing Index" Fehler
+✅ LÖSUNG: 2 Indexes für telegram_messages erstellen (je 2 Minuten)
+
+═══════════════════════════════════════════════════════════════════════
+📋 INDEX 1: POSTS NACH TOPIC + TIMESTAMP
+═══════════════════════════════════════════════════════════════════════
+
+Für: Posts nach Thema sortiert (z.B. "Verlorene Zivilisationen")
+Collection: telegram_messages
+Fields: topic + timestamp
+
+SCHRITT 1: Öffne diese URL im Browser
+────────────────────────────────────────────────────────────────────────
+https://console.firebase.google.com/v1/r/project/weltenbibliothek-5d21f/firestore/indexes?create_composite=CmBwcm9qZWN0cy93ZWx0ZW5iaWJsaW90aGVrLTVkMjFmL2RhdGFiYXNlcy8oZGVmYXVsdCkvY29sbGVjdGlvbkdyb3Vwcy90ZWxlZ3JhbV9tZXNzYWdlcy9pbmRleGVzL18QARoJCgV0b3BpYxABGg0KCXRpbWVzdGFtcBACGgwKCF9fbmFtZV9fEAI
+
+SCHRITT 2: Klicke "Create Index"
+
+SCHRITT 3: Warte 1-3 Minuten
+
+SCHRITT 4: ✅ STATUS "Enabled" abwarten
+
+
+═══════════════════════════════════════════════════════════════════════
+📋 INDEX 2: POSTS NACH TYPE + TIMESTAMP
+═══════════════════════════════════════════════════════════════════════
+
+Für: Posts nach Typ sortiert (Text, Foto, Video, etc.)
+Collection: telegram_messages
+Fields: type + timestamp
+
+SCHRITT 1: Öffne diese URL im Browser
+────────────────────────────────────────────────────────────────────────
+https://console.firebase.google.com/v1/r/project/weltenbibliothek-5d21f/firestore/indexes?create_composite=CmBwcm9qZWN0cy93ZWx0ZW5iaWJsaW90aGVrLTVkMjFmL2RhdGFiYXNlcy8oZGVmYXVsdCkvY29sbGVjdGlvbkdyb3Vwcy90ZWxlZ3JhbV9tZXNzYWdlcy9pbmRleGVzL18QARoICgR0eXBlEAEaDQoJdGltZXN0YW1wEAIaDAoIX19uYW1lX18QAg
+
+SCHRITT 2: Klicke "Create Index"
+
+SCHRITT 3: Warte 1-3 Minuten
+
+SCHRITT 4: ✅ STATUS "Enabled" abwarten
+
+
+═══════════════════════════════════════════════════════════════════════
+🎯 ZUSAMMENFASSUNG
+═══════════════════════════════════════════════════════════════════════
+
+INDEXES ERSTELLEN:
+1. ✅ telegram_videos (topic + timestamp) → BEREITS VORHANDEN
+2. ⏳ telegram_messages (topic + timestamp) → JETZT ERSTELLEN
+3. ⏳ telegram_messages (type + timestamp) → JETZT ERSTELLEN
+
+GESAMT-ZEIT: ~4 Minuten (2 Min pro Index)
+
+NACH ERSTELLUNG:
+- App komplett schließen (Force Stop)
+- App neu starten
+- Zu "Posts" Tab navigieren
+- Posts sollten jetzt geladen werden! ✅
+
+
+═══════════════════════════════════════════════════════════════════════
+💡 TIPP: INDEXES PARALLEL ERSTELLEN
+═══════════════════════════════════════════════════════════════════════
+
+Du kannst beide Indexes gleichzeitig erstellen:
+
+1. Öffne URL 1 in neuem Browser-Tab → "Create Index"
+2. Öffne URL 2 in weiterem Browser-Tab → "Create Index"
+3. Beide werden parallel erstellt (jeweils 1-3 Min)
+4. Warte bis BEIDE Status "Enabled" zeigen
+5. App neu starten
+
+
+═══════════════════════════════════════════════════════════════════════
+❓ WARUM 3 INDEXES?
+═══════════════════════════════════════════════════════════════════════
+
+Deine App hat 3 verschiedene Ansichten:
+
+1. VIDEOS Tab
+   → telegram_videos (topic + timestamp)
+   ✅ Bereits erstellt!
+
+2. POSTS Tab (nach Thema)
+   → telegram_messages (topic + timestamp)
+   ⏳ Muss erstellt werden
+
+3. POSTS Tab (nach Typ)
+   → telegram_messages (type + timestamp)
+   ⏳ Muss erstellt werden
+
+Jede Ansicht braucht einen eigenen Index für schnelle Sortierung!
+
+
+═══════════════════════════════════════════════════════════════════════
+Erstellt: 5. November 2025
+Für: telegram_messages Collection (Posts)
+═══════════════════════════════════════════════════════════════════════

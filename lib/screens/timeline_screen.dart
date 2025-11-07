@@ -558,6 +558,10 @@ class _TimelineScreenState extends State<TimelineScreen> {
         return '🧘';
       case PerspectiveType.scientific:
         return '🔬';
+      case PerspectiveType.alien:
+        return '👽';
+      case PerspectiveType.occult:
+        return '🔮';
     }
   }
 
@@ -850,6 +854,10 @@ class _TimelineScreenState extends State<TimelineScreen> {
         return 'Spirituell';
       case PerspectiveType.scientific:
         return 'Wissenschaftlich';
+      case PerspectiveType.alien:
+        return 'Alien';
+      case PerspectiveType.occult:
+        return 'Okkult';
     }
   }
 }

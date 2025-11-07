@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import '../models/chat_models.dart';
 import 'imgbb_service.dart';
+import 'telegram_service.dart'; // v2.14.3 - Telegram Integration
 
 /// Chat Service für Firebase Realtime Chat
 class ChatService {
@@ -145,6 +146,22 @@ class ChatService {
         'lastMessageId': docRef.id,
       });
 
+      // v2.14.3: Telegram-Synchronisation (App → Telegram)
+      if (chatRoomId == 'telegram_chat') {
+        try {
+          final success = await TelegramService().sendMessageToTelegram(
+            '<b>${message.senderName}</b>: ${message.text}'
+          );
+          if (success && kDebugMode) {
+            debugPrint('📤 Nachricht an Telegram gesendet: ${message.text}');
+          }
+        } catch (e) {
+          if (kDebugMode) {
+            debugPrint('⚠️ Telegram-Sync Fehler: $e');
+          }
+        }
+      }
+
       if (kDebugMode) {
         debugPrint('✅ Nachricht gesendet: $text');
       }
@@ -173,6 +190,17 @@ class ChatService {
     );
   }
 
+  /// Standard-Verhaltensregeln für alle Chat-Gruppen
+  static const String defaultChatRules = '''
+📜 Verhaltensregeln:
+
+1. 👍 Respektvoller Umgang - Behandle andere so, wie du selbst behandelt werden möchtest
+2. 🚫 Keine Beleidigungen - Respektiere unterschiedliche Meinungen
+3. 💬 Konstruktive Diskussionen - Bleibe sachlich und höflich
+4. 🔒 Datenschutz - Teile keine privaten Daten von anderen
+5. ✨ Themenrelevanz - Bleibe beim Thema des Chat-Raums
+''';
+
   /// Chat-Raum erstellen
   Future<String> createChatRoom({
     required String name,
@@ -185,10 +213,13 @@ class ChatService {
     }
 
     try {
+      // Erweiterte Beschreibung mit Verhaltensregeln
+      final fullDescription = '$description\n\n$defaultChatRules';
+
       final chatRoom = ChatRoom(
         id: '',
         name: name,
-        description: description,
+        description: fullDescription,  // Jetzt mit Verhaltensregeln
         participants: participants ?? [currentUserId!],
         createdAt: DateTime.now(),
         lastActivity: DateTime.now(),
@@ -412,6 +443,10 @@ class ChatService {
   /// Initialisiere Standard-Chat-Räume
   Future<void> initializeDefaultChatRooms() async {
     try {
+      if (kDebugMode) {
+        debugPrint('🔄 Initialisiere Standard-Chat-Räume...');
+      }
+      
       // Prüfe ob Community-Chats existieren
       final snapshot = await _firestore
           .collection('chat_rooms')
@@ -419,14 +454,28 @@ class ChatService {
           .limit(1)
           .get();
 
+      if (kDebugMode) {
+        debugPrint('📊 Gefundene Chat-Räume: ${snapshot.docs.length}');
+      }
+
       if (snapshot.docs.isEmpty) {
+        if (kDebugMode) {
+          debugPrint('🔄 Keine Chat-Räume gefunden, erstelle Standard-Chats...');
+        }
         // Erstelle Standard-Community-Chats
         await _createDefaultCommunityChats();
+      } else {
+        if (kDebugMode) {
+          debugPrint('✅ Chat-Räume bereits vorhanden');
+        }
       }
-    } catch (e) {
+    } catch (e, stackTrace) {
       if (kDebugMode) {
         debugPrint('❌ Fehler bei Initialisierung: $e');
+        debugPrint('Stack Trace: $stackTrace');
       }
+      // Rethrow, damit der Fehler sichtbar wird
+      rethrow;
     }
   }
 
@@ -438,38 +487,35 @@ class ChatService {
         'avatarUrl': '',
       },
       {
-        'name': '👽 UFO-Sichtungen',
-        'description': 'Teile deine UFO-Sichtungen und Erfahrungen',
-        'avatarUrl': '',
-      },
-      {
-        'name': '🌊 Erdveränderungen',
-        'description': 'Erdbeben, Vulkane und geologische Phänomene',
-        'avatarUrl': '',
-      },
-      {
-        'name': '⚡ Schumann-Resonanz',
-        'description': 'Diskussionen über Erdfrequenzen und ihre Bedeutung',
-        'avatarUrl': '',
-      },
-      {
-        'name': '🔮 Esoterisches Wissen',
-        'description': 'Spirituelle Themen und altes Wissen',
+        'name': '✈️ Telegram',
+        'description': 'Synchronisiert mit @Weltenbibliothekchat und @ArchivWeltenBibliothek',
         'avatarUrl': '',
       },
     ];
 
+    int created = 0;
     for (final chatData in defaultChats) {
-      await createChatRoom(
-        name: chatData['name']!,
-        description: chatData['description']!,
-        type: ChatRoomType.community,
-        participants: [],
-      );
+      try {
+        // Erstelle Chat-Raum direkt mit Verhaltensregeln
+        await createChatRoom(
+          name: chatData['name']!,
+          description: chatData['description']!,
+          type: ChatRoomType.community,
+          participants: [],
+        );
+        created++;
+        if (kDebugMode) {
+          debugPrint('✅ Chat erstellt: ${chatData['name']}');
+        }
+      } catch (e) {
+        if (kDebugMode) {
+          debugPrint('❌ Fehler beim Erstellen von ${chatData['name']}: $e');
+        }
+      }
     }
 
     if (kDebugMode) {
-      debugPrint('✅ Standard-Community-Chats erstellt');
+      debugPrint('✅ $created/${{defaultChats.length}} Standard-Community-Chats erstellt');
     }
   }
 
@@ -618,10 +664,13 @@ class ChatService {
       // Creator ist automatisch Teilnehmer
       final participants = [currentUserId!, ...memberIds];
 
+      // Erweiterte Beschreibung mit Verhaltensregeln
+      final fullDescription = '$description\n\n$defaultChatRules';
+
       final chatRoom = ChatRoom(
         id: '',
         name: name,
-        description: description,
+        description: fullDescription,  // Jetzt mit Verhaltensregeln
         participants: participants.toSet().toList(), // Duplikate entfernen
         createdAt: DateTime.now(),
         lastActivity: DateTime.now(),

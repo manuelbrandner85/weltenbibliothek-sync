@@ -1,0 +1,118 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+    
+    function isAdmin() {
+      return isSignedIn() && 
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+    
+    match /telegram_videos/{videoId} {
+      allow read: if true;
+      allow create: if isSignedIn();
+      allow update, delete: if isSignedIn();
+    }
+    
+    match /telegram_photos/{photoId} {
+      allow read: if true;
+      allow create: if isSignedIn();
+      allow update, delete: if isSignedIn();
+    }
+    
+    match /telegram_documents/{documentId} {
+      allow read: if true;
+      allow create: if isSignedIn();
+      allow update, delete: if isSignedIn();
+    }
+    
+    match /telegram_audio/{audioId} {
+      allow read: if true;
+      allow create: if isSignedIn();
+      allow update, delete: if isSignedIn();
+    }
+    
+    match /telegram_feed/{postId} {
+      allow read: if true;
+      allow create: if isSignedIn();
+      allow update, delete: if isSignedIn();
+    }
+    
+    match /telegram_messages/{messageId} {
+      allow read: if true;
+      allow create: if isSignedIn();
+      allow update: if isSignedIn() && (
+        request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['favorite_by', 'read_by', 'reminder_at', 'reminder_status'])
+        || isAdmin()
+      );
+      allow delete: if isAdmin();
+    }
+    
+    match /live_chat_messages/{messageId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update: if isSignedIn() && 
+                     (isOwner(resource.data.user_id) || isAdmin());
+      allow delete: if isAdmin();
+    }
+    
+    match /live_chat_participants/{participantId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update: if isSignedIn() && 
+                     (isOwner(resource.data.user_id) || isAdmin());
+      allow delete: if isSignedIn() && isOwner(resource.data.user_id);
+    }
+    
+    match /users/{userId} {
+      allow read: if true;
+      allow create: if isSignedIn() && request.auth.uid == userId;
+      allow update: if isOwner(userId) || isAdmin();
+      allow delete: if isAdmin();
+    }
+    
+    match /user_settings/{userId} {
+      allow read, write: if isOwner(userId);
+    }
+    
+    match /user_favorites/{userId} {
+      allow read, write: if isOwner(userId);
+    }
+    
+    match /telegram_config/{configId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    
+    match /app_config/{configId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    
+    match /schumann_resonance/{dataId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    
+    match /notifications/{notificationId} {
+      allow read: if isSignedIn() && 
+                   resource.data.user_id == request.auth.uid;
+      allow create: if isSignedIn();
+      allow update, delete: if isSignedIn() && 
+                             resource.data.user_id == request.auth.uid;
+    }
+    
+    match /{document=**} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+  }
+}

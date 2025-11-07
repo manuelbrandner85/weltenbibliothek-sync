@@ -4,13 +4,14 @@ import 'package:fl_chart/fl_chart.dart';
 import '../config/app_theme.dart';
 import '../services/live_data_service.dart';
 import '../services/enhanced_schumann_service.dart';
-import '../services/enhanced_population_service.dart';
-import '../services/correlation_service.dart';
+// ❌ ENTFERNT: Simulations-Services
+// import '../services/enhanced_population_service.dart';
+// import '../services/correlation_service.dart';
+// import '../models/enhanced_population_data.dart';
+// import '../widgets/population_heatmap_widget.dart';
+// import '../widgets/correlation_dashboard_widget.dart';
 import '../models/enhanced_schumann_data.dart';
-import '../models/enhanced_population_data.dart';
 import '../widgets/schumann_spectrogram_widget.dart';
-import '../widgets/population_heatmap_widget.dart';
-import '../widgets/correlation_dashboard_widget.dart';
 import 'package:intl/intl.dart';
 
 /// Live-Daten Dashboard mit Echtzeit-Visualisierungen
@@ -30,8 +31,9 @@ class LiveDashboardScreen extends StatefulWidget {
 class _LiveDashboardScreenState extends State<LiveDashboardScreen> {
   final LiveDataService _liveService = LiveDataService();
   final EnhancedSchumannService _enhancedSchumannService = EnhancedSchumannService();
-  final EnhancedPopulationService _enhancedPopulationService = EnhancedPopulationService();
-  final CorrelationService _correlationService = CorrelationService();
+  // ❌ ENTFERNT: Simulations-Services
+  // final EnhancedPopulationService _enhancedPopulationService = EnhancedPopulationService();
+  // final CorrelationService _correlationService = CorrelationService();
   
   // Live-Daten (getrennt für jeden Bereich)
   SchumannResonance? _schumannData;
@@ -41,8 +43,9 @@ class _LiveDashboardScreenState extends State<LiveDashboardScreen> {
   
   // Enhanced Daten
   EnhancedSchumannData? _enhancedSchumann;
-  EnhancedPopulationData? _enhancedPopulation;
-  CorrelationAnalysis? _correlationAnalysis;
+  // ❌ ENTFERNT: Simulations-Daten
+  // EnhancedPopulationData? _enhancedPopulation;
+  // CorrelationAnalysis? _correlationAnalysis;
   
   // Schumann-Resonanz History (letzte 60 Sekunden)
   final List<SchumannDataPoint> _schumannHistory = [];
@@ -89,8 +92,7 @@ class _LiveDashboardScreenState extends State<LiveDashboardScreen> {
     
     // Lade Enhanced Daten
     final enhancedSchumann = await _enhancedSchumannService.getEnhancedSchumannData();
-    final enhancedPopulation = await _enhancedPopulationService.getEnhancedPopulationData();
-    final correlationAnalysis = await _correlationService.getCorrelationAnalysis();
+    // ❌ ENTFERNT: Population & Correlation Simulations
     
     if (mounted) {
       setState(() {
@@ -99,8 +101,7 @@ class _LiveDashboardScreenState extends State<LiveDashboardScreen> {
         _volcanoes = volcanoes;
         _populationStats = populationStats;
         _enhancedSchumann = enhancedSchumann;
-        _enhancedPopulation = enhancedPopulation;
-        _correlationAnalysis = correlationAnalysis;
+        // ❌ ENTFERNT: _enhancedPopulation, _correlationAnalysis
         _lastSchumannUpdate = DateTime.now();
         _lastPopulationUpdate = DateTime.now();
         _lastVolcanoUpdate = DateTime.now();
@@ -175,14 +176,12 @@ class _LiveDashboardScreenState extends State<LiveDashboardScreen> {
     // 5. ENHANCED DATEN: Alle 30 Sekunden aktualisieren
     _enhancedTimer = Timer.periodic(const Duration(seconds: 30), (_) async {
       final enhancedSchumann = await _enhancedSchumannService.getEnhancedSchumannData();
-      final enhancedPopulation = await _enhancedPopulationService.getEnhancedPopulationData();
-      final correlationAnalysis = await _correlationService.getCorrelationAnalysis();
+      // ❌ ENTFERNT: Population & Correlation Simulations
       
       if (mounted) {
         setState(() {
           _enhancedSchumann = enhancedSchumann;
-          _enhancedPopulation = enhancedPopulation;
-          _correlationAnalysis = correlationAnalysis;
+          // ❌ ENTFERNT: _enhancedPopulation, _correlationAnalysis
         });
       }
     });
@@ -271,25 +270,7 @@ class _LiveDashboardScreenState extends State<LiveDashboardScreen> {
               child: _buildEnhancedSchumannCard(),
             ),
             
-            // Trennlinie
-            SliverToBoxAdapter(
-              child: _buildDivider('Bevölkerungs-Heatmap'),
-            ),
-            
-            // 6. POPULATION HEATMAP (Enhanced)
-            SliverToBoxAdapter(
-              child: _buildEnhancedPopulationCard(),
-            ),
-            
-            // Trennlinie
-            SliverToBoxAdapter(
-              child: _buildDivider('Korrelations-Analyse'),
-            ),
-            
-            // 7. CORRELATION DASHBOARD (Enhanced)
-            SliverToBoxAdapter(
-              child: _buildCorrelationCard(),
-            ),
+            // ❌ ENTFERNT: Bevölkerungs-Heatmap & Korrelations-Analyse Sektionen
             
             // Bottom Spacer
             const SliverToBoxAdapter(
@@ -1391,66 +1372,7 @@ class _LiveDashboardScreenState extends State<LiveDashboardScreen> {
     );
   }
 
-  Widget _buildEnhancedPopulationCard() {
-    if (_enhancedPopulation == null) {
-      return Container(
-        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Colors.blue.withValues(alpha: 0.15),
-              AppTheme.surfaceDark,
-            ],
-          ),
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: const Center(
-          child: CircularProgressIndicator(),
-        ),
-      );
-    }
-
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: PopulationHeatmapWidget(
-        data: _enhancedPopulation!,
-        height: 400,
-      ),
-    );
-  }
-
-  Widget _buildCorrelationCard() {
-    if (_correlationAnalysis == null) {
-      return Container(
-        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Colors.purple.withValues(alpha: 0.15),
-              AppTheme.surfaceDark,
-            ],
-          ),
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: const Center(
-          child: CircularProgressIndicator(),
-        ),
-      );
-    }
-
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: CorrelationDashboardWidget(
-        analysis: _correlationAnalysis!,
-      ),
-    );
-  }
+  // ❌ KOMPLETT ENTFERNT: Population & Correlation Widgets (nicht mehr verwendet)
 }
 
 /// Schumann-Resonanz Datenpunkt für Grafik

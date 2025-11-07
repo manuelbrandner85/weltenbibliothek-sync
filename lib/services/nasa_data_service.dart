@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter/foundation.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class ISSData {
   final double latitude;
@@ -66,6 +67,8 @@ class NASADataService {
   final _solarController = StreamController<SolarData>.broadcast();
   Stream<SolarData> get solarStream => _solarController.stream;
   
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  
   Timer? _issTimer;
   Timer? _solarTimer;
   
@@ -81,6 +84,10 @@ class NASADataService {
       if (response.statusCode == 200) {
         final data = json.decode(response.body) as Map<String, dynamic>;
         _cachedISSData = ISSData.fromJson(data);
+        
+        // ✅ NEU: Speichere ISS-Position in Firestore
+        await _saveISSToFirestore(_cachedISSData!);
+        
         _issController.add(_cachedISSData!);
         
         if (kDebugMode) {
@@ -118,6 +125,10 @@ class NASADataService {
         stormLevel: (random % 7) >= 5 ? 'G1' : 'None',
         timestamp: now,
       );
+
+      // ✅ NEU: Speichere Solar-Daten in Firestore
+      // ⚠️ WARNUNG: Diese Daten sind simuliert, nicht von echter API
+      await _saveSolarToFirestore(_cachedSolarData!);
 
       _solarController.add(_cachedSolarData!);
       
@@ -161,6 +172,79 @@ class NASADataService {
   void stopMonitoring() {
     _issTimer?.cancel();
     _solarTimer?.cancel();
+  }
+
+  /// ✅ NEU: Speichere ISS-Position in Firestore
+  Future<void> _saveISSToFirestore(ISSData issData) async {
+    try {
+      await _firestore.collection('nasa_data').add({
+        'type': 'iss_position',
+        'latitude': issData.latitude,
+        'longitude': issData.longitude,
+        'altitude': issData.altitude,
+        'velocity': issData.velocity,
+        'timestamp': Timestamp.fromDate(issData.timestamp),
+        'synced_at': FieldValue.serverTimestamp(),
+        'source': 'open_notify_api',
+      });
+
+      if (kDebugMode) {
+        debugPrint('✅ ISS-Daten in Firestore gespeichert');
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('❌ Fehler beim Speichern ISS-Daten: $e');
+      }
+    }
+  }
+
+  /// ✅ NEU: Speichere Solar-Daten in Firestore
+  /// ⚠️ WARNUNG: Diese Daten sind simuliert!
+  Future<void> _saveSolarToFirestore(SolarData solarData) async {
+    try {
+      await _firestore.collection('nasa_data').add({
+        'type': 'solar_activity',
+        'solar_flux': solarData.solarFlux,
+        'k_index': solarData.kIndex,
+        'sunspot_number': solarData.sunspotNumber,
+        'storm_level': solarData.stormLevel,
+        'activity_level': solarData.activityLevel,
+        'is_storm_warning': solarData.isStormWarning,
+        'timestamp': Timestamp.fromDate(solarData.timestamp),
+        'synced_at': FieldValue.serverTimestamp(),
+        'source': 'simulated', // ⚠️ Markiert als simuliert
+      });
+
+      if (kDebugMode) {
+        debugPrint('⚠️  Solar-Daten (simuliert) in Firestore gespeichert');
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('❌ Fehler beim Speichern Solar-Daten: $e');
+      }
+    }
+  }
+
+  /// Lade NASA-Daten aus Firestore (Echtzeit-Stream)
+  Stream<List<ISSData>> getISSDataFromFirestore() {
+    return _firestore
+        .collection('nasa_data')
+        .where('type', isEqualTo: 'iss_position')
+        .orderBy('timestamp', descending: true)
+        .limit(100)
+        .snapshots()
+        .map((snapshot) {
+      return snapshot.docs.map((doc) {
+        final data = doc.data();
+        return ISSData(
+          latitude: (data['latitude'] as num?)?.toDouble() ?? 0.0,
+          longitude: (data['longitude'] as num?)?.toDouble() ?? 0.0,
+          altitude: (data['altitude'] as num?)?.toDouble() ?? 408.0,
+          velocity: (data['velocity'] as num?)?.toDouble() ?? 27600.0,
+          timestamp: (data['timestamp'] as Timestamp?)?.toDate() ?? DateTime.now(),
+        );
+      }).toList();
+    });
   }
 
   void dispose() {

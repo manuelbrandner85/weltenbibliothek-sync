@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../config/app_theme.dart';
 import '../services/auth_service.dart';
+import '../services/telegram_bot_service.dart';
 import 'register_screen.dart';
 import 'home_container.dart';
 
@@ -34,10 +36,32 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => _isLoading = true);
 
     try {
-      await _authService.loginWithEmailPassword(
+      final userCredential = await _authService.loginWithEmailPassword(
         email: _emailController.text.trim(),
         password: _passwordController.text,
       );
+
+      // ✅ Lade Benutzername aus Firestore und setze für Telegram
+      if (userCredential.user != null) {
+        try {
+          final userDoc = await FirebaseFirestore.instance
+              .collection('users')
+              .doc(userCredential.user!.uid)
+              .get();
+          
+          if (userDoc.exists) {
+            final displayName = userDoc.data()?['displayName'] ?? 
+                               userCredential.user!.displayName ?? 
+                               'Unbekannt';
+            
+            // Setze Benutzername für Telegram-Integration
+            final telegramService = TelegramBotService();
+            await telegramService.setCurrentUserName(displayName);
+          }
+        } catch (e) {
+          debugPrint('⚠️ Fehler beim Laden des displayName: $e');
+        }
+      }
 
       if (mounted) {
         // Navigate to home

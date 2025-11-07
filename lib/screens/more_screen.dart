@@ -8,6 +8,7 @@ import '../providers/theme_provider.dart';
 import '../services/auth_service.dart';
 import '../services/admin_service.dart';
 import '../widgets/glass_card.dart';
+import 'telegram_main_screen.dart'; // Phase 6.3 - Vereinfachtes Telegram Menü
 import 'package:flutter_animate/flutter_animate.dart';
 import 'stats_screen.dart';
 import 'search_screen.dart';
@@ -284,6 +285,13 @@ class _MoreScreenState extends State<MoreScreen> {
                 context,
                 title: 'Community',
                 items: [
+                  _buildMenuItem(
+                    icon: Icons.telegram,
+                    title: 'Telegram Channels',
+                    subtitle: '6 Kanäle + Live-Chat via Bot API',
+                    color: AppTheme.secondaryGold,
+                    onTap: () => _connectTelegram(context),
+                  ),
                   _buildMenuItem(
                     icon: Icons.people,
                     title: 'Community Forum',
@@ -917,6 +925,14 @@ class _MoreScreenState extends State<MoreScreen> {
       '🌌 Chroniken der verborgenen Pfade\n\n'
       'Lade die App herunter und entdecke 161 mystische Events!',
       subject: 'Weltenbibliothek - Meine Favoriten',
+    );
+  }
+
+  // Phase 6.3: Telegram Main Menu
+  Future<void> _connectTelegram(BuildContext context) async {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const TelegramMainScreen()),
     );
   }
 

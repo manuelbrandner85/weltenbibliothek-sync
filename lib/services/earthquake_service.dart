@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter/foundation.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class Earthquake {
   final String id;
@@ -56,6 +57,8 @@ class EarthquakeService {
   final _earthquakesController = StreamController<List<Earthquake>>.broadcast();
   Stream<List<Earthquake>> get earthquakesStream => _earthquakesController.stream;
   
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  
   Timer? _refreshTimer;
   List<Earthquake> _cachedEarthquakes = [];
 
@@ -75,6 +78,9 @@ class EarthquakeService {
 
         // Sortiere nach Magnitude (höchste zuerst)
         _cachedEarthquakes.sort((a, b) => b.magnitude.compareTo(a.magnitude));
+
+        // ✅ NEU: Speichere in Firestore für persistente Echtzeit-Daten
+        await _saveToFirestore(_cachedEarthquakes);
 
         _earthquakesController.add(_cachedEarthquakes);
         
@@ -109,6 +115,67 @@ class EarthquakeService {
 
   List<Earthquake> getSignificantEarthquakes() {
     return _cachedEarthquakes.where((eq) => eq.isSignificant).toList();
+  }
+
+  /// ✅ NEU: Speichere Erdbeben-Daten in Firestore
+  Future<void> _saveToFirestore(List<Earthquake> earthquakes) async {
+    try {
+      final batch = _firestore.batch();
+      final now = FieldValue.serverTimestamp();
+
+      // Speichere nur signifikante Erdbeben (Magnitude >= 4.0) für bessere Performance
+      final significantQuakes = earthquakes.where((eq) => eq.magnitude >= 4.0).toList();
+
+      for (final quake in significantQuakes) {
+        final docRef = _firestore.collection('earthquake_data').doc(quake.id);
+        batch.set(docRef, {
+          'id': quake.id,
+          'magnitude': quake.magnitude,
+          'place': quake.place,
+          'time': Timestamp.fromDate(quake.time),
+          'latitude': quake.latitude,
+          'longitude': quake.longitude,
+          'depth': quake.depth,
+          'magnitude_category': quake.magnitudeCategory,
+          'is_significant': quake.isSignificant,
+          'synced_at': now,
+          'source': 'usgs_api',
+        }, SetOptions(merge: true));
+      }
+
+      await batch.commit();
+
+      if (kDebugMode) {
+        debugPrint('✅ ${significantQuakes.length} Erdbeben in Firestore gespeichert');
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('❌ Fehler beim Speichern in Firestore: $e');
+      }
+    }
+  }
+
+  /// Lade Erdbeben-Daten aus Firestore (Echtzeit-Stream)
+  Stream<List<Earthquake>> getEarthquakesFromFirestore() {
+    return _firestore
+        .collection('earthquake_data')
+        .orderBy('magnitude', descending: true)
+        .limit(100)
+        .snapshots()
+        .map((snapshot) {
+      return snapshot.docs.map((doc) {
+        final data = doc.data();
+        return Earthquake(
+          id: data['id'] as String? ?? '',
+          magnitude: (data['magnitude'] as num?)?.toDouble() ?? 0.0,
+          place: data['place'] as String? ?? 'Unbekannt',
+          time: (data['time'] as Timestamp?)?.toDate() ?? DateTime.now(),
+          latitude: (data['latitude'] as num?)?.toDouble() ?? 0.0,
+          longitude: (data['longitude'] as num?)?.toDouble() ?? 0.0,
+          depth: (data['depth'] as num?)?.toDouble() ?? 0.0,
+        );
+      }).toList();
+    });
   }
 
   void dispose() {

@@ -790,6 +790,10 @@ class _LibraryScreenState extends State<LibraryScreen> {
         return '🧘 Spirituell';
       case PerspectiveType.scientific:
         return '🔬 Wissenschaftlich';
+      case PerspectiveType.alien:
+        return '👽 Alien';
+      case PerspectiveType.occult:
+        return '🔮 Okkult';
     }
   }
 }

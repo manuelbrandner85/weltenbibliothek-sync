@@ -4,6 +4,7 @@ import '../services/earthquake_service.dart';
 import '../services/schumann_resonance_service.dart';
 import '../services/nasa_data_service.dart';
 import '../widgets/glass_card.dart';
+import '../widgets/interactive_data_card.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -298,49 +299,30 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildLiveDataCard(String emoji, String title, String value, Color accentColor) {
-    return GlassCard(
-      padding: const EdgeInsets.all(16),
-      borderRadius: BorderRadius.circular(16),
-      opacity: 0.12,
-      blur: 15,
-      border: Border.all(
-        color: accentColor.withValues(alpha: 0.3),
-        width: 1.5,
-      ),
-      boxShadow: [
-        BoxShadow(
-          color: accentColor.withValues(alpha: 0.2),
-          blurRadius: 20,
-          spreadRadius: 2,
-        ),
-      ],
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(
-            emoji,
-            style: const TextStyle(fontSize: 36),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            title,
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.bodySmall,
-          ),
-          const SizedBox(height: 4),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: accentColor,
-            ),
-          ),
-        ],
-      ),
-    ).animate()
-      .fadeIn(delay: 600.ms)
-      .slideY(begin: 0.2, end: 0, delay: 600.ms);
+    return InteractiveDataCard(
+      emoji: emoji,
+      title: title,
+      value: value,
+      accentColor: accentColor,
+      showPulse: true,
+      actionIcon: Icons.arrow_forward,
+      onTap: () {
+        // Navigation zu Detail-Screen basierend auf Typ
+        if (title.contains('Schumann')) {
+          // Navigation zu Schumann-Details
+          debugPrint('🌊 Navigation zu Schumann-Resonanz Details');
+        } else if (title.contains('Erdbeben')) {
+          // Navigation zu Erdbeben-Details
+          debugPrint('🌍 Navigation zu Erdbeben Details');
+        } else if (title.contains('ISS')) {
+          // Navigation zu ISS-Details
+          debugPrint('🛰️ Navigation zu ISS Details');
+        } else if (title.contains('K-Index')) {
+          // Navigation zu Solar-Details
+          debugPrint('☀️ Navigation zu Solar Activity Details');
+        }
+      },
+    );
   }
 
   Widget _buildQuickAccessButtons() {

@@ -1041,16 +1041,45 @@ class AdminService {
     onProgress?.call('✅ $deletedRooms Audio-Räume gelöscht');
   }
 
-  /// Lösche Chat-Raum vollständig aus Firebase (Super-Admin)
+  /// Lösche Chat-Raum vollständig aus Firebase (Moderator + Super-Admin)
+  /// 
+  /// WICHTIG:
+  /// - Standard-Räume: Moderatoren UND Super-Admin können löschen
+  /// - "Allgemeiner Chat": NUR Super-Admin kann löschen
   Future<void> deleteChatRoomCompletely({
     required String chatRoomId,
     required String adminUserId,
   }) async {
     try {
-      // Prüfe Super-Admin-Rechte
-      final isAdmin = await isSuperAdmin(adminUserId);
-      if (!isAdmin) {
-        throw Exception('Nur Super-Admins können Chat-Räume komplett löschen');
+      // Hole Chat-Raum-Daten um Name zu prüfen
+      final chatRoomDoc = await _firestore
+          .collection('chat_rooms')
+          .doc(chatRoomId)
+          .get();
+
+      if (!chatRoomDoc.exists) {
+        throw Exception('Chat-Raum nicht gefunden');
+      }
+
+      final chatRoomData = chatRoomDoc.data()!;
+      final chatRoomName = chatRoomData['name'] as String? ?? '';
+
+      // Prüfe ob es "Allgemeiner Chat" ist (mit oder ohne Emoji)
+      final isGeneralChat = chatRoomName.contains('Allgemeiner Chat') ||
+          chatRoomName == '🌍 Allgemeiner Chat';
+
+      if (isGeneralChat) {
+        // "Allgemeiner Chat" kann nur von Super-Admin gelöscht werden
+        final isAdmin = await isSuperAdmin(adminUserId);
+        if (!isAdmin) {
+          throw Exception('"Allgemeiner Chat" kann nur von Super-Admin gelöscht werden');
+        }
+      } else {
+        // Standard-Räume können von Moderatoren UND Super-Admin gelöscht werden
+        final hasModerationRights = await hasModeratorRights(adminUserId);
+        if (!hasModerationRights) {
+          throw Exception('Nur Moderatoren und Super-Admin können Chat-Räume löschen');
+        }
       }
 
       if (kDebugMode) {

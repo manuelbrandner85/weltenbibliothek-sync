@@ -2,11 +2,12 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import '../config/app_theme.dart';
 import '../services/enhanced_schumann_service.dart';
-import '../services/enhanced_population_service.dart';
-import '../services/correlation_service.dart';
+// ❌ ENTFERNT: Simulations-Services
+// import '../services/enhanced_population_service.dart';
+// import '../services/correlation_service.dart';
+// import '../widgets/population_heatmap_widget.dart';
+// import '../widgets/correlation_dashboard_widget.dart';
 import '../widgets/schumann_spectrogram_widget.dart';
-import '../widgets/population_heatmap_widget.dart';
-import '../widgets/correlation_dashboard_widget.dart';
 
 /// Enhanced Live Dashboard mit Option C Features
 /// 
@@ -24,8 +25,9 @@ class EnhancedDashboardScreen extends StatefulWidget {
 class _EnhancedDashboardScreenState extends State<EnhancedDashboardScreen> 
     with SingleTickerProviderStateMixin {
   final EnhancedSchumannService _schumannService = EnhancedSchumannService();
-  final EnhancedPopulationService _populationService = EnhancedPopulationService();
-  final CorrelationService _correlationService = CorrelationService();
+  // ❌ ENTFERNT: Simulations-Services
+  // final EnhancedPopulationService _populationService = EnhancedPopulationService();
+  // final CorrelationService _correlationService = CorrelationService();
   
   late TabController _tabController;
   
@@ -35,7 +37,7 @@ class _EnhancedDashboardScreenState extends State<EnhancedDashboardScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(length: 1, vsync: this); // ❌ Reduziert von 3 auf 1 (nur Schumann)
     _loadInitialData();
   }
 
@@ -85,14 +87,9 @@ class _EnhancedDashboardScreenState extends State<EnhancedDashboardScreen>
               icon: Icon(Icons.graphic_eq),
               text: 'Schumann',
             ),
-            Tab(
-              icon: Icon(Icons.public),
-              text: 'Bevölkerung',
-            ),
-            Tab(
-              icon: Icon(Icons.insights),
-              text: 'Korrelationen',
-            ),
+            // ❌ ENTFERNT: Population & Correlation Tabs
+            // Tab(icon: Icon(Icons.public), text: 'Bevölkerung'),
+            // Tab(icon: Icon(Icons.insights), text: 'Korrelationen'),
           ],
         ),
       ),
@@ -104,8 +101,9 @@ class _EnhancedDashboardScreenState extends State<EnhancedDashboardScreen>
                   controller: _tabController,
                   children: [
                     _buildSchumannTab(),
-                    _buildPopulationTab(),
-                    _buildCorrelationTab(),
+                    // ❌ ENTFERNT: Population & Correlation Tabs
+                    // _buildPopulationTab(),
+                    // _buildCorrelationTab(),
                   ],
                 ),
     );
@@ -248,177 +246,7 @@ class _EnhancedDashboardScreenState extends State<EnhancedDashboardScreen>
     );
   }
 
-  Widget _buildPopulationTab() {
-    return StreamBuilder(
-      stream: _populationService.getPopulationStream(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                CircularProgressIndicator(color: AppTheme.secondaryGold),
-                const SizedBox(height: 16),
-                Text(
-                  'Lade Bevölkerungs-Daten...',
-                  style: AppTheme.bodyLarge,
-                ),
-              ],
-            ),
-          );
-        }
-
-        if (snapshot.hasError) {
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(Icons.error, size: 64, color: Colors.red),
-                const SizedBox(height: 16),
-                Text(
-                  'Fehler: ${snapshot.error}',
-                  style: AppTheme.bodyLarge,
-                  textAlign: TextAlign.center,
-                ),
-              ],
-            ),
-          );
-        }
-
-        if (!snapshot.hasData) {
-          return Center(
-            child: Text(
-              'Keine Daten verfügbar',
-              style: AppTheme.bodyLarge,
-            ),
-          );
-        }
-
-        final data = snapshot.data!;
-        final currentPopulation = data.getCurrentPopulation();
-
-        return SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            children: [
-              // Live Population Counter
-              _buildLivePopulationCounter(currentPopulation, data),
-              
-              const SizedBox(height: 16),
-              
-              // Heatmap Widget
-              PopulationHeatmapWidget(data: data),
-              
-              const SizedBox(height: 16),
-              
-              // Continental Breakdown
-              _buildContinentalBreakdown(data),
-              
-              const SizedBox(height: 16),
-              
-              // Info Card
-              _buildInfoCard(
-                'Über die Weltbevölkerung',
-                'Die Weltbevölkerung wächst kontinuierlich. Jede Sekunde werden etwa '
-                '${data.growthPerSecond.toStringAsFixed(2)} Menschen mehr geboren als sterben.',
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildCorrelationTab() {
-    return FutureBuilder(
-      future: _correlationService.getCorrelationAnalysis(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                CircularProgressIndicator(color: AppTheme.secondaryGold),
-                const SizedBox(height: 16),
-                Text(
-                  'Berechne Korrelationen...',
-                  style: AppTheme.bodyLarge,
-                ),
-              ],
-            ),
-          );
-        }
-
-        if (snapshot.hasError) {
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(Icons.error, size: 64, color: Colors.red),
-                const SizedBox(height: 16),
-                Text(
-                  'Fehler: ${snapshot.error}',
-                  style: AppTheme.bodyLarge,
-                  textAlign: TextAlign.center,
-                ),
-              ],
-            ),
-          );
-        }
-
-        if (!snapshot.hasData) {
-          return Center(
-            child: Text(
-              'Keine Daten verfügbar',
-              style: AppTheme.bodyLarge,
-            ),
-          );
-        }
-
-        final analysis = snapshot.data!;
-
-        return SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            children: [
-              CorrelationDashboardWidget(analysis: analysis),
-              
-              const SizedBox(height: 16),
-              
-              // Refresh Button
-              ElevatedButton.icon(
-                onPressed: () {
-                  setState(() {
-                    // Trigger rebuild to recalculate
-                  });
-                },
-                icon: const Icon(Icons.refresh),
-                label: const Text('Korrelationen neu berechnen'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.primaryPurple,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 24,
-                    vertical: 12,
-                  ),
-                ),
-              ),
-              
-              const SizedBox(height: 16),
-              
-              // Info Card
-              _buildInfoCard(
-                'Über Korrelationen',
-                'Diese Analyse untersucht statistische Zusammenhänge zwischen verschiedenen '
-                'Phänomenen wie Schumann-Resonanz, Erdbeben, UFO-Sichtungen und solarer Aktivität. '
-                'Ein Korrelationskoeffizient nahe 1 oder -1 deutet auf einen starken Zusammenhang hin.',
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
+  // ❌ KOMPLETT ENTFERNT: Population & Correlation Tab Widgets (nicht mehr verwendet)
 
   Widget _buildHistoricalDataCard(String title, int dataPoints, IconData icon, Color color) {
     return Card(
@@ -442,131 +270,10 @@ class _EnhancedDashboardScreenState extends State<EnhancedDashboardScreen>
     );
   }
 
-  Widget _buildLivePopulationCounter(int population, data) {
-    return Card(
-      color: AppTheme.cardDark,
-      elevation: 4,
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          children: [
-            Text(
-              'Weltbevölkerung LIVE',
-              style: AppTheme.headlineMedium.copyWith(
-                color: AppTheme.secondaryGold,
-              ),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              _formatPopulation(population),
-              style: AppTheme.headlineLarge.copyWith(
-                fontSize: 36,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 16),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _buildPopulationStat(
-                  'Geburten heute',
-                  '${data.birthsToday}',
-                  Icons.child_care,
-                  Colors.green,
-                ),
-                _buildPopulationStat(
-                  'Todesfälle heute',
-                  '${data.deathsToday}',
-                  Icons.favorite,
-                  Colors.red,
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildPopulationStat(String label, String value, IconData icon, Color color) {
-    return Column(
-      children: [
-        Icon(icon, color: color, size: 28),
-        const SizedBox(height: 4),
-        Text(
-          value,
-          style: AppTheme.bodyLarge.copyWith(
-            color: color,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        Text(
-          label,
-          style: AppTheme.bodySmall.copyWith(
-            color: AppTheme.textGrey,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildContinentalBreakdown(data) {
-    return Card(
-      color: AppTheme.cardDark,
-      elevation: 4,
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Kontinentale Verteilung',
-              style: AppTheme.headlineMedium,
-            ),
-            const SizedBox(height: 16),
-            ...data.byContinent.entries.map((entry) {
-              final percentage = (entry.value / data.totalPopulation) * 100;
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          entry.key,
-                          style: AppTheme.bodyMedium,
-                        ),
-                        Text(
-                          '${percentage.toStringAsFixed(1)}%',
-                          style: AppTheme.bodyMedium.copyWith(
-                            color: AppTheme.secondaryGold,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(4),
-                      child: LinearProgressIndicator(
-                        value: percentage / 100,
-                        minHeight: 8,
-                        backgroundColor: Colors.grey.shade800,
-                        valueColor: AlwaysStoppedAnimation<Color>(
-                          AppTheme.primaryPurple,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            }).toList(),
-          ],
-        ),
-      ),
-    );
-  }
+  // ❌ ENTFERNT: Helper-Methoden für Population-Simulation
+  // _buildLivePopulationCounter() - nicht mehr benötigt
+  // _buildPopulationStat() - nicht mehr benötigt
+  // _buildContinentalBreakdown() - nicht mehr benötigt
 
   Widget _buildInfoCard(String title, String description) {
     return Card(
@@ -600,14 +307,5 @@ class _EnhancedDashboardScreenState extends State<EnhancedDashboardScreen>
     );
   }
 
-  String _formatPopulation(int population) {
-    if (population >= 1000000000) {
-      return '${(population / 1000000000).toStringAsFixed(3)} Mrd';
-    } else {
-      return population.toString().replaceAllMapped(
-        RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-        (Match m) => '${m[1]}.',
-      );
-    }
-  }
+  // ❌ ENTFERNT: _formatPopulation() - nicht mehr benötigt
 }
