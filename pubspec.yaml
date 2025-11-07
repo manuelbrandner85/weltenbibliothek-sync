@@ -2,7 +2,7 @@ name: weltenbibliothek
 description: "Weltenbibliothek - Chroniken der verborgenen Pfade. Progressive App für alternative Geschichte, verborgenes Wissen und paranormale Phänomene."
 publish_to: 'none'
 
-version: 2.32.0+80  # Telegram-Style In-App Viewing (kein Download), Deduplizierung
+version: 3.0.0+82  # Unified Media Library mit Telegram Web-Links, Firestore Sync funktioniert
 
 environment:
   sdk: ^3.9.2

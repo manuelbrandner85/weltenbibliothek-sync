@@ -81,7 +81,7 @@ class _UnifiedMediaLibraryScreenState extends State<UnifiedMediaLibraryScreen> {
               children: [
                 Text(
                   'Medien-Bibliothek',
-                  style: AppTheme.headingLarge.copyWith(fontSize: 24),
+                  style: AppTheme.headlineLarge.copyWith(fontSize: 24),
                 ),
                 Text(
                   'Telegram-Inhalte direkt abspielen',
