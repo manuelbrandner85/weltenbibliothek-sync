@@ -9,11 +9,55 @@
 </p>
 
 <p align="center">
+  <img src="https://img.shields.io/badge/Version-3.1.0+90-brightgreen?logo=flutter" alt="Version 3.1.0 Build 90"/>
   <img src="https://img.shields.io/badge/Flutter-3.35.4-blue?logo=flutter" alt="Flutter 3.35.4"/>
-  <img src="https://img.shields.io/badge/Platform-Android-green?logo=android" alt="Android"/>
+  <img src="https://img.shields.io/badge/Platform-Android%20%7C%20Web-green?logo=android" alt="Android & Web"/>
   <img src="https://img.shields.io/badge/Firebase-Enabled-orange?logo=firebase" alt="Firebase"/>
   <img src="https://img.shields.io/badge/License-MIT-yellow" alt="MIT License"/>
 </p>
+
+---
+
+## 🚀 **Build 90 - Neue Features!**
+
+### ✨ **Alle 4 Features vollständig implementiert:**
+
+#### 📎 **File-Upload System**
+- FilePicker Integration (jpg, jpeg, png, pdf, mp4, mp3, doc, docx)
+- 10MB Größenlimit mit Echtzeit-Validierung
+- Base64-Encoding für Firebase Storage
+- Media-Type Detection & Upload-Progress Dialog
+- Nur im Chat-Kanal verfügbar
+
+#### 👤 **User Authentication**
+- **Anonymous Auto-Login** beim App-Start (Gast-Modus)
+- **Email/Password Registrierung** & Login
+- **User Profile Management** in Firestore
+- **Dynamische User IDs** in Telegram-Chats
+- Profile-Streaming mit Real-time Updates
+
+#### 🔔 **Push Notifications**
+- **Firebase Cloud Messaging (FCM)** vollständig aktiv
+- Foreground & Background Message Handling
+- **Local Notifications** mit Tap-Navigation
+- **Topic Subscriptions** für Telegram-Channels
+- Automatische Permission-Requests (iOS & Android)
+
+#### 📥 **Offline-Mode**
+- **Hive NoSQL Database** Integration
+- Automatisches Message-Caching im Hintergrund
+- **Favorites & Read Receipts** lokal gespeichert
+- Firestore Offline Persistence (unbegrenzte Cache-Größe)
+- Funktioniert ohne Internetverbindung
+
+---
+
+## 🔧 **Kritische Fixes (Build 90)**
+
+- ✅ **Media Library**: Lädt aus existierenden Collections (`audiobooks`, `pdf_documents`, `images`, `videos`)
+- ✅ **Chat**: Memory-Sorting statt Firestore `orderBy()` (vermeidet Composite Index-Probleme)
+- ✅ **Feldnamen-Kompatibilität** für verschiedene Collection-Strukturen
+- ✅ **Type-Detection** für Media-Dateien basierend auf Extensions
 
 ---
 
@@ -124,6 +168,23 @@ flutter build apk --release
 ```
 
 Für detaillierte Setup-Anleitung siehe [SETUP.md](SETUP.md).
+
+### 📥 **Direkte APK-Downloads (Build 90)**
+
+**🌐 Web-App (Live Preview)**:  
+🔗 [Weltenbibliothek Web-App öffnen](https://5060-i0sts42562ps3y0etjezb-cc2fbc16.sandbox.novita.ai)
+
+**📱 Android APKs**:
+- ✅ **ARM64** (37.7 MB) - Empfohlen für moderne Geräte  
+  📥 [Download ARM64-APK](https://www.genspark.ai/api/code_sandbox/download_file_stream?project_id=781a9c41-1ab2-4aab-b51f-4751d39f7875&file_path=%2Fhome%2Fuser%2Fflutter_app%2Fbuild%2Fapp%2Foutputs%2Fflutter-apk%2Fapp-arm64-v8a-release.apk&file_name=Weltenbibliothek-v3.1.0-arm64.apk)
+
+- **ARMv7** (34.4 MB) - Für ältere Geräte  
+  📥 [Download ARMv7-APK](https://www.genspark.ai/api/code_sandbox/download_file_stream?project_id=781a9c41-1ab2-4aab-b51f-4751d39f7875&file_path=%2Fhome%2Fuser%2Fflutter_app%2Fbuild%2Fapp%2Foutputs%2Fflutter-apk%2Fapp-armeabi-v7a-release.apk&file_name=Weltenbibliothek-v3.1.0-armv7.apk)
+
+- **x86_64** (39.3 MB) - Für Emulatoren  
+  📥 [Download x86_64-APK](https://www.genspark.ai/api/code_sandbox/download_file_stream?project_id=781a9c41-1ab2-4aab-b51f-4751d39f7875&file_path=%2Fhome%2Fuser%2Fflutter_app%2Fbuild%2Fapp%2Foutputs%2Fflutter-apk%2Fapp-x86_64-release.apk&file_name=Weltenbibliothek-v3.1.0-x86_64.apk)
+
+**Mindestanforderungen**: Android 7.0 (API 24+), 50 MB Speicherplatz
 
 ---
 
