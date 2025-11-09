@@ -2,7 +2,7 @@ name: weltenbibliothek
 description: "Weltenbibliothek - Chroniken der verborgenen Pfade. Progressive App für alternative Geschichte, verborgenes Wissen und paranormale Phänomene."
 publish_to: 'none'
 
-version: 3.1.0+90  # ✅ Alle 4 Features: File-Upload, User Auth, Push Notifications, Offline-Mode
+version: 3.1.0+91  # ✅ Alle 4 Features: File-Upload, User Auth, Push Notifications, Offline-Mode
 
 environment:
   sdk: ^3.9.2
