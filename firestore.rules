@@ -1,71 +1,126 @@
-
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    // Chat Rooms Collection
-    match /chat_rooms/{chatRoomId} {
-      // Jeder authentifizierte User kann Chat-Räume lesen
-      allow read: if request.auth != null;
-      
-      // Jeder authentifizierte User kann Chat-Räume erstellen
-      allow create: if request.auth != null;
-      
-      // Nur Teilnehmer können Chat-Räume aktualisieren
-      allow update: if request.auth != null && 
-                       request.auth.uid in resource.data.participants;
-      
-      // Nur Ersteller können Chat-Räume löschen
-      allow delete: if request.auth != null;
-      
-      // Messages Sub-Collection
-      match /messages/{messageId} {
-        // Jeder Teilnehmer kann Nachrichten lesen
-        allow read: if request.auth != null;
-        
-        // Jeder authentifizierte User kann Nachrichten senden
-        allow create: if request.auth != null &&
-                         request.auth.uid == request.resource.data.senderId;
-        
-        // Nur Sender kann eigene Nachrichten aktualisieren
-        allow update: if request.auth != null &&
-                         request.auth.uid == resource.data.senderId;
-        
-        // Nur Sender kann eigene Nachrichten löschen
-        allow delete: if request.auth != null &&
-                         request.auth.uid == resource.data.senderId;
-      }
+    // ═══════════════════════════════════════════════════════
+    // HELPER FUNCTIONS
+    // ═══════════════════════════════════════════════════════
+    
+    // Prüft ob Nutzer authentifiziert ist
+    function isSignedIn() {
+      return request.auth != null;
     }
     
-    // Alle anderen Collections (bestehende Rules)
-    match /events/{document=**} {
+    // Prüft ob Nutzer der Eigentümer ist
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+    
+    // Prüft ob Daten valide sind (nicht leer)
+    function isValidData() {
+      return request.resource.data.keys().hasAny(['title', 'name', 'content']);
+    }
+    
+    // Prüft ob Zeitstempel gültig ist
+    function isValidTimestamp() {
+      return request.resource.data.created_at is timestamp;
+    }
+    
+    // ═══════════════════════════════════════════════════════
+    // EVENTS COLLECTION
+    // Haupt-Datenbank für historische Events
+    // ═══════════════════════════════════════════════════════
+    match /events/{eventId} {
+      // LESEN: Jeder kann Events lesen (auch ohne Auth)
       allow read: if true;
-      allow write: if request.auth != null;
+      
+      // ERSTELLEN: Nur authentifizierte Nutzer
+      allow create: if isSignedIn() 
+                    && isValidData()
+                    && request.resource.data.keys().hasAll([
+                      'title', 'date', 'description', 'category'
+                    ]);
+      
+      // AKTUALISIEREN: Nur Admin oder Eigentümer
+      allow update: if isSignedIn() 
+                    && (
+                      isOwner(resource.data.created_by)
+                      || request.auth.token.admin == true
+                    );
+      
+      // LÖSCHEN: Nur Admin
+      allow delete: if isSignedIn() 
+                    && request.auth.token.admin == true;
     }
     
+    // ═══════════════════════════════════════════════════════
+    // TELEGRAM MEDIA COLLECTION
+    // Telegram Kanal Medien-Bibliothek
+    // ═══════════════════════════════════════════════════════
+    match /telegram_media/{mediaId} {
+      // LESEN: Jeder kann Medien lesen
+      allow read: if true;
+      
+      // ERSTELLEN: Nur authentifizierte Nutzer
+      allow create: if isSignedIn()
+                    && request.resource.data.keys().hasAll([
+                      'title', 'category', 'media_type', 'timestamp'
+                    ]);
+      
+      // AKTUALISIEREN: Nur Admin
+      allow update: if isSignedIn() 
+                    && request.auth.token.admin == true;
+      
+      // LÖSCHEN: Nur Admin
+      allow delete: if isSignedIn() 
+                    && request.auth.token.admin == true;
+    }
+    
+    // ═══════════════════════════════════════════════════════
+    // CATEGORIES COLLECTION
+    // Kategorien-Verwaltung
+    // ═══════════════════════════════════════════════════════
+    match /categories/{categoryId} {
+      // LESEN: Jeder kann Kategorien lesen
+      allow read: if true;
+      
+      // ERSTELLEN: Nur Admin
+      allow create: if isSignedIn() 
+                    && request.auth.token.admin == true
+                    && request.resource.data.keys().hasAll([
+                      'name', 'color', 'icon'
+                    ]);
+      
+      // AKTUALISIEREN: Nur Admin (für event_count Updates)
+      allow update: if isSignedIn() 
+                    && request.auth.token.admin == true;
+      
+      // LÖSCHEN: Nur Admin
+      allow delete: if isSignedIn() 
+                    && request.auth.token.admin == true;
+    }
+    
+    // ═══════════════════════════════════════════════════════
+    // USER PREFERENCES (Optional für zukünftige Features)
+    // ═══════════════════════════════════════════════════════
     match /users/{userId} {
-      allow read: if request.auth != null;
-      allow write: if request.auth != null && request.auth.uid == userId;
+      // Nur eigene Daten lesen/schreiben
+      allow read, write: if isOwner(userId);
     }
     
-    match /categories/{document=**} {
-      allow read: if true;
-      allow write: if request.auth != null;
+    // ═══════════════════════════════════════════════════════
+    // FAVORITES (Optional für zukünftige Features)
+    // ═══════════════════════════════════════════════════════
+    match /users/{userId}/favorites/{favoriteId} {
+      // Nur eigene Favoriten lesen/schreiben
+      allow read, write: if isOwner(userId);
     }
     
-    match /schumann_history/{document=**} {
-      allow read: if true;
-      allow write: if request.auth != null;
-    }
-    
-    match /population_history/{document=**} {
-      allow read: if true;
-      allow write: if request.auth != null;
-    }
-    
-    match /correlation_analysis/{document=**} {
-      allow read: if true;
-      allow write: if request.auth != null;
+    // ═══════════════════════════════════════════════════════
+    // DEFAULT DENY (Alle anderen Pfade)
+    // ═══════════════════════════════════════════════════════
+    match /{document=**} {
+      allow read, write: if false;
     }
   }
 }

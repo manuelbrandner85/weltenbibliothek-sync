@@ -25,6 +25,7 @@ class AppTheme {
   // Zusätzliche Accessor-Farben
   static const Color accentGold = secondaryGold;
   static const Color accentBlue = Color(0xFF3B82F6);  // Blau für Moderator-Badge
+  static const Color primaryTeal = techMysteries;  // Türkis/Cyan als primäre Teal-Farbe
   static const Color cardDark = surfaceDark;
   static const Color cardColor = surfaceDark;  // Alias für Telegram Health Widget
   static const Color textGrey = Color(0xFFB0B0B0);

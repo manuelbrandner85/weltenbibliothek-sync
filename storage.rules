@@ -1,0 +1,50 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    
+    // ═══════════════════════════════════════════════════════
+    // EVENT IMAGES
+    // ═══════════════════════════════════════════════════════
+    match /event_images/{imageId} {
+      // LESEN: Jeder kann Bilder sehen
+      allow read: if true;
+      
+      // SCHREIBEN: Nur authentifizierte Nutzer
+      // Max 10MB, nur Bilder
+      allow write: if request.auth != null
+                   && request.resource.size < 10 * 1024 * 1024
+                   && request.resource.contentType.matches('image/.*');
+    }
+    
+    // ═══════════════════════════════════════════════════════
+    // TELEGRAM MEDIA FILES
+    // ═══════════════════════════════════════════════════════
+    match /telegram_media/{mediaId} {
+      // LESEN: Jeder kann Medien sehen
+      allow read: if true;
+      
+      // SCHREIBEN: Nur Admin
+      // Max 50MB für Videos/PDFs
+      allow write: if request.auth != null
+                   && request.auth.token.admin == true
+                   && request.resource.size < 50 * 1024 * 1024;
+    }
+    
+    // ═══════════════════════════════════════════════════════
+    // USER UPLOADS
+    // ═══════════════════════════════════════════════════════
+    match /user_uploads/{userId}/{fileName} {
+      // Nur eigene Dateien
+      allow read, write: if request.auth != null
+                         && request.auth.uid == userId
+                         && request.resource.size < 5 * 1024 * 1024;
+    }
+    
+    // ═══════════════════════════════════════════════════════
+    // DEFAULT DENY
+    // ═══════════════════════════════════════════════════════
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

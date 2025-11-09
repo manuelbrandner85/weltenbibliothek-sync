@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:provider/provider.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../config/app_theme.dart';
 import '../providers/theme_provider.dart';
 import '../services/auth_service.dart';
@@ -16,6 +17,7 @@ import 'enhanced_dashboard_screen.dart';
 import 'edit_profile_screen.dart';
 import 'admin_panel_screen.dart';
 import 'unified_media_library_screen.dart'; // ✅ NEU: Telegram Media Library
+import 'schumann_resonance_screen.dart'; // ✅ NEU: Schumann Resonanz Live
 // import 'favorites_screen.dart';
 // import 'settings_screen.dart';
 
@@ -140,69 +142,28 @@ class _MoreScreenState extends State<MoreScreen> {
                 },
               ),
               
-              // Features-Sektion
+              // Daten & Speicher-Sektion (JETZT OBEN)
               _buildSection(
                 context,
-                title: 'Features',
+                title: 'Daten & Speicher',
                 items: [
                   _buildMenuItem(
-                    icon: Icons.video_library,
-                    title: 'Telegram Media-Bibliothek',
-                    subtitle: 'Videos, PDFs, Podcasts, Bilder, Hörbücher',
-                    color: AppTheme.secondaryGold,
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (_) => const UnifiedMediaLibraryScreen()),
-                      );
-                    },
+                    icon: Icons.cloud_download,
+                    title: 'Offline-Daten',
+                    subtitle: 'Events für Offline-Zugriff',
+                    onTap: () => _downloadOfflineData(context),
                   ),
                   _buildMenuItem(
-                    icon: Icons.search,
-                    title: 'Erweiterte Suche',
-                    subtitle: '161 Events durchsuchen',
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (_) => const SearchScreen()),
-                      );
-                    },
+                    icon: Icons.import_export,
+                    title: 'Daten Exportieren',
+                    subtitle: 'Favoriten & Notizen',
+                    onTap: () => _exportData(context),
                   ),
                   _buildMenuItem(
-                    icon: Icons.bar_chart,
-                    title: 'Statistiken',
-                    subtitle: 'Datenbank-Übersicht',
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (_) => const StatsScreen()),
-                      );
-                    },
-                  ),
-                  _buildMenuItem(
-                    icon: Icons.analytics,
-                    title: 'Enhanced Analytics',
-                    subtitle: 'Spektrogramm, Heatmap, Korrelationen',
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (_) => const EnhancedDashboardScreen()),
-                      );
-                    },
-                  ),
-                  _buildMenuItem(
-                    icon: Icons.favorite,
-                    title: 'Favoriten',
-                    subtitle: 'Markierte Events',
-                    onTap: () {
-                      // Navigation zu Favoriten via TabController
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Favoriten-Screen wird in einem künftigen Update verfügbar sein'),
-                          duration: Duration(seconds: 2),
-                        ),
-                      );
-                    },
+                    icon: Icons.delete_sweep,
+                    title: 'Cache Löschen',
+                    subtitle: 'App-Daten bereinigen',
+                    onTap: () => _clearCache(context),
                   ),
                 ],
               ),
@@ -265,66 +226,11 @@ class _MoreScreenState extends State<MoreScreen> {
               
               const SizedBox(height: 24),
               
-              // Daten-Sektion
-              _buildSection(
-                context,
-                title: 'Daten & Speicher',
-                items: [
-                  _buildMenuItem(
-                    icon: Icons.cloud_download,
-                    title: 'Offline-Daten',
-                    subtitle: 'Events für Offline-Zugriff',
-                    onTap: () => _downloadOfflineData(context),
-                  ),
-                  _buildMenuItem(
-                    icon: Icons.import_export,
-                    title: 'Daten Exportieren',
-                    subtitle: 'Favoriten & Notizen',
-                    onTap: () => _exportData(context),
-                  ),
-                  _buildMenuItem(
-                    icon: Icons.delete_sweep,
-                    title: 'Cache Löschen',
-                    subtitle: 'App-Daten bereinigen',
-                    onTap: () => _clearCache(context),
-                  ),
-                ],
-              ),
+
               
               const SizedBox(height: 24),
               
-              // Community-Sektion
-              _buildSection(
-                context,
-                title: 'Community',
-                items: [
-                  _buildMenuItem(
-                    icon: Icons.telegram,
-                    title: 'Telegram Channels',
-                    subtitle: '6 Kanäle + Live-Chat via Bot API',
-                    color: AppTheme.secondaryGold,
-                    onTap: () => _connectTelegram(context),
-                  ),
-                  _buildMenuItem(
-                    icon: Icons.people,
-                    title: 'Community Forum',
-                    subtitle: 'Diskutiere mit Gleichgesinnten',
-                    onTap: () => _openCommunityForum(context),
-                  ),
-                  _buildMenuItem(
-                    icon: Icons.report,
-                    title: 'Sichtung Melden',
-                    subtitle: 'Teile deine Erfahrungen',
-                    onTap: () => _reportSighting(context),
-                  ),
-                  _buildMenuItem(
-                    icon: Icons.share,
-                    title: 'App Teilen',
-                    subtitle: 'Mit Freunden teilen',
-                    onTap: () => _shareApp(context),
-                  ),
-                ],
-              ),
+
               
               const SizedBox(height: 24),
               
@@ -338,40 +244,6 @@ class _MoreScreenState extends State<MoreScreen> {
                     title: 'Abmelden',
                     subtitle: 'Vom Konto abmelden',
                     onTap: () => _handleLogout(context),
-                  ),
-                ],
-              ),
-              
-              const SizedBox(height: 24),
-              
-              // Info-Sektion
-              _buildSection(
-                context,
-                title: 'Information',
-                items: [
-                  _buildMenuItem(
-                    icon: Icons.info,
-                    title: 'Über die App',
-                    subtitle: 'Version 1.0.0',
-                    onTap: () => _showAboutDialog(context),
-                  ),
-                  _buildMenuItem(
-                    icon: Icons.privacy_tip,
-                    title: 'Datenschutz',
-                    subtitle: 'Deine Daten sind sicher',
-                    onTap: () => _showPrivacyPolicy(context),
-                  ),
-                  _buildMenuItem(
-                    icon: Icons.gavel,
-                    title: 'Nutzungsbedingungen',
-                    subtitle: 'Rechtliche Hinweise',
-                    onTap: () => _showTermsOfService(context),
-                  ),
-                  _buildMenuItem(
-                    icon: Icons.help,
-                    title: 'Hilfe & Support',
-                    subtitle: 'FAQ & Kontakt',
-                    onTap: () => _showHelpAndSupport(context),
                   ),
                 ],
               ),
@@ -420,10 +292,10 @@ class _MoreScreenState extends State<MoreScreen> {
   Widget _buildProfileCard(BuildContext context) {
     final authService = AuthService();
     
-    return StreamBuilder<Map<String, dynamic>?>(
+    return StreamBuilder<DocumentSnapshot>(
       stream: authService.streamUserProfile(authService.currentUserId ?? ''),
       builder: (context, snapshot) {
-        final profile = snapshot.data;
+        final profile = snapshot.data?.data() as Map<String, dynamic>?;
         final displayName = profile?['displayName'] ?? 'Forscher';
         final username = profile?['username'] ?? 'unbekannt';
         final photoURL = profile?['photoURL'] as String?;

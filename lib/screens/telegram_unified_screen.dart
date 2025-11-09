@@ -419,10 +419,7 @@ class _TelegramUnifiedScreenState extends State<TelegramUnifiedScreen> {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (_) => TelegramChatScreen(
-                  channelUsername: channel.username,
-                  channelTitle: channel.title,
-                ),
+                builder: (_) => const TelegramChatScreen(),
               ),
             );
           } else {

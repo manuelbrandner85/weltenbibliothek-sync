@@ -53,9 +53,10 @@ class ModernBottomNav extends StatelessWidget {
                 index: 1,
               ),
               _buildNavItem(
-                icon: Icons.library_books_rounded,
-                label: 'Feed',
+                icon: Icons.telegram,
+                label: 'Telegram',
                 index: 2,
+                badgeCount: unreadCount, // Zeigt ungelesene aus Chat-Tab
               ),
               _buildNavItem(
                 icon: Icons.analytics_rounded,
@@ -68,15 +69,9 @@ class ModernBottomNav extends StatelessWidget {
                 index: 4,
               ),
               _buildNavItem(
-                icon: Icons.chat_bubble_rounded,
-                label: 'Chat',
-                index: 5,
-                badgeCount: unreadCount,
-              ),
-              _buildNavItem(
                 icon: Icons.more_horiz_rounded,
                 label: 'Mehr',
-                index: 6,
+                index: 5,
               ),
             ],
           ),

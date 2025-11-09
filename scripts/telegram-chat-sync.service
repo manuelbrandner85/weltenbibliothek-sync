@@ -1,0 +1,27 @@
+[Unit]
+Description=Telegram Chat Sync Daemon (MadelineProto)
+Documentation=https://github.com/danog/MadelineProto
+After=network.target
+
+[Service]
+Type=simple
+User=user
+WorkingDirectory=/home/user/flutter_app/scripts
+ExecStart=/usr/bin/php telegram_chat_sync_madeline.php
+Restart=always
+RestartSec=10
+StandardOutput=append:/var/log/telegram-chat-sync.log
+StandardError=append:/var/log/telegram-chat-sync.log
+
+# Environment
+Environment="PATH=/usr/local/bin:/usr/bin:/bin"
+
+# Security
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=/home/user/flutter_app/scripts /tmp
+
+[Install]
+WantedBy=multi-user.target

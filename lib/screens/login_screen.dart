@@ -37,12 +37,12 @@ class _LoginScreenState extends State<LoginScreen> {
 
     try {
       final userCredential = await _authService.loginWithEmailPassword(
-        email: _emailController.text.trim(),
-        password: _passwordController.text,
+        _emailController.text.trim(),
+        _passwordController.text,
       );
 
       // ✅ Lade Benutzername aus Firestore und setze für Telegram
-      if (userCredential.user != null) {
+      if (userCredential != null && userCredential.user != null) {
         try {
           final userDoc = await FirebaseFirestore.instance
               .collection('users')

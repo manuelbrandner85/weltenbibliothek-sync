@@ -8,6 +8,13 @@ import '../config/modern_design_system.dart';
 import '../providers/theme_provider.dart';
 import '../services/telegram_channel_loader.dart';
 import '../models/channel_content.dart';
+import 'search_screen.dart';
+import 'stats_screen.dart';
+import 'unified_telegram_screen.dart';
+import 'schumann_resonance_screen.dart';
+import 'map_screen.dart';
+import 'timeline_screen.dart';
+import 'media_gallery_screen.dart'; // ✅ NEU: FTP-Medien-Gallery
 
 class ModernHomeScreen extends StatefulWidget {
   const ModernHomeScreen({super.key});
@@ -267,8 +274,13 @@ class _ModernHomeScreenState extends State<ModernHomeScreen> {
     
     return GestureDetector(
       onTap: () {
-        // Navigate to Channel Feed with selected category
-        // TODO: Implement navigation
+        // Navigate to Telegram Library Screen filtered by category
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const UnifiedTelegramScreen(),
+          ),
+        );
       },
       child: ModernGlassCard(
         padding: const EdgeInsets.all(ModernSpacing.md),
@@ -348,8 +360,13 @@ class _ModernHomeScreenState extends State<ModernHomeScreen> {
               ),
               TextButton(
                 onPressed: () {
-                  // Navigate to Channel Feed
-                  // TODO: Implement navigation
+                  // Navigate to Telegram Library (all posts)
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const UnifiedTelegramScreen(),
+                    ),
+                  );
                 },
                 child: Text(
                   'Alle anzeigen',
@@ -527,7 +544,13 @@ class _ModernHomeScreenState extends State<ModernHomeScreen> {
                 color: ModernColors.deepPurple,
                 isDark: isDark,
                 onTap: () {
-                  // TODO: Navigate to search
+                  // Navigate to Search Screen
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const SearchScreen(),
+                    ),
+                  );
                 },
               ),
             ),
@@ -539,11 +562,74 @@ class _ModernHomeScreenState extends State<ModernHomeScreen> {
                 color: ModernColors.goldenHoney,
                 isDark: isDark,
                 onTap: () {
-                  // TODO: Navigate to stats
+                  // Navigate to Statistics Screen
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const StatsScreen(),
+                    ),
+                  );
                 },
               ),
             ),
           ],
+        ),
+        const SizedBox(height: ModernSpacing.md),
+        Row(
+          children: [
+            Expanded(
+              child: _buildActionButton(
+                icon: Icons.waves,
+                label: 'Schumann',
+                color: ModernColors.categoryMatrix,
+                isDark: isDark,
+                onTap: () {
+                  // Navigate to Schumann Resonance Screen
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const SchumannResonanceScreen(),
+                    ),
+                  );
+                },
+              ),
+            ),
+            const SizedBox(width: ModernSpacing.md),
+            Expanded(
+              child: _buildActionButton(
+                icon: Icons.map,
+                label: 'Weltkarte',
+                color: ModernColors.categoryMatrix,
+                isDark: isDark,
+                onTap: () {
+                  // Navigate to Map Screen
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const MapScreen(),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: ModernSpacing.md),
+        // ✅ NEU: FTP-Medien-Bibliothek Button
+        _buildActionButton(
+          icon: Icons.video_library,
+          label: '📚 FTP-Medien (Telegram Sync)',
+          color: ModernColors.categoryUFO,
+          isDark: isDark,
+          onTap: () {
+            // Navigate to Media Gallery Screen
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const MediaGalleryScreen(),
+              ),
+            );
+          },
         ),
       ],
     ).animate().fadeIn(delay: 1000.ms).slideY(begin: 0.2, end: 0);

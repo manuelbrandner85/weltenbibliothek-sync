@@ -6,6 +6,11 @@ import '../services/nasa_data_service.dart';
 import '../widgets/glass_card.dart';
 import '../widgets/interactive_data_card.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'schumann_resonance_screen.dart';
+import 'stats_screen.dart';
+import 'search_screen.dart';
+import 'telegram_chat_screen.dart';
+import 'unified_telegram_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -309,17 +314,29 @@ class _HomeScreenState extends State<HomeScreen> {
       onTap: () {
         // Navigation zu Detail-Screen basierend auf Typ
         if (title.contains('Schumann')) {
-          // Navigation zu Schumann-Details
-          debugPrint('🌊 Navigation zu Schumann-Resonanz Details');
+          // Navigation zu Schumann-Resonanz Live
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const SchumannResonanceScreen()),
+          );
         } else if (title.contains('Erdbeben')) {
-          // Navigation zu Erdbeben-Details
-          debugPrint('🌍 Navigation zu Erdbeben Details');
+          // Navigation zu Statistiken (enthält Erdbeben-Daten)
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const StatsScreen()),
+          );
         } else if (title.contains('ISS')) {
-          // Navigation zu ISS-Details
-          debugPrint('🛰️ Navigation zu ISS Details');
+          // Navigation zu Statistiken (NASA-Daten)
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const StatsScreen()),
+          );
         } else if (title.contains('K-Index')) {
-          // Navigation zu Solar-Details
-          debugPrint('☀️ Navigation zu Solar Activity Details');
+          // Navigation zu Schumann (enthält Solar Activity)
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const SchumannResonanceScreen()),
+          );
         }
       },
     );
@@ -366,47 +383,84 @@ class _HomeScreenState extends State<HomeScreen> {
         const SizedBox(height: 12),
         
         _buildQuickAccessButton(
-          icon: Icons.auto_awesome,
-          title: 'AI-Assistent',
-          description: 'Gemini 2.0 Analyse',
+          icon: Icons.search,
+          title: 'Erweiterte Suche',
+          description: 'Durchsuche alle Events',
           gradient: LinearGradient(
-            colors: [AppTheme.techMysteries, AppTheme.alienContact],
+            colors: [AppTheme.primaryTeal, AppTheme.dimensionalAnomalies],
           ),
           onTap: () {
-            // Zeige Info-Dialog über künftige Features
-            showDialog(
-              context: context,
-              builder: (context) => AlertDialog(
-                backgroundColor: AppTheme.surfaceDark,
-                title: Row(
-                  children: [
-                    Icon(Icons.auto_awesome, color: AppTheme.secondaryGold),
-                    const SizedBox(width: 12),
-                    const Text(
-                      'AI-Assistent',
-                      style: TextStyle(color: AppTheme.textWhite),
-                    ),
-                  ],
-                ),
-                content: Text(
-                  'Der KI-gestützte Gemini 2.0 Assistent wird in einem künftigen Update verfügbar sein.\n\n'
-                  'Features:\n'
-                  '• Event-Analyse & Zusammenhänge\n'
-                  '• Persönliche Empfehlungen\n'
-                  '• Multi-perspektivische Erklärungen\n'
-                  '• Echtzeit-Datenauswertung',
-                  style: TextStyle(color: AppTheme.textWhite.withValues(alpha: 0.9)),
-                ),
-                actions: [
-                  TextButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: Text(
-                      'Verstanden',
-                      style: TextStyle(color: AppTheme.secondaryGold),
-                    ),
-                  ),
-                ],
-              ),
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const SearchScreen()),
+            );
+          },
+        ),
+        
+        const SizedBox(height: 12),
+        
+        _buildQuickAccessButton(
+          icon: Icons.bar_chart,
+          title: 'Statistiken',
+          description: 'Datenbank-Übersicht',
+          gradient: LinearGradient(
+            colors: [AppTheme.secondaryGold, AppTheme.primaryPurple],
+          ),
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const StatsScreen()),
+            );
+          },
+        ),
+        
+        const SizedBox(height: 12),
+        
+        _buildQuickAccessButton(
+          icon: Icons.graphic_eq,
+          title: 'Schumann Resonanz',
+          description: 'Live-Daten aus Tomsk',
+          gradient: LinearGradient(
+            colors: [AppTheme.energyPhenomena, AppTheme.primaryTeal],
+          ),
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const SchumannResonanceScreen()),
+            );
+          },
+        ),
+        
+        const SizedBox(height: 12),
+        
+        _buildQuickAccessButton(
+          icon: Icons.telegram,
+          title: '📱 Telegram Channels',
+          description: '6 Live-Channels · Echtzeit-Sync',
+          gradient: LinearGradient(
+            colors: [AppTheme.alienContact, AppTheme.primaryPurple],
+          ),
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const UnifiedTelegramScreen()),
+            );
+          },
+        ),
+        
+        const SizedBox(height: 12),
+        
+        _buildQuickAccessButton(
+          icon: Icons.chat_bubble,
+          title: '💬 Telegram Chat',
+          description: 'Bidirektionale Synchronisation',
+          gradient: LinearGradient(
+            colors: [AppTheme.techMysteries, AppTheme.ufoFleets],
+          ),
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const TelegramChatScreen()),
             );
           },
         ),

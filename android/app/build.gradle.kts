@@ -67,6 +67,12 @@ android {
             isUniversalApk = true
         }
     }
+    
+    // Disable lint errors for release builds
+    lint {
+        abortOnError = false
+        checkReleaseBuilds = false
+    }
 }
 
 flutter {

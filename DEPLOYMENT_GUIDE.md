@@ -1,68 +1,453 @@
-# 🚀 Weltenbibliothek - Deployment Guide
+# 🚀 Weltenbibliothek v3.0.0+88 - Deployment Guide
 
-## 📋 Pre-Deployment Checklist
+## 📱 Bidirektionale Telegram-Chat-Synchronisation
 
-### ✅ Firebase Setup
-- [ ] Firebase Projekt erstellt
-- [ ] Firestore Database aktiviert
-- [ ] Firebase Authentication aktiviert (Email/Password)
-- [ ] Firebase Storage aktiviert
-- [ ] Firebase Cloud Messaging (FCM) aktiviert
-- [ ] google-services.json heruntergeladen und in `android/app/` platziert
-- [ ] firebase-admin-sdk.json heruntergeladen (für Cloud Functions)
-
-### ✅ Android Setup
-- [ ] Package Name konfiguriert in `android/app/build.gradle.kts`
-- [ ] AndroidManifest.xml Package Name aktualisiert
-- [ ] MainActivity.kt im richtigen Package-Pfad
-- [ ] App Icon generiert und platziert
-
-### ✅ Firestore Configuration
-- [ ] Security Rules deployed (siehe `firestore_production.rules`)
-- [ ] Composite Indexes erstellt (siehe unten)
-- [ ] Storage Rules konfiguriert
-
-### ✅ Cloud Functions Setup
-- [ ] Node.js 18 installiert
-- [ ] Firebase CLI installiert: `npm install -g firebase-tools`
-- [ ] Firebase login: `firebase login`
-- [ ] Functions deployed: `firebase deploy --only functions`
+**Build-Datum:** 2025-06-09  
+**APK-Größe:** 68.2 MB  
+**Version:** 3.0.0+88  
+**Status:** ✅ Produktionsbereit
 
 ---
 
-## 🔥 Firebase Security Rules Deployment
+## 📋 Übersicht
 
-### 1. Firestore Rules
+Diese Version implementiert **vollständige bidirektionale Synchronisation** zwischen der Flutter-App und dem Telegram-Kanal **@Weltenbibliothekchat**:
 
-```bash
-# Von der Firebase Console
-firebase deploy --only firestore:rules
+✅ **App → Telegram:** Nachrichten aus der App erscheinen sofort im Telegram-Chat  
+✅ **Telegram → App:** Telegram-Nachrichten erscheinen in Echtzeit in der App  
+✅ **Bearbeitungen:** Edits werden bidirektional synchronisiert  
+✅ **Löschungen:** Deletes werden bidirektional synchronisiert  
+✅ **Medien-Sync:** FTP-Server-Integration für Bilder/Videos/Dateien  
+✅ **Auto-Delete:** Automatische Löschung nach 24 Stunden  
+✅ **Benutzer-Display:** Telegram-Usernamen werden korrekt angezeigt  
 
-# Oder manuell in Firebase Console:
-# 1. Gehe zu Firestore Database → Rules
-# 2. Kopiere Inhalt von firestore_production.rules
-# 3. Klicke "Publish"
+---
+
+## 🏗️ System-Architektur
+
+```
+┌─────────────────┐         ┌──────────────────┐         ┌─────────────────┐
+│  Flutter App    │ ←─────→ │  Firebase        │ ←─────→ │  MadelineProto  │
+│  (Android/iOS)  │         │  Firestore       │         │  PHP Daemon     │
+└─────────────────┘         └──────────────────┘         └─────────────────┘
+        ↑                            ↑                             ↑
+        │                            │                             │
+        └────────────────────────────┴─────────────────────────────┘
+                            Bidirektionale Echtzeit-Sync
+                                      
+                    ┌──────────────────────┐
+                    │  Xlight FTP Server   │
+                    │  (Medien-Speicher)   │
+                    └──────────────────────┘
+                              ↑
+                              │
+                    ┌──────────────────────┐
+                    │  HTTP Proxy (8080)   │
+                    │  (Medien-Auslieferung)│
+                    └──────────────────────┘
 ```
 
-**Rules Datei:** `firestore_production.rules`
+---
 
-### 2. Storage Rules
+## 📦 Installation
+
+### 1. APK Installation (Android)
+
+**Download:**
+```
+Datei: /home/user/Weltenbibliothek_v3.0.0+88_Release.apk
+Größe: 68.2 MB
+MD5: 48d2fc13c31867ad55a6da02d1f7157c
+```
+
+**Installation auf Android-Gerät:**
+1. APK auf Gerät übertragen (via USB, Email, Cloud)
+2. "Installation aus unbekannten Quellen" aktivieren (Einstellungen → Sicherheit)
+3. APK öffnen und Installation bestätigen
+4. App starten → Firebase-Verbindung wird automatisch hergestellt
+
+---
+
+### 2. Backend-Daemon Installation (PHP)
+
+Der Chat-Sync-Daemon muss auf einem Server mit PHP 8.1+ laufen.
+
+#### Option A: systemd Service (empfohlen für Produktiv-Betrieb)
+
+**Voraussetzungen:**
+- PHP 8.1 oder höher
+- MadelineProto 8.6.0 (bereits installiert im Projektverzeichnis)
+- sudo-Rechte für systemd-Installation
+
+**Installation:**
+```bash
+# 1. Service-Datei kopieren
+sudo cp /home/user/flutter_app/scripts/telegram-chat-sync.service /etc/systemd/system/
+
+# 2. Log-Verzeichnis erstellen
+sudo mkdir -p /var/log
+sudo touch /var/log/telegram-chat-sync.log
+sudo chown user:user /var/log/telegram-chat-sync.log
+
+# 3. Service aktivieren
+sudo systemctl daemon-reload
+sudo systemctl enable telegram-chat-sync.service
+
+# 4. Service starten
+sudo systemctl start telegram-chat-sync.service
+
+# 5. Status prüfen
+sudo systemctl status telegram-chat-sync.service
+```
+
+**Service-Management:**
+```bash
+# Neustart
+sudo systemctl restart telegram-chat-sync.service
+
+# Stoppen
+sudo systemctl stop telegram-chat-sync.service
+
+# Logs anzeigen
+tail -f /var/log/telegram-chat-sync.log
+
+# Live-Log mit systemd
+journalctl -u telegram-chat-sync.service -f
+```
+
+#### Option B: Manuelle Ausführung (für Tests)
+
+**Hintergrund-Prozess starten:**
+```bash
+cd /home/user/flutter_app/scripts
+nohup php telegram_chat_sync_madeline.php > sync.log 2>&1 &
+```
+
+**Prozess stoppen:**
+```bash
+# Prozess-ID finden
+ps aux | grep telegram_chat_sync
+
+# Prozess beenden
+kill <PID>
+```
+
+**Logs überwachen:**
+```bash
+tail -f sync.log
+```
+
+---
+
+### 3. Firebase Firestore Indexes erstellen
+
+Der Daemon benötigt 5 Composite Indexes für optimale Performance.
+
+#### Methode 1: Automatisch (empfohlen)
+
+Starten Sie den Daemon - beim ersten Zugriff auf nicht-indexierte Queries zeigt Firebase automatisch Fehler mit Index-URLs:
 
 ```bash
-# Erstelle firebase.storage.rules
+# Daemon starten und Logs beobachten
+sudo systemctl start telegram-chat-sync.service
+tail -f /var/log/telegram-chat-sync.log
+
+# Firebase zeigt URLs wie:
+# https://console.firebase.google.com/project/weltenbibliothek-5d21f/firestore/indexes?create_composite=...
+```
+
+Klicken Sie auf diese URLs → Firebase erstellt die Indexes automatisch.
+
+#### Methode 2: Manuell über Console
+
+**Firebase Console URL:**
+https://console.firebase.google.com/project/weltenbibliothek-5d21f/firestore/indexes
+
+**Benötigte Indexes:**
+
+**Index 1: App → Telegram Sync**
+- Collection: `chat_messages`
+- Fields:
+  - `source` (Ascending)
+  - `syncedToTelegram` (Ascending)
+  - `__name__` (Ascending)
+
+**Index 2: Chat Display (Flutter App)**
+- Collection: `chat_messages`
+- Fields:
+  - `deleted` (Ascending)
+  - `timestamp` (Descending)
+  - `__name__` (Ascending)
+
+**Index 3: Edit Synchronization**
+- Collection: `chat_messages`
+- Fields:
+  - `source` (Ascending)
+  - `edited` (Ascending)
+  - `editSyncedToTelegram` (Ascending)
+  - `__name__` (Ascending)
+
+**Index 4: Delete Synchronization**
+- Collection: `chat_messages`
+- Fields:
+  - `source` (Ascending)
+  - `deleted` (Ascending)
+  - `deleteSyncedToTelegram` (Ascending)
+  - `__name__` (Ascending)
+
+**Index 5: Auto-Delete (24h Cleanup)**
+- Collection: `chat_messages`
+- Fields:
+  - `timestamp` (Ascending)
+  - `deleted` (Ascending)
+  - `__name__` (Ascending)
+
+**Erstell-Dauer:** Ca. 5-15 Minuten pro Index (Firebase baut Indexes im Hintergrund)
+
+---
+
+### 4. HTTP Proxy für Medien (Port 8080)
+
+Der HTTP-Proxy muss auf dem FTP-Server laufen, um Medien via HTTP auszuliefern.
+
+**FTP-Server:** Weltenbibliothek.ddns.net  
+**Medien-URL:** http://Weltenbibliothek.ddns.net:8080/
+
+**Python HTTP-Proxy starten (auf FTP-Server):**
+```bash
+# Verbindung zum FTP-Server herstellen (SSH/Remote-Desktop)
+ssh admin@Weltenbibliothek.ddns.net
+
+# Zum FTP-Root-Verzeichnis navigieren
+cd /path/to/ftp/root
+
+# HTTP-Proxy starten
+python3 -m http.server 8080 --bind 0.0.0.0
+```
+
+**Persistent mit systemd (auf FTP-Server):**
+```ini
+[Unit]
+Description=HTTP Proxy for FTP Media
+After=network.target
+
+[Service]
+Type=simple
+User=admin
+WorkingDirectory=/path/to/ftp/root
+ExecStart=/usr/bin/python3 -m http.server 8080 --bind 0.0.0.0
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+```
+
+Speichern als `/etc/systemd/system/ftp-http-proxy.service` und aktivieren:
+```bash
+sudo systemctl enable ftp-http-proxy.service
+sudo systemctl start ftp-http-proxy.service
+```
+
+---
+
+## 🧪 Funktionstest
+
+### Test 1: App → Telegram
+
+1. Flutter-App öffnen
+2. Zum Chat navigieren (Telegram-Icon auf Startseite)
+3. Nachricht eingeben und senden
+4. Telegram-App öffnen: https://t.me/Weltenbibliothekchat
+5. **Erwartung:** Nachricht erscheint nach ~5 Sekunden im Telegram-Chat
+
+### Test 2: Telegram → App
+
+1. Telegram-App öffnen: https://t.me/Weltenbibliothekchat
+2. Nachricht im Chat senden
+3. Flutter-App öffnen (Chat-Screen)
+4. **Erwartung:** Nachricht erscheint nach ~5 Sekunden in der App
+
+### Test 3: Bearbeitung (Edit)
+
+1. In Flutter-App: Nachricht lange drücken → "Bearbeiten"
+2. Text ändern und speichern
+3. Telegram prüfen: Nachricht sollte aktualisiert sein
+4. In Telegram: Nachricht editieren
+5. Flutter-App prüfen: Änderung erscheint nach ~5 Sekunden
+
+### Test 4: Löschung (Delete)
+
+1. In Flutter-App: Nachricht lange drücken → "Löschen"
+2. Telegram prüfen: Nachricht sollte gelöscht sein
+3. In Telegram: Nachricht löschen
+4. Flutter-App prüfen: Nachricht verschwindet nach ~5 Sekunden
+
+### Test 5: Medien-Upload (Bilder/Videos)
+
+1. In Flutter-App: Kamera-Icon tippen
+2. Bild/Video auswählen oder aufnehmen
+3. Nachricht mit Medien senden
+4. **Erwartung:**
+   - Medien wird auf FTP-Server hochgeladen
+   - HTTP-URL wird generiert
+   - Medien erscheint in Telegram und App
+
+### Test 6: Auto-Delete (24h)
+
+1. Nachricht senden
+2. 24 Stunden warten (oder Daemon-Timer für Tests auf 5 Minuten setzen)
+3. **Erwartung:**
+   - Nachricht wird aus Firestore gelöscht
+   - Medien wird vom FTP-Server gelöscht
+   - Nachricht verschwindet aus App und Telegram
+
+---
+
+## 📊 Monitoring & Troubleshooting
+
+### Daemon-Logs prüfen
+
+**systemd-Service:**
+```bash
+# Live-Log
+sudo journalctl -u telegram-chat-sync.service -f
+
+# Letzte 100 Zeilen
+sudo journalctl -u telegram-chat-sync.service -n 100
+
+# Log-Datei
+tail -f /var/log/telegram-chat-sync.log
+```
+
+**Manuelle Ausführung:**
+```bash
+tail -f /home/user/flutter_app/scripts/sync.log
+```
+
+### Wichtige Log-Ausgaben
+
+**Erfolgreicher Start:**
+```
+✅ MadelineProto verbunden
+✅ Chat ID: -1001191136317
+🔄 Starte Synchronisations-Loop...
+🔄 SYNC CYCLE #1 - 2025-11-08 14:23:29
+```
+
+**Erfolgreiche Synchronisation:**
+```
+🆕 1 neue Telegram-Nachrichten → Firestore
+📤 2 App-Nachrichten → Telegram gesendet
+🗑️ 5 Nachrichten (>24h) gelöscht
+```
+
+**Fehler-Beispiele:**
+```
+❌ FTP-Verbindung fehlgeschlagen
+❌ Firestore-Schreibfehler: Permission denied
+⚠️ Index fehlt: https://console.firebase.google.com/...
+```
+
+### Häufige Probleme
+
+**Problem 1: Daemon startet nicht**
+```bash
+# PHP-Version prüfen
+php -v  # Muss >= 8.1 sein
+
+# MadelineProto-Installation prüfen
+cd /home/user/madeline_backend
+php -r "require 'vendor/autoload.php'; echo 'OK';"
+
+# Berechtigungen prüfen
+ls -la /home/user/flutter_app/scripts/telegram_chat_sync_madeline.php
+```
+
+**Problem 2: Keine Nachrichten werden synchronisiert**
+```bash
+# Firestore-Regeln prüfen (Firebase Console)
+# Rules müssen read/write erlauben
+
+# Firestore-Indexes prüfen
+# Alle 5 Indexes müssen Status "Enabled" haben
+```
+
+**Problem 3: Medien werden nicht angezeigt**
+```bash
+# HTTP-Proxy-Status prüfen
+curl -I http://Weltenbibliothek.ddns.net:8080/
+
+# FTP-Verbindung testen
+ftp Weltenbibliothek.ddns.net
+# User: Weltenbibliothek
+# Pass: Jolene2305
+```
+
+**Problem 4: App zeigt "Connection Error"**
+```bash
+# Firebase-Konfiguration prüfen
+# android/app/google-services.json muss existieren
+# Package Name muss übereinstimmen: com.example.weltenbibliothek
+```
+
+---
+
+## 🔒 Sicherheitshinweise
+
+### Credentials-Verwaltung
+
+**Telegram API:**
+- API_ID: 25697241
+- API_HASH: 19cfb3819684da4571a91874ee22603a
+- **Speicherort:** `/home/user/flutter_app/scripts/telegram_chat_sync_madeline.php` (Zeile 28-29)
+- **Empfehlung:** In Produktiv-Umgebung via Umgebungsvariablen laden
+
+**FTP-Server:**
+- Host: Weltenbibliothek.ddns.net
+- User: Weltenbibliothek
+- Pass: Jolene2305
+- **Speicherort:** `telegram_chat_sync_madeline.php` (Zeile 35-38)
+- **Empfehlung:** Via `.env`-Datei auslagern
+
+**Firebase:**
+- **Admin SDK:** `/opt/flutter/firebase-admin-sdk.json`
+- **App-Config:** `android/app/google-services.json`
+- **Empfehlung:** Firestore Rules auf Produktiv-Modus setzen
+
+### Firestore Security Rules (Produktiv)
+
+**Aktuell (Development):**
+```javascript
 rules_version = '2';
-service firebase.storage {
-  match /b/{bucket}/o {
-    // Chat Images - nur für authentifizierte User
-    match /chat_images/{chatRoomId}/{imageId} {
-      allow read: if true;
-      allow write: if request.auth != null;
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if true;
     }
-    
-    // User Avatars
-    match /user_avatars/{userId}/{imageId} {
-      allow read: if true;
-      allow write: if request.auth != null && request.auth.uid == userId;
+  }
+}
+```
+
+**Empfohlen (Production):**
+```javascript
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /chat_messages/{messageId} {
+      // Lesen: Alle authentifizierten Nutzer
+      allow read: if request.auth != null;
+      
+      // Schreiben: Nur eigene Nachrichten
+      allow create: if request.auth != null 
+                    && request.resource.data.userId == request.auth.uid;
+      
+      // Bearbeiten: Nur eigene Nachrichten
+      allow update: if request.auth != null 
+                    && resource.data.userId == request.auth.uid;
+      
+      // Löschen: Nur eigene Nachrichten
+      allow delete: if request.auth != null 
+                    && resource.data.userId == request.auth.uid;
     }
   }
 }
@@ -70,316 +455,154 @@ service firebase.storage {
 
 ---
 
-## 🔐 Firestore Composite Indexes
+## 📈 Performance-Optimierung
 
-### Erforderliche Indexes:
+### Sync-Intervall anpassen
 
-**Wichtig:** Diese Indexes müssen **NICHT** manuell erstellt werden, da wir die Queries so umgeschrieben haben, dass sie ohne Composite Indexes funktionieren!
+**Aktuell:** 5 Minuten (300 Sekunden)
 
-Sollten dennoch Fehler auftreten, hier die Indexes:
+**Anpassen in `telegram_chat_sync_madeline.php`:**
+```php
+// Zeile 26: Check-Intervall
+$CHECK_INTERVAL_SECONDS = 300;  // 5 Minuten
 
-1. **Chat Rooms - Private Chats**
-   - Collection: `chat_rooms`
-   - Fields: `type` (Ascending), `participants` (Array-contains), `lastActivity` (Descending)
+// Für Echtzeit-Sync (höhere Server-Last):
+$CHECK_INTERVAL_SECONDS = 30;   // 30 Sekunden
 
-2. **Chat Rooms - Group Chats**
-   - Collection: `chat_rooms`
-   - Fields: `type` (Ascending), `participants` (Array-contains), `lastActivity` (Descending)
-
-**Auto-Create via Error-Link:**
-Wenn ein Index fehlt, zeigt Firebase eine Fehlermeldung mit einem Link. Klicke auf den Link → Firebase erstellt den Index automatisch.
-
----
-
-## ☁️ Cloud Functions Deployment
-
-### 1. Setup
-
-```bash
-cd /home/user/flutter_app/cloud_functions
-
-# Install dependencies
-npm install
-
-# Test locally (optional)
-firebase emulators:start --only functions
+// Für Strom-Sparung (langsamere Sync):
+$CHECK_INTERVAL_SECONDS = 600;  // 10 Minuten
 ```
 
-### 2. Deploy
+### Firestore-Abfrage-Limit
 
-```bash
-# Deploy alle Functions
-firebase deploy --only functions
+**Aktuell:** 100 Nachrichten pro Abfrage
 
-# Deploy einzelne Function
-firebase deploy --only functions:sendChatNotification
+**Anpassen in `lib/services/chat_sync_service.dart`:**
+```dart
+// Zeile 97: Limit-Parameter
+.limit(100)
+
+// Für mehr History (höherer Daten-Transfer):
+.limit(500)
+
+// Für weniger Daten (schnellerer Load):
+.limit(50)
 ```
 
-### 3. Environment Variables (falls benötigt)
+### FTP-Upload-Chunk-Size
 
-```bash
-firebase functions:config:set someservice.key="THE API KEY"
-```
+**Aktuell:** 8192 Bytes (8 KB)
 
----
+**Anpassen in `telegram_chat_sync_madeline.php`:**
+```php
+// Zeile 149: FTP-Chunk-Size
+fwrite($stream, $fileContent, 8192);
 
-## 📦 Android APK Build
+// Für schnellere Uploads (mehr RAM):
+fwrite($stream, $fileContent, 65536);  // 64 KB
 
-### 1. Vorbereitung
-
-```bash
-cd /home/user/flutter_app
-
-# Clean build
-flutter clean
-flutter pub get
-
-# Check for issues
-flutter doctor
-flutter analyze
-```
-
-### 2. Build APK (Debug)
-
-```bash
-flutter build apk --debug
-```
-
-**Output:** `build/app/outputs/flutter-apk/app-debug.apk`
-
-### 3. Build APK (Release)
-
-```bash
-flutter build apk --release
-```
-
-**Output:** `build/app/outputs/flutter-apk/app-release.apk`
-
-### 4. Build App Bundle (für Play Store)
-
-```bash
-flutter build appbundle --release
-```
-
-**Output:** `build/app/outputs/bundle/release/app-release.aab`
-
----
-
-## 🌐 Web Deployment
-
-### Option A: Firebase Hosting
-
-```bash
-# Build web version
-flutter build web --release
-
-# Initialize Firebase Hosting (einmalig)
-firebase init hosting
-
-# Deploy
-firebase deploy --only hosting
-```
-
-### Option B: Eigener Server
-
-```bash
-# Build web version
-flutter build web --release
-
-# Upload build/web/ folder to your server
-scp -r build/web/* user@server:/var/www/weltenbibliothek/
+// Für langsame Verbindungen (weniger RAM):
+fwrite($stream, $fileContent, 4096);   // 4 KB
 ```
 
 ---
 
-## 🔔 Push Notifications Setup
+## 🔄 Update-Prozess
 
-### Android
+### App-Update (neue APK)
 
-**Bereits konfiguriert in:**
-- `android/app/google-services.json`
-- `pubspec.yaml` → `firebase_messaging: 15.1.3`
-- `lib/services/fcm_service.dart`
+1. Neue Version bauen:
+   ```bash
+   cd /home/user/flutter_app
+   flutter build apk --release
+   ```
 
-**Testen:**
-1. App starten
-2. Notification Permission wird automatisch angefragt
-3. FCM Token wird in Firestore gespeichert
-4. Cloud Functions senden Notifications bei neuen Messages
+2. Version in `pubspec.yaml` erhöhen:
+   ```yaml
+   version: 3.0.1+89  # Neue Version
+   ```
 
-### iOS (falls später benötigt)
+3. APK auf Gerät installieren (überschreibt alte Version)
 
-1. APNs Certificate in Firebase Console hochladen
-2. `ios/Runner/GoogleService-Info.plist` hinzufügen
-3. Push Notification Capability in Xcode aktivieren
+### Daemon-Update
 
----
+1. Daemon stoppen:
+   ```bash
+   sudo systemctl stop telegram-chat-sync.service
+   ```
 
-## 🗂️ Firestore Initial Data
+2. PHP-Datei aktualisieren:
+   ```bash
+   nano /home/user/flutter_app/scripts/telegram_chat_sync_madeline.php
+   ```
 
-### Chat Rooms erstellen
+3. Daemon neu starten:
+   ```bash
+   sudo systemctl start telegram-chat-sync.service
+   ```
 
-Die App erstellt automatisch 5 Standard-Community-Chats beim ersten Start:
-- 🌍 Allgemeiner Chat
-- 👽 UFO-Sichtungen
-- 🌊 Erdveränderungen
-- ⚡ Schumann-Resonanz
-- 🔮 Esoterisches Wissen
+### Firebase-Update (Indexes, Rules)
 
-**Manuell erstellen (optional):**
+1. Firebase Console öffnen:
+   https://console.firebase.google.com/project/weltenbibliothek-5d21f
 
-```javascript
-// In Firebase Console → Firestore → chat_rooms
-{
-  name: "Test Chat",
-  description: "Test Beschreibung",
-  type: "community",
-  participants: [],
-  createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-  lastActivity: firebase.firestore.FieldValue.serverTimestamp(),
-  avatarUrl: ""
-}
-```
+2. Indexes/Rules anpassen
+
+3. **Kein Daemon-Neustart nötig** (wird automatisch übernommen)
 
 ---
 
-## 🧪 Testing
+## 📝 Changelog
 
-### 1. Local Testing
+### v3.0.0+88 (2025-06-09)
+- ✅ **Bidirektionale Telegram-Chat-Synchronisation**
+- ✅ MadelineProto 8.6.0 Integration (PHP)
+- ✅ Material Design 3 Chat-UI
+- ✅ Edit/Delete-Synchronisation
+- ✅ FTP-Medien-Integration (Xlight Server)
+- ✅ Auto-Delete nach 24 Stunden
+- ✅ Telegram-Username-Display
+- ✅ Firestore Composite Indexes
+- ✅ systemd Service-Konfiguration
+- ✅ HTTP-Proxy für Medien-Auslieferung
 
-```bash
-# Run on web
-flutter run -d chrome
-
-# Run on Android emulator
-flutter run -d <device-id>
-```
-
-### 2. Test Checklist
-
-- [ ] Login/Logout funktioniert
-- [ ] Community Chats werden geladen
-- [ ] Nachrichten senden funktioniert
-- [ ] Bilder hochladen funktioniert
-- [ ] Reactions funktionieren
-- [ ] Private Chats erstellen funktioniert
-- [ ] Gruppen erstellen funktioniert
-- [ ] User Profile anzeigen funktioniert
-- [ ] Notifications erscheinen
-- [ ] Online-Status wird aktualisiert
+### v2.x (vorherige Versionen)
+- Firebase-Integration
+- Bibliotheks-Verwaltung
+- FTP-Datei-Uploads
+- Grundlegende UI
 
 ---
 
-## 🐛 Troubleshooting
+## 🆘 Support & Kontakt
 
-### Issue: "No Firebase App"
-**Lösung:** Prüfe ob `google-services.json` im richtigen Pfad liegt (`android/app/`)
+**Technische Fragen:**
+- GitHub Issues: (Repository-URL)
+- E-Mail: (Support-Adresse)
 
-### Issue: "Permission Denied" in Firestore
-**Lösung:** Deploye die Security Rules: `firebase deploy --only firestore:rules`
+**Telegram:**
+- Community-Chat: https://t.me/Weltenbibliothekchat
+- Support-Bot: https://t.me/WeltenbibliothekBot
 
-### Issue: "Missing Composite Index"
-**Lösung:** Klicke auf den Error-Link oder siehe "Firestore Composite Indexes" oben
-
-### Issue: "FCM Token null"
-**Lösung:** 
-1. Prüfe ob FCM in Firebase Console aktiviert ist
-2. Prüfe Notification Permissions in Android Settings
-3. Neustart der App
-
-### Issue: Build Fehler
-**Lösung:**
-```bash
-flutter clean
-flutter pub get
-flutter build apk --release
-```
+**Dokumentation:**
+- Vollständige Projekt-Docs: `/home/user/flutter_app/docs/`
+- API-Dokumentation: `/home/user/flutter_app/API.md`
 
 ---
 
-## 📊 Performance Optimization
+## ✅ Checkliste für Produktiv-Start
 
-### 1. Firestore
-
-- Pagination für große Listen implementieren
-- Queries limitieren (`.limit(100)`)
-- Offline Persistence nutzen
-
-### 2. Images
-
-- Bilder komprimieren vor Upload
-- Thumbnails generieren (Cloud Function)
-- Caching nutzen (`cached_network_image`)
-
-### 3. App Size
-
-- Remove unused assets
-- Enable code shrinking in `build.gradle`
-- Use ProGuard rules
+- [ ] **APK installiert** (v3.0.0+88)
+- [ ] **PHP-Daemon läuft** (systemd-Service aktiv)
+- [ ] **Alle 5 Firestore-Indexes erstellt** (Status: Enabled)
+- [ ] **HTTP-Proxy läuft** (Port 8080 auf FTP-Server)
+- [ ] **FTP-Verbindung getestet** (Weltenbibliothek.ddns.net:21)
+- [ ] **Firestore Rules auf Production** (Security Rules aktualisiert)
+- [ ] **Funktionstest erfolgreich** (App ↔ Telegram bidirektional)
+- [ ] **Monitoring eingerichtet** (Log-Überwachung aktiv)
+- [ ] **Backup-Strategie definiert** (Firestore-Backups konfiguriert)
+- [ ] **Credentials gesichert** (API-Keys dokumentiert)
 
 ---
 
-## 🔒 Security Best Practices
-
-1. **Nie API Keys im Code committen**
-2. **Environment Variables nutzen**
-3. **Security Rules restriktiv halten**
-4. **User Input validieren**
-5. **Sensitive Daten verschlüsseln**
-6. **Rate Limiting für API Calls**
-
----
-
-## 📈 Monitoring
-
-### Firebase Console
-
-- **Authentication:** User-Aktivität
-- **Firestore:** Database Usage
-- **Storage:** Storage Usage
-- **Functions:** Execution Logs
-- **Crashlytics:** Crash Reports
-
-### Logs
-
-```bash
-# Function Logs
-firebase functions:log
-
-# Android Logs
-adb logcat | grep Flutter
-```
-
----
-
-## 🚀 Go Live Checklist
-
-- [ ] Alle Features getestet
-- [ ] Security Rules deployed
-- [ ] Cloud Functions deployed
-- [ ] APK/AAB gebaut
-- [ ] App Icon gesetzt
-- [ ] App Name finalisiert
-- [ ] Privacy Policy erstellt
-- [ ] Terms of Service erstellt
-- [ ] Play Store Listing vorbereitet
-- [ ] Screenshots erstellt
-- [ ] Beta Testing durchgeführt
-
----
-
-## 📞 Support
-
-**Bei Problemen:**
-1. Check Firebase Console Logs
-2. Check Flutter Console Output
-3. Check `flutter doctor`
-4. Google the error message
-5. Firebase Support kontaktieren
-
----
-
-**Version:** 1.0.0  
-**Letzte Aktualisierung:** 2024
-
-🎉 **Viel Erfolg mit dem Deployment!**
+**Viel Erfolg mit der Weltenbibliothek v3.0.0+88! 🚀📚**

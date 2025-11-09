@@ -1,0 +1,50 @@
+# 📊 Weltenbibliothek - Projekt-Statistik
+
+## Datei-Übersicht
+
+### Dart-Code (Flutter)
+156 Dart-Dateien
+64556 Zeilen Dart-Code
+
+### Kategorien:
+- Screens:    50 Dateien
+- Widgets:    40 Dateien  
+- Services:   35 Dateien
+- Models:     11 Dateien
+- Utils:      0 Dateien
+- Data:       15 Dateien
+
+### Python-Scripts
+14 Python-Dateien
+3111 Zeilen Python-Code
+
+### Dokumentation
+33 Markdown-Dateien
+28 Text-Dateien
+
+### Konfiguration
+2 YAML-Dateien
+5 JSON-Dateien
+
+## Projekt-Größe
+Gesamtgröße: 57M
+Ohne Build:   8.1M
+
+## Top 10 größte Dateien
+76K	lib/screens/admin_panel_screen.dart
+72K	lib/screens/live_dashboard_screen.dart
+60K	lib/screens/map_screen.dart
+52K	lib/services/telegram_service.dart
+52K	lib/data/massive_events_extended_v3.dart
+44K	lib/services/admin_service.dart
+44K	lib/screens/telegram_content_screen.dart
+40K	lib/screens/more_screen.dart
+36K	lib/services/telegram_service_v3_incomplete.dart
+36K	lib/screens/telegram_bot_screen.dart
+
+## Letzte Änderungen
+Version: 3.0.0+85
+Letzter Build: 2025-11-08 12:08:42
+
+---
+Generiert am: 2025-11-08 12:08:42

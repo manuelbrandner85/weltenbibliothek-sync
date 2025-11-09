@@ -241,23 +241,43 @@ class _UnifiedMediaLibraryScreenState extends State<UnifiedMediaLibraryScreen> {
   }
 
   Stream<QuerySnapshot> _getMediaStream() {
-    Query query = _firestore.collection('telegram_media');
-
-    // Filter by category
-    if (_selectedCategory != 'alle') {
-      query = query.where('category', isEqualTo: _selectedCategory);
+    // ✅ FIX: Synchronisiert mit MadelineProto Collections
+    String collectionName;
+    
+    switch (_selectedCategory) {
+      case 'hoerbuecher':
+        collectionName = 'hoerbuch_messages';  // ✅ Passt zu PHP-Script
+        break;
+      case 'pdfs':
+        collectionName = 'pdf_messages';  // ✅ Passt zu PHP-Script
+        break;
+      case 'bilder':
+        collectionName = 'bilder_messages';  // ✅ Passt zu PHP-Script
+        break;
+      case 'videos':
+        collectionName = 'archiv_messages';  // ✅ Video-Archiv Collection
+        break;
+      case 'podcasts':
+        collectionName = 'wachauf_messages';  // ✅ WachAuf Podcasts
+        break;
+      case 'alle':
+      default:
+        // Für "alle": Lade Chat als Hauptquelle
+        collectionName = 'chat_messages';
+        break;
     }
 
-    // Order by date
-    query = query.orderBy('created_at', descending: true);
+    // Simple query ohne orderBy (vermeidet Index-Probleme)
+    Query query = _firestore.collection(collectionName).limit(100);
 
     return query.snapshots();
   }
 
   Widget _buildMediaCard(Map<String, dynamic> data) {
-    final title = data['title'] ?? 'Unbekannt';
-    final type = data['type'] ?? 'unknown';
-    final downloadUrl = data['download_url'];
+    // ✅ FIX: Kompatibel mit audiobooks, pdf_documents, images, videos Collections
+    final title = data['title'] ?? data['fileName'] ?? data['text'] ?? 'Unbekannt';
+    final type = data['mediaType'] ?? data['type'] ?? _guessTypeFromData(data);
+    final downloadUrl = data['url'] ?? data['download_url'] ?? data['fileUrl'];
     
     // Filter by search
     if (_searchQuery.isNotEmpty && !title.toLowerCase().contains(_searchQuery)) {
@@ -384,5 +404,25 @@ class _UnifiedMediaLibraryScreenState extends State<UnifiedMediaLibraryScreen> {
       case 'audio': return 'Audio';
       default: return 'Datei';
     }
+  }
+  
+  // ✅ NEU: Type-Detection basierend auf Collection/Feldern
+  String _guessTypeFromData(Map<String, dynamic> data) {
+    // Check fileName extension
+    final fileName = data['fileName'] ?? data['title'] ?? '';
+    if (fileName.toLowerCase().endsWith('.pdf')) return 'pdf';
+    if (fileName.toLowerCase().endsWith('.mp4')) return 'video';
+    if (fileName.toLowerCase().endsWith('.mp3')) return 'audio';
+    if (fileName.toLowerCase().contains('.jpg') || 
+        fileName.toLowerCase().contains('.png')) return 'image';
+    
+    // Check mediaType field
+    if (data['mediaType'] == 'document') return 'pdf';
+    if (data['mediaType'] == 'photo') return 'image';
+    if (data['mediaType'] == 'video') return 'video';
+    if (data['mediaType'] == 'audio') return 'audio';
+    
+    // Default fallback
+    return 'unknown';
   }
 }

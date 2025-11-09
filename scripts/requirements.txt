@@ -1,0 +1,11 @@
+# Telegram → FTP Sync System Requirements
+
+# Telegram Client
+pyrogram==2.0.106
+tgcrypto==1.2.5
+
+# Environment Variables
+python-dotenv==1.0.0
+
+# Optional: Firebase Admin SDK (falls benötigt)
+# firebase-admin==7.1.0

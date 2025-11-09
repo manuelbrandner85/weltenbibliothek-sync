@@ -195,10 +195,14 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
       // Update profile
       print('📝 Updating Firestore profile...');
+      final userId = _authService.currentUserId ?? '';
       await _authService.updateUserProfile(
-        username: _usernameController.text.trim(),
-        bio: _bioController.text.trim(),
-        photoURL: photoURL,
+        userId,
+        {
+          'username': _usernameController.text.trim(),
+          'bio': _bioController.text.trim(),
+          'photoURL': photoURL,
+        },
       );
       print('✅ Profile updated successfully');
 

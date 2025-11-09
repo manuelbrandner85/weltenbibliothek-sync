@@ -1,367 +1,127 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import '../services/telegram_bot_service.dart';
-import '../config/app_theme.dart';
+import 'package:flutter/foundation.dart';
+import '../services/chat_sync_service.dart';
+import 'package:intl/intl.dart';
 
-/// Telegram Chat Screen - Bidirektionaler Chat
+/// 💬 TELEGRAM CHAT SCREEN
+/// 
+/// Synchronisierter Chat-Screen mit bidirektionaler Telegram-Integration
 /// 
 /// Features:
-/// - Nachrichten senden
-/// - Nachrichten bearbeiten (eigene)
-/// - Nachrichten löschen (eigene)
-/// - Echtzeit-Synchronisation mit Telegram
-class TelegramChatScreen extends StatefulWidget {
-  final String channelUsername;
-  final String channelTitle;
+/// ✅ Real-time Nachrichtenanzeige
+/// ✅ Nachrichten senden (App → Telegram)
+/// ✅ Nachrichten bearbeiten (bidirektional)
+/// ✅ Nachrichten löschen (bidirektional)
+/// ✅ Telegram-Benutzernamen anzeigen
+/// ✅ Medien-Vorschau (Bilder, Videos, Audio)
+/// ✅ Reply-Funktion
 
-  const TelegramChatScreen({
-    super.key,
-    required this.channelUsername,
-    required this.channelTitle,
-  });
+class TelegramChatScreen extends StatefulWidget {
+  const TelegramChatScreen({super.key});
 
   @override
   State<TelegramChatScreen> createState() => _TelegramChatScreenState();
 }
 
 class _TelegramChatScreenState extends State<TelegramChatScreen> {
+  final ChatSyncService _chatService = ChatSyncService();
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
-
+  
+  ChatMessage? _replyToMessage;
+  ChatMessage? _editingMessage;
+  
+  // Demo-Benutzer (in echter App aus Auth-Service)
+  final String _currentUserId = 'app_user_001';
+  final String _currentUsername = 'FlutterUser';
+  
+  @override
+  void initState() {
+    super.initState();
+    _chatService.initialize();
+  }
+  
   @override
   void dispose() {
     _messageController.dispose();
     _scrollController.dispose();
     super.dispose();
   }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppTheme.backgroundDark,
-      appBar: AppBar(
-        title: Text(
-          widget.channelTitle,
-          style: const TextStyle(color: Colors.white),
-        ),
-        backgroundColor: AppTheme.backgroundDark,
-        elevation: 0,
-        iconTheme: const IconThemeData(color: Colors.white),
-      ),
-      body: Consumer<TelegramBotService>(
-        builder: (context, botService, child) {
-          final messages = botService.chatMessages;
-
-          return Column(
-            children: [
-              // Messages List
-              Expanded(
-                child: messages.isEmpty
-                    ? _buildEmptyState()
-                    : ListView.builder(
-                        controller: _scrollController,
-                        padding: const EdgeInsets.all(8),
-                        reverse: true,
-                        itemCount: messages.length,
-                        itemBuilder: (context, index) {
-                          final message = messages[index];
-                          return _buildMessageBubble(message, botService);
-                        },
-                      ),
-              ),
-              
-              // Input Field
-              _buildMessageInput(botService),
-            ],
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _buildEmptyState() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.chat_bubble_outline, size: 80, color: Colors.white38),
-          const SizedBox(height: 24),
-          Text(
-            'Noch keine Nachrichten',
-            style: AppTheme.headlineSmall.copyWith(color: Colors.white70),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Sende die erste Nachricht!',
-            style: AppTheme.bodySmall.copyWith(color: Colors.white54),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildMessageBubble(Map<String, dynamic> message, TelegramBotService botService) {
-    final text = message['text'] ?? '';
-    final senderName = message['_sender_name'] ?? 'Unbekannt';
-    final isFromApp = message['_is_from_app'] == true;
-    final messageId = message['message_id'];
-    final date = message['date'] != null
-        ? DateTime.fromMillisecondsSinceEpoch(message['date'] * 1000)
-        : DateTime.now();
-
-    return Align(
-      alignment: isFromApp ? Alignment.centerRight : Alignment.centerLeft,
-      child: Container(
-        margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
-        constraints: BoxConstraints(
-          maxWidth: MediaQuery.of(context).size.width * 0.75,
-        ),
-        child: InkWell(
-          onLongPress: isFromApp ? () => _showMessageOptions(message, botService) : null,
-          borderRadius: BorderRadius.circular(12),
-          child: Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: isFromApp
-                  ? AppTheme.secondaryGold.withValues(alpha: 0.3)
-                  : AppTheme.surfaceDark,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: isFromApp 
-                    ? AppTheme.secondaryGold
-                    : AppTheme.primaryPurple.withValues(alpha: 0.3),
-              ),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Sender Name
-                Row(
-                  children: [
-                    Icon(
-                      isFromApp ? Icons.person : Icons.account_circle,
-                      size: 16,
-                      color: AppTheme.secondaryGold,
-                    ),
-                    const SizedBox(width: 4),
-                    Expanded(
-                      child: Text(
-                        senderName,
-                        style: AppTheme.bodySmall.copyWith(
-                          color: AppTheme.secondaryGold,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                
-                // Message Text
-                Text(
-                  text,
-                  style: AppTheme.bodyMedium.copyWith(color: Colors.white),
-                ),
-                
-                const SizedBox(height: 8),
-                
-                // Time
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.access_time, size: 12, color: Colors.white54),
-                    const SizedBox(width: 4),
-                    Text(
-                      '${date.hour}:${date.minute.toString().padLeft(2, '0')}',
-                      style: AppTheme.bodySmall.copyWith(color: Colors.white54),
-                    ),
-                    if (isFromApp) ...[
-                      const SizedBox(width: 8),
-                      Text(
-                        'Lange drücken',
-                        style: AppTheme.bodySmall.copyWith(
-                          color: Colors.white38,
-                          fontSize: 10,
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildMessageInput(TelegramBotService botService) {
-    return Container(
-      padding: const EdgeInsets.all(8),
-      decoration: BoxDecoration(
-        color: AppTheme.surfaceDark,
-        border: Border(
-          top: BorderSide(
-            color: AppTheme.primaryPurple.withValues(alpha: 0.3),
-          ),
-        ),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: TextField(
-              controller: _messageController,
-              style: const TextStyle(color: Colors.white),
-              maxLines: null,
-              decoration: InputDecoration(
-                hintText: 'Nachricht eingeben...',
-                hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.5)),
-                filled: true,
-                fillColor: AppTheme.backgroundDark,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(24),
-                  borderSide: BorderSide.none,
-                ),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-              ),
-            ),
-          ),
-          const SizedBox(width: 8),
-          FloatingActionButton(
-            mini: true,
-            backgroundColor: AppTheme.secondaryGold,
-            onPressed: () async {
-              final text = _messageController.text.trim();
-              if (text.isNotEmpty) {
-                await botService.sendMessage(
-                  chatId: widget.channelUsername,
-                  text: text,
-                );
-                _messageController.clear();
-              }
-            },
-            child: const Icon(Icons.send, color: Colors.black),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showMessageOptions(Map<String, dynamic> message, TelegramBotService botService) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: AppTheme.surfaceDark,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) => Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: Icon(Icons.edit, color: AppTheme.secondaryGold),
-              title: Text('Bearbeiten', style: AppTheme.bodyLarge.copyWith(color: Colors.white)),
-              onTap: () {
-                Navigator.pop(context);
-                _editMessage(message, botService);
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.delete, color: Colors.red),
-              title: Text('Löschen', style: AppTheme.bodyLarge.copyWith(color: Colors.white)),
-              onTap: () {
-                Navigator.pop(context);
-                _deleteMessage(message, botService);
-              },
-            ),
-            ListTile(
-              leading: Icon(Icons.cancel, color: Colors.white54),
-              title: Text('Abbrechen', style: AppTheme.bodyLarge.copyWith(color: Colors.white54)),
-              onTap: () => Navigator.pop(context),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Future<void> _editMessage(Map<String, dynamic> message, TelegramBotService botService) async {
-    final currentText = message['text'] ?? '';
-    final controller = TextEditingController(text: currentText);
+  
+  /// Sendet eine neue Nachricht
+  Future<void> _sendMessage() async {
+    final text = _messageController.text.trim();
     
-    final newText = await showDialog<String>(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: AppTheme.surfaceDark,
-        title: Text('Nachricht bearbeiten', style: AppTheme.headlineSmall),
-        content: TextField(
-          controller: controller,
-          style: const TextStyle(color: Colors.white),
-          maxLines: 5,
-          autofocus: true,
-          decoration: InputDecoration(
-            hintText: 'Neuer Text...',
-            hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.3)),
-            filled: true,
-            fillColor: AppTheme.backgroundDark,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-            ),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('Abbrechen', style: TextStyle(color: Colors.white54)),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context, controller.text),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppTheme.secondaryGold,
-              foregroundColor: Colors.black,
-            ),
-            child: const Text('Speichern'),
-          ),
-        ],
-      ),
-    );
+    if (text.isEmpty) return;
     
-    if (newText != null && newText.trim().isNotEmpty && newText != currentText) {
-      final success = await botService.editMessage(
-        chatId: widget.channelUsername,
-        messageId: message['message_id'],
-        newText: newText.trim(),
-      );
-      
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(success ? '✅ Nachricht bearbeitet' : '❌ Bearbeitung fehlgeschlagen'),
-            backgroundColor: success ? Colors.green : Colors.red,
-          ),
+    try {
+      if (_editingMessage != null) {
+        // Nachricht bearbeiten
+        await _chatService.editMessage(
+          messageId: _editingMessage!.messageId,
+          newText: text,
         );
+        
+        setState(() {
+          _editingMessage = null;
+        });
+        
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('✅ Nachricht bearbeitet')),
+        );
+      } else {
+        // Neue Nachricht senden
+        await _chatService.sendMessage(
+          text: text,
+          replyToId: _replyToMessage?.messageId,
+          currentUserId: _currentUserId,
+          currentUsername: _currentUsername,
+        );
+        
+        setState(() {
+          _replyToMessage = null;
+        });
+        
+        // Scroll nach unten
+        if (_scrollController.hasClients) {
+          _scrollController.animateTo(
+            0.0,
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeOut,
+          );
+        }
       }
+      
+      _messageController.clear();
+      
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('❌ Fehler beim Senden: $e');
+      }
+      
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('❌ Fehler: $e')),
+      );
     }
   }
-
-  Future<void> _deleteMessage(Map<String, dynamic> message, TelegramBotService botService) async {
+  
+  /// Löscht eine Nachricht
+  Future<void> _deleteMessage(ChatMessage message) async {
+    // Bestätigung anfordern
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: AppTheme.surfaceDark,
-        title: Text('Nachricht löschen?', style: AppTheme.headlineSmall),
-        content: Text(
-          'Diese Nachricht wird für alle gelöscht.',
-          style: AppTheme.bodyMedium.copyWith(color: Colors.white70),
-        ),
+        title: const Text('Nachricht löschen?'),
+        content: const Text('Diese Nachricht wird auch aus Telegram gelöscht.'),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: Text('Abbrechen', style: TextStyle(color: Colors.white54)),
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Abbrechen'),
           ),
           ElevatedButton(
-            onPressed: () => Navigator.pop(context, true),
+            onPressed: () => Navigator.of(context).pop(true),
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.red,
               foregroundColor: Colors.white,
@@ -372,20 +132,495 @@ class _TelegramChatScreenState extends State<TelegramChatScreen> {
       ),
     );
     
-    if (confirmed == true) {
-      final success = await botService.deleteMessage(
-        chatId: widget.channelUsername,
-        messageId: message['message_id'],
-      );
+    if (confirmed != true) return;
+    
+    try {
+      await _chatService.deleteMessage(messageId: message.messageId);
       
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(success ? '✅ Nachricht gelöscht' : '❌ Löschen fehlgeschlagen'),
-            backgroundColor: success ? Colors.green : Colors.red,
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('✅ Nachricht gelöscht')),
+      );
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('❌ Fehler beim Löschen: $e');
+      }
+      
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('❌ Fehler: $e')),
+      );
+    }
+  }
+  
+  /// Bereitet Nachrichtenbearbeitung vor
+  void _startEditingMessage(ChatMessage message) {
+    setState(() {
+      _editingMessage = message;
+      _messageController.text = message.text;
+      _replyToMessage = null;
+    });
+  }
+  
+  /// Bricht Bearbeitung ab
+  void _cancelEditing() {
+    setState(() {
+      _editingMessage = null;
+      _messageController.clear();
+    });
+  }
+  
+  /// Zeigt Nachrichtenoptionen
+  void _showMessageOptions(ChatMessage message) {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (message.source == 'app') ...[
+              ListTile(
+                leading: const Icon(Icons.edit),
+                title: const Text('Bearbeiten'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _startEditingMessage(message);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.delete, color: Colors.red),
+                title: const Text('Löschen', style: TextStyle(color: Colors.red)),
+                onTap: () {
+                  Navigator.pop(context);
+                  _deleteMessage(message);
+                },
+              ),
+            ],
+            ListTile(
+              leading: const Icon(Icons.reply),
+              title: const Text('Antworten'),
+              onTap: () {
+                Navigator.pop(context);
+                setState(() {
+                  _replyToMessage = message;
+                  _editingMessage = null;
+                });
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+  
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Weltenbibliothek Chat'),
+            Text(
+              '@Weltenbibliothekchat',
+              style: TextStyle(fontSize: 12, fontWeight: FontWeight.normal),
+            ),
+          ],
+        ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.info_outline),
+            onPressed: () {
+              showDialog(
+                context: context,
+                builder: (context) => AlertDialog(
+                  title: const Text('🔄 Bidirektionale Synchronisation'),
+                  content: const Text(
+                    'Dieser Chat ist mit Telegram synchronisiert:\n\n'
+                    '✅ Nachrichten aus App → Telegram\n'
+                    '✅ Nachrichten aus Telegram → App\n'
+                    '✅ Bearbeitungen werden synchronisiert\n'
+                    '✅ Löschungen werden synchronisiert\n'
+                    '🗑️ Auto-Löschung nach 24 Stunden'
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text('OK'),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        ],
+      ),
+      body: Column(
+        children: [
+          // Nachrichten-Liste
+          Expanded(
+            child: StreamBuilder<List<ChatMessage>>(
+              stream: _chatService.getMessagesStream(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                
+                if (snapshot.hasError) {
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.error, size: 48, color: Colors.red),
+                        const SizedBox(height: 16),
+                        Text('Fehler: ${snapshot.error}'),
+                        const SizedBox(height: 16),
+                        ElevatedButton(
+                          onPressed: () {
+                            setState(() {});
+                          },
+                          child: const Text('Erneut versuchen'),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+                
+                final messages = snapshot.data ?? [];
+                
+                if (messages.isEmpty) {
+                  return const Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.chat_bubble_outline, size: 64, color: Colors.grey),
+                        SizedBox(height: 16),
+                        Text('Noch keine Nachrichten'),
+                        SizedBox(height: 8),
+                        Text(
+                          'Schreibe die erste Nachricht!',
+                          style: TextStyle(color: Colors.grey),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+                
+                return ListView.builder(
+                  controller: _scrollController,
+                  reverse: true,
+                  padding: const EdgeInsets.all(8),
+                  itemCount: messages.length,
+                  itemBuilder: (context, index) {
+                    final message = messages[index];
+                    final isOwnMessage = message.source == 'app' && 
+                                        message.appUserId == _currentUserId;
+                    
+                    return _MessageBubble(
+                      message: message,
+                      isOwnMessage: isOwnMessage,
+                      onLongPress: () => _showMessageOptions(message),
+                    );
+                  },
+                );
+              },
+            ),
+          ),
+          
+          // Reply-Vorschau
+          if (_replyToMessage != null)
+            Container(
+              color: Colors.grey[200],
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Row(
+                children: [
+                  const Icon(Icons.reply, size: 20),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Antwort an ${_replyToMessage!.displayName}',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12,
+                          ),
+                        ),
+                        Text(
+                          _replyToMessage!.text,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(fontSize: 12),
+                        ),
+                      ],
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close, size: 20),
+                    onPressed: () {
+                      setState(() {
+                        _replyToMessage = null;
+                      });
+                    },
+                  ),
+                ],
+              ),
+            ),
+          
+          // Edit-Modus Indikator
+          if (_editingMessage != null)
+            Container(
+              color: Colors.orange[100],
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Row(
+                children: [
+                  const Icon(Icons.edit, size: 20, color: Colors.orange),
+                  const SizedBox(width: 8),
+                  const Expanded(
+                    child: Text(
+                      'Nachricht bearbeiten',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: _cancelEditing,
+                    child: const Text('Abbrechen'),
+                  ),
+                ],
+              ),
+            ),
+          
+          // Eingabefeld
+          Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.grey.withValues(alpha: 0.3),
+                  blurRadius: 4,
+                  offset: const Offset(0, -2),
+                ),
+              ],
+            ),
+            padding: const EdgeInsets.all(8),
+            child: SafeArea(
+              child: Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _messageController,
+                      decoration: InputDecoration(
+                        hintText: _editingMessage != null 
+                            ? 'Nachricht bearbeiten...'
+                            : 'Nachricht schreiben...',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(24),
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 10,
+                        ),
+                      ),
+                      maxLines: null,
+                      textCapitalization: TextCapitalization.sentences,
+                      onSubmitted: (_) => _sendMessage(),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  FloatingActionButton(
+                    onPressed: _sendMessage,
+                    mini: true,
+                    child: Icon(
+                      _editingMessage != null ? Icons.check : Icons.send,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Nachrichtenblase Widget
+class _MessageBubble extends StatelessWidget {
+  final ChatMessage message;
+  final bool isOwnMessage;
+  final VoidCallback onLongPress;
+  
+  const _MessageBubble({
+    required this.message,
+    required this.isOwnMessage,
+    required this.onLongPress,
+  });
+  
+  @override
+  Widget build(BuildContext context) {
+    final timeFormat = DateFormat('HH:mm');
+    
+    return Align(
+      alignment: isOwnMessage ? Alignment.centerRight : Alignment.centerLeft,
+      child: GestureDetector(
+        onLongPress: onLongPress,
+        child: Container(
+          margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+          padding: const EdgeInsets.all(12),
+          constraints: BoxConstraints(
+            maxWidth: MediaQuery.of(context).size.width * 0.7,
+          ),
+          decoration: BoxDecoration(
+            color: isOwnMessage 
+                ? Colors.blue[100] 
+                : Colors.grey[300],
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Absender-Name (nur bei fremden Nachrichten)
+              if (!isOwnMessage)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 4),
+                  child: Text(
+                    message.displayName,
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 12,
+                      color: Colors.blue[700],
+                    ),
+                  ),
+                ),
+              
+              // Medien-Vorschau
+              if (message.hasMedia)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: _MediaPreview(message: message),
+                ),
+              
+              // Nachrichtentext
+              if (message.text.isNotEmpty)
+                Text(message.text),
+              
+              // Zeitstempel und Status
+              const SizedBox(height: 4),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (message.edited)
+                    const Padding(
+                      padding: EdgeInsets.only(right: 4),
+                      child: Text(
+                        'bearbeitet',
+                        style: TextStyle(fontSize: 10, color: Colors.grey),
+                      ),
+                    ),
+                  Text(
+                    message.timestamp != null 
+                        ? timeFormat.format(message.timestamp!)
+                        : 'Sende...',
+                    style: const TextStyle(fontSize: 10, color: Colors.grey),
+                  ),
+                  if (isOwnMessage) ...[
+                    const SizedBox(width: 4),
+                    Icon(
+                      message.syncedToTelegram == true 
+                          ? Icons.done_all 
+                          : Icons.done,
+                      size: 14,
+                      color: message.syncedToTelegram == true 
+                          ? Colors.blue 
+                          : Colors.grey,
+                    ),
+                  ],
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Medien-Vorschau Widget
+class _MediaPreview extends StatelessWidget {
+  final ChatMessage message;
+  
+  const _MediaPreview({required this.message});
+  
+  @override
+  Widget build(BuildContext context) {
+    if (!message.hasMedia) return const SizedBox.shrink();
+    
+    final mediaType = message.mediaType ?? 'unknown';
+    
+    switch (mediaType) {
+      case 'photo':
+      case 'image':
+        return ClipRRect(
+          borderRadius: BorderRadius.circular(8),
+          child: Image.network(
+            message.mediaUrl!,
+            fit: BoxFit.cover,
+            errorBuilder: (context, error, stackTrace) {
+              return Container(
+                height: 150,
+                color: Colors.grey[300],
+                child: const Center(
+                  child: Icon(Icons.image, size: 48, color: Colors.grey),
+                ),
+              );
+            },
           ),
         );
-      }
+      
+      case 'video':
+        return Container(
+          height: 150,
+          decoration: BoxDecoration(
+            color: Colors.black,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: const Center(
+            child: Icon(Icons.play_circle_filled, size: 64, color: Colors.white),
+          ),
+        );
+      
+      case 'audio':
+        return Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: Colors.grey[200],
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: const Row(
+            children: [
+              Icon(Icons.audiotrack),
+              SizedBox(width: 8),
+              Text('Audio-Datei'),
+            ],
+          ),
+        );
+      
+      default:
+        return Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: Colors.grey[200],
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: const Row(
+            children: [
+              Icon(Icons.attach_file),
+              SizedBox(width: 8),
+              Text('Datei'),
+            ],
+          ),
+        );
     }
   }
 }

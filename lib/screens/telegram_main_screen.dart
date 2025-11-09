@@ -173,16 +173,13 @@ class _TelegramMainScreenState extends State<TelegramMainScreen> {
           _buildMenuCard(
             icon: Icons.chat_bubble,
             title: 'Weltenbibliothekchat',
-            subtitle: 'Live-Chat mit der Community',
+            subtitle: 'Live-Chat mit der Community (Bidirektionale Sync)',
             color: AppTheme.primaryPurple,
             onTap: () {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (_) => TelegramChatScreen(
-                    channelUsername: '@Weltenbibliothekchat',
-                    channelTitle: 'Weltenbibliothekchat',
-                  ),
+                  builder: (_) => const TelegramChatScreen(),
                 ),
               );
             },

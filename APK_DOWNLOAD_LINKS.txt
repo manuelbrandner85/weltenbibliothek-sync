@@ -1,0 +1,107 @@
+═══════════════════════════════════════════════════════════════
+🌍 WELTENBIBLIOTHEK v3.0.0+84 - APK DOWNLOAD LINKS
+═══════════════════════════════════════════════════════════════
+
+✅ DOWNLOADS FUNKTIONIEREN JETZT!
+
+Alle APKs wurden in build/web/apk/ kopiert und sind direkt downloadbar.
+
+📥 HAUPT-DOWNLOAD-SEITE (Empfohlen):
+https://5060-i0sts42562ps3y0etjezb-cc2fbc16.sandbox.novita.ai/apk-download.html
+
+Schöne Webseite mit:
+- Alle 4 APK-Varianten
+- Detaillierte Geräteinformationen
+- Feature-Liste
+- Installations-Anleitung
+- Funktioniert in ALLEN Browsern (Chrome, Firefox, Safari, Edge, Opera)
+
+───────────────────────────────────────────────────────────────
+
+🔗 DIREKTE DOWNLOAD-LINKS (Für fortgeschrittene Nutzer):
+
+1️⃣ ARM 64-bit (EMPFOHLEN - 30 MB)
+   Für die meisten modernen Android-Geräte (2019+)
+   
+   https://5060-i0sts42562ps3y0etjezb-cc2fbc16.sandbox.novita.ai/apk/app-arm64-v8a-release.apk
+
+2️⃣ ARM 32-bit (28 MB)
+   Für ältere Android-Geräte (vor 2019)
+   
+   https://5060-i0sts42562ps3y0etjezb-cc2fbc16.sandbox.novita.ai/apk/app-armeabi-v7a-release.apk
+
+3️⃣ Intel x86 64-bit (31 MB)
+   Für Intel-basierte Geräte und Emulatoren
+   
+   https://5060-i0sts42562ps3y0etjezb-cc2fbc16.sandbox.novita.ai/apk/app-x86_64-release.apk
+
+4️⃣ Universal APK (67 MB)
+   Funktioniert auf ALLEN Geräten
+   
+   https://5060-i0sts42562ps3y0etjezb-cc2fbc16.sandbox.novita.ai/apk/app-release.apk
+
+───────────────────────────────────────────────────────────────
+
+📱 INSTALLATIONS-ANLEITUNG:
+
+1. Wähle die passende APK für dein Gerät
+2. Aktiviere "Unbekannte Quellen" in Android-Einstellungen:
+   Einstellungen → Sicherheit → Unbekannte Quellen
+3. Download die APK-Datei
+4. Öffne die heruntergeladene Datei
+5. Tippe auf "Installieren"
+6. Fertig! 🎉
+
+───────────────────────────────────────────────────────────────
+
+✨ FEATURES IN v3.0.0+84:
+
+• Schumann Resonanz Live-Grafiken (10 Diagramme)
+• Home Screen komplett funktionsfähig (alle Buttons)
+• Telegram Media-Bibliothek (233 Dokumente)
+• Erweiterte Suche mit Kategorien-Filter
+• Statistiken mit vollständiger Datenbank-Übersicht
+• Firebase Firestore Integration
+• 161 historische Events
+• Auto-Refresh alle 60 Sekunden
+
+───────────────────────────────────────────────────────────────
+
+🔧 TECHNISCHE DETAILS:
+
+APK Speicherort im Build:
+/home/user/flutter_app/build/web/apk/
+
+Bereitgestellt über:
+Python HTTP Server auf Port 5060
+
+Server läuft auf:
+build/web/ Verzeichnis
+
+APK-Dateien:
+✅ app-arm64-v8a-release.apk (30,792,789 bytes)
+✅ app-armeabi-v7a-release.apk (28,567,347 bytes)  
+✅ app-x86_64-release.apk (31,965,012 bytes)
+✅ app-release.apk (69,468,538 bytes)
+
+───────────────────────────────────────────────────────────────
+
+⚠️ WICHTIGE HINWEISE:
+
+• Internet-Zugriff erforderlich für Live-Daten
+• Firebase Integration optional
+• App funktioniert auch offline mit lokalen Daten
+• Getestet auf Android 8.0+ (API 26+)
+
+───────────────────────────────────────────────────────────────
+
+🎯 WELCHE APK SOLL ICH WÄHLEN?
+
+Nicht sicher? → Nimm die Universal APK (app-release.apk)
+
+Sie funktioniert garantiert auf jedem Android-Gerät!
+
+Für beste Performance und kleinere Größe:
+→ ARM 64-bit für moderne Geräte (2019+)
+
+═══════════════════════════════════════════════════════════════

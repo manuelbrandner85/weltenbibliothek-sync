@@ -52,10 +52,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
     try {
       final displayName = _displayNameController.text.trim();
       
-      await _authService.registerWithEmailPassword(
-        email: _emailController.text.trim(),
-        password: _passwordController.text,
-        displayName: displayName,
+      await _authService.registerWithEmail(
+        _emailController.text.trim(),
+        _passwordController.text,
+        displayName,
       );
 
       // ✅ Setze Benutzername für Telegram-Integration

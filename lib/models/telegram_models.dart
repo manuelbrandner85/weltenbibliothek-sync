@@ -22,10 +22,16 @@ class TelegramVideo {
   }
   
   String? get videoUrl {
+    // ✅ PRIORITÄT 1: FTP/HTTP URL (vom Python-Script)
+    if (data['mediaUrl'] != null) {
+      return data['mediaUrl'] as String;
+    }
+    // PRIORITÄT 2: Neue Struktur (media_files)
     if (data['media_files'] != null && (data['media_files'] as List).isNotEmpty) {
       return (data['media_files'] as List).first['download_url'];
     }
-    return data['video_url']; // Fallback alte Struktur
+    // PRIORITÄT 3: Fallback alte Struktur
+    return data['video_url'];
   }
   
   int get duration {
@@ -97,20 +103,26 @@ class TelegramDocument {
     if (data['media_files'] != null && (data['media_files'] as List).isNotEmpty) {
       return (data['media_files'] as List).first['dateiname'];
     }
-    return data['file_name'] ?? 'document';
+    return data['file_name'] ?? data['fileName'] ?? 'document';
   }
   
   int get fileSize {
     if (data['media_files'] != null && (data['media_files'] as List).isNotEmpty) {
       return (data['media_files'] as List).first['groesse'];
     }
-    return data['file_size'] ?? 0;
+    return data['file_size'] ?? data['fileSize'] ?? 0;
   }
   
   String? get downloadUrl {
+    // ✅ PRIORITÄT 1: FTP/HTTP URL (vom Python-Script)
+    if (data['mediaUrl'] != null) {
+      return data['mediaUrl'] as String;
+    }
+    // PRIORITÄT 2: Neue Struktur (media_files)
     if (data['media_files'] != null && (data['media_files'] as List).isNotEmpty) {
       return (data['media_files'] as List).first['download_url'];
     }
+    // PRIORITÄT 3: Fallback alte Struktur
     return data['download_url'];
   }
   
@@ -183,9 +195,15 @@ class TelegramPhoto {
   
   // Bild-Felder
   String? get imageUrl {
+    // ✅ PRIORITÄT 1: FTP/HTTP URL (vom Python-Script)
+    if (data['mediaUrl'] != null) {
+      return data['mediaUrl'] as String;
+    }
+    // PRIORITÄT 2: Neue Struktur (media_files)
     if (data['media_files'] != null && (data['media_files'] as List).isNotEmpty) {
       return (data['media_files'] as List).first['download_url'];
     }
+    // PRIORITÄT 3: Fallback alte Struktur
     return data['image_url'];
   }
   
@@ -253,9 +271,15 @@ class TelegramAudio {
   
   // Audio-Felder
   String? get downloadUrl {
+    // ✅ PRIORITÄT 1: FTP/HTTP URL (vom Python-Script)
+    if (data['mediaUrl'] != null) {
+      return data['mediaUrl'] as String;
+    }
+    // PRIORITÄT 2: Neue Struktur (media_files)
     if (data['media_files'] != null && (data['media_files'] as List).isNotEmpty) {
       return (data['media_files'] as List).first['download_url'];
     }
+    // PRIORITÄT 3: Fallback alte Struktur
     return data['download_url'];
   }
   

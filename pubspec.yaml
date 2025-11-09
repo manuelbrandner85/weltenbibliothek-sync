@@ -2,7 +2,7 @@ name: weltenbibliothek
 description: "Weltenbibliothek - Chroniken der verborgenen Pfade. Progressive App für alternative Geschichte, verborgenes Wissen und paranormale Phänomene."
 publish_to: 'none'
 
-version: 3.0.0+82  # Unified Media Library mit Telegram Web-Links, Firestore Sync funktioniert
+version: 3.1.0+90  # ✅ Alle 4 Features: File-Upload, User Auth, Push Notifications, Offline-Mode
 
 environment:
   sdk: ^3.9.2
@@ -50,18 +50,18 @@ dependencies:
   latlong2: 0.9.1
   
   # Media & Audio
-  audioplayers: 6.5.1  # Updated from 6.1.0 - Audio playback improvements
-  url_launcher: 6.3.2  # Updated from 6.3.1 - Bug fixes
-  image_picker: 1.2.0  # Updated from 1.1.2 - Phase 2: Bild-Upload
-  # flutter_slidable: 3.1.1  # REMOVED - Incompatible with Flutter 3.35.4 (hashValues error)
-  # record: 5.1.2  # Phase 5A: Voice Messages (DEAKTIVIERT - Build-Fehler)
-  # just_audio: 0.9.40  # Phase 5A: Audio Playback (DEAKTIVIERT - Dependency)
-  video_player: 2.9.2  # Phase 5B: Video-Wiedergabe
-  file_picker: 8.1.4  # Phase 5B: Datei-Auswahl
-  # flutter_sound: 9.16.3  # Phase 5A: Alternative (DEAKTIVIERT - Build-Fehler)
-  permission_handler: 11.3.1  # Android Permissions (Kamera, Storage, etc.)
-  path: 1.9.1  # Pfad-Operationen für Datei-Verwaltung
-  webview_flutter: 4.13.0  # v2.30.0 - Telegram Web Embed Support
+  audioplayers: 6.5.1  # Audio playback (Hörbücher, Podcasts)
+  url_launcher: 6.3.2  # URL launching
+  image_picker: 1.2.0  # Bild-Upload
+  video_player: 2.9.2  # Video-Wiedergabe
+  chewie: 1.8.5  # Video-Player UI (Better controls)
+  flutter_pdfview: 1.3.2  # PDF-Viewer
+  file_picker: 8.1.4  # Datei-Auswahl
+  permission_handler: 11.3.1  # Android Permissions
+  path: 1.9.1  # Pfad-Operationen
+  webview_flutter: 4.13.0  # Telegram Web Embed
+  photo_view: 0.15.0  # Zoom-fähige Bildansicht
+  smooth_page_indicator: 1.2.0+3  # Bilder-Galerie Indikatoren
   
   # ✅ Telegram Bot API Integration (Phase 6.2) - FUNKTIONIERT GARANTIERT!
   # Web + Android kompatibel via HTTP

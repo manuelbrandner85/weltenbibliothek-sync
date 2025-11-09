@@ -14,22 +14,23 @@ import 'screens/map_screen.dart';
 import 'screens/timeline_screen.dart';
 import 'screens/live_dashboard_screen.dart';
 import 'screens/more_screen.dart';
-import 'screens/chat_list_screen.dart';
-// import 'screens/modern_channel_feed_screen.dart'; // NEU: Moderner Channel Feed
-// import 'screens/telegram_unified_screen.dart'; // v2.22.0 - Vereinheitlichter Telegram Screen
-import 'screens/telegram_library_screen.dart'; // v2.30.0 - Telegram Library mit Web Embed
+// Chat List Screen entfernt - Chat ist jetzt im Telegram Tab integriert
+// import 'screens/chat_list_screen.dart';
+import 'screens/unified_telegram_screen.dart'; // v3.1.0 - Benutzerfreundlicher Telegram Screen mit Chat
 import 'widgets/modern_bottom_nav.dart'; // v3.0.0 - Moderne Bottom Navigation
 import 'package:shared_preferences/shared_preferences.dart';
 import 'services/fcm_service.dart';
 import 'services/presence_service.dart';
 import 'services/chat_service.dart';
 import 'services/auth_service.dart';
+import 'services/offline_storage_service.dart';
 import 'services/telegram_service.dart'; // v2.13.0 - Telegram Integration
 import 'services/telegram_background_service.dart'; // v2.14.5 - Background Service (Phase 2.2)
 import 'services/telegram_bot_service.dart'; // v2.21.0 - Bot API Integration (Phase 6.2)
 import 'services/audio_player_service.dart'; // Phase 4 - Background Audio
 // ✅ NEU: Live-Data Services
 import 'services/telegram_channel_loader.dart'; // NEU: Automatischer Channel Content Loader
+import 'services/chat_sync_service.dart'; // v3.0.0+86 - Bidirektionale Telegram Chat Sync
 
 // NEU: Background Message Handler (Phase 3)
 @pragma('vm:entry-point')
@@ -48,6 +49,17 @@ void main() async {
       options: DefaultFirebaseOptions.currentPlatform,
     );
     debugPrint('✅ Firebase erfolgreich initialisiert');
+    
+    // ✅ VERBESSERUNG: Firestore Offline-Persistenz aktivieren
+    FirebaseFirestore.instance.settings = const Settings(
+      persistenceEnabled: true,
+      cacheSizeBytes: Settings.CACHE_SIZE_UNLIMITED,
+    );
+    debugPrint('✅ Firestore Offline-Persistenz aktiviert');
+    
+    // ✅ NEU: Hive Offline Storage initialisieren
+    await OfflineStorageService.initialize();
+    debugPrint('✅ Hive Offline Storage initialisiert');
     
     // NEU: FCM Background Handler registrieren (Phase 3)
     FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
@@ -77,6 +89,14 @@ void main() async {
       debugPrint('✅ Telegram Background Service initialisiert');
     } catch (e) {
       debugPrint('⚠️ Telegram Background Service Fehler: $e');
+    }
+    
+    // v3.0.0+86: Telegram Chat Sync Service initialisieren (Bidirektionale Synchronisation)
+    try {
+      await ChatSyncService().initialize();
+      debugPrint('✅ Chat Sync Service initialisiert (bidirektionale Telegram Synchronisation)');
+    } catch (e) {
+      debugPrint('⚠️ Chat Sync Service Fehler: $e');
     }
     
     // ✅ NEU: Telegram Channel Content Loader (Automatisch beim Start)
@@ -272,10 +292,10 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   final List<Widget> _screens = const [
     ModernHomeScreen(), // 🎨 Moderner Home Screen (stabil)
     MapScreen(),
-    TelegramLibraryScreen(), // v2.30.0 - Telegram Library mit Web Embed & Kategorisierung
+    UnifiedTelegramScreen(), // v3.1.0 - Benutzerfreundlicher Telegram Screen mit Chat (inkl. weltenbibliothek_chat)
     LiveDashboardScreen(),
     TimelineScreen(),
-    ChatListScreen(),
+    // ChatListScreen() entfernt - Chat ist jetzt im Telegram Tab integriert
     MoreScreen(),
   ];
 

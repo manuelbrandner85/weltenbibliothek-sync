@@ -1,0 +1,581 @@
+<?php
+/**
+ * ⚡ ECHTZEIT MULTI-CHANNEL SYNC MIT GITHUB INTEGRATION
+ * =====================================================
+ * 
+ * OPTIMIERTER UPLOAD-FLOW:
+ * Telegram → MadelineProto → GitHub → Firebase → Flutter App
+ *                                  ↓
+ *                            FTP (Backup)
+ * 
+ * VORTEILE:
+ * ✅ GitHub CDN für schnelle Downloads
+ * ✅ Versionskontrolle aller Medien
+ * ✅ Automatische Backups
+ * ✅ Raw URLs für direkten Zugriff
+ * ✅ FTP als Fallback
+ */
+
+require __DIR__ . '/../../madeline_backend/vendor/autoload.php';
+
+use danog\MadelineProto\API;
+use danog\MadelineProto\Logger;
+use danog\MadelineProto\Settings;
+use danog\MadelineProto\Settings\AppInfo;
+
+// ============================================================================
+// KONFIGURATION
+// ============================================================================
+
+$CHANNELS = [
+    [
+        'name' => 'Chat',
+        'username' => '@Weltenbibliothekchat',
+        'collection' => 'chat_messages',
+        'githubFolder' => 'media/chat',
+        'ftpFolder' => '/chat/',
+        'chat_id' => null
+    ],
+    [
+        'name' => 'PDFs',
+        'username' => '@WeltenbibliothekPDF',
+        'collection' => 'pdf_messages',
+        'githubFolder' => 'media/pdfs',
+        'ftpFolder' => '/pdfs/',
+        'chat_id' => null
+    ],
+    [
+        'name' => 'Bilder',
+        'username' => '@weltenbibliothekbilder',
+        'collection' => 'bilder_messages',
+        'githubFolder' => 'media/images',
+        'ftpFolder' => '/images/',
+        'chat_id' => null
+    ],
+    [
+        'name' => 'WachAuf',
+        'username' => '@WeltenbibliothekWachauf',
+        'collection' => 'wachauf_messages',
+        'githubFolder' => 'media/wachauf',
+        'ftpFolder' => '/audios/',
+        'chat_id' => null
+    ],
+    [
+        'name' => 'Video-Archiv',
+        'username' => '@ArchivWeltenBibliothek',
+        'collection' => 'archiv_messages',
+        'githubFolder' => 'media/archiv',
+        'ftpFolder' => '/videos/',
+        'chat_id' => null
+    ],
+    [
+        'name' => 'Hörbücher',
+        'username' => '@WeltenbibliothekHoerbuch',
+        'collection' => 'hoerbuch_messages',
+        'githubFolder' => 'media/audiobooks',
+        'ftpFolder' => '/audiobooks/',
+        'chat_id' => null
+    ],
+];
+
+// GitHub Repository
+$GITHUB_REPO_PATH = '/home/user/weltenbibliothek_media';
+$GITHUB_REPO_URL = 'https://github.com/YOUR_USERNAME/weltenbibliothek_media';  // Anpassen!
+$GITHUB_RAW_BASE = 'https://raw.githubusercontent.com/YOUR_USERNAME/weltenbibliothek_media/main';
+
+// FTP Server (Fallback)
+$FTP_HOST = 'Weltenbibliothek.ddns.net';
+$FTP_PORT = 21;
+$FTP_USER = 'Weltenbibliothek';
+$FTP_PASS = 'Jolene2305';
+$HTTP_BASE_URL = "http://{$FTP_HOST}:8080";
+
+// Firebase
+$FIREBASE_SDK = '/opt/flutter/firebase-admin-sdk.json';
+
+// ⚡ KRITISCH: 1 Sekunde Intervall
+$CHECK_INTERVAL_SECONDS = 1;
+
+echo "\n";
+echo "╔═══════════════════════════════════════════════════════════════╗\n";
+echo "║  ⚡ ECHTZEIT SYNC MIT GITHUB INTEGRATION                     ║\n";
+echo "║     GitHub CDN + FTP Fallback                                ║\n";
+echo "╚═══════════════════════════════════════════════════════════════╝\n\n";
+
+// ============================================================================
+// GITHUB FUNKTIONEN
+// ============================================================================
+
+function initGitRepo() {
+    global $GITHUB_REPO_PATH;
+    
+    if (!file_exists($GITHUB_REPO_PATH)) {
+        echo "🔧 Erstelle GitHub Repository...\n";
+        mkdir($GITHUB_REPO_PATH, 0755, true);
+        
+        chdir($GITHUB_REPO_PATH);
+        exec('git init');
+        
+        // .gitignore erstellen
+        file_put_contents('.gitignore', "*.tmp\n*.log\n");
+        
+        // README erstellen
+        $readme = <<<README
+# Weltenbibliothek Media Storage
+
+Dieses Repository enthält alle Medien aus den Telegram-Kanälen.
+
+## Struktur:
+
+```
+media/
+├── chat/           # Chat-Medien
+├── pdfs/           # PDF-Dokumente
+├── images/         # Bilder
+├── wachauf/        # WachAuf Audios
+├── archiv/         # Video-Archiv
+└── audiobooks/     # Hörbücher
+```
+
+## Usage:
+
+Alle Medien sind über Raw-URLs verfügbar:
+
+https://raw.githubusercontent.com/YOUR_USERNAME/weltenbibliothek_media/main/media/chat/example.jpg
+README;
+        
+        file_put_contents('README.md', $readme);
+        
+        exec('git add .');
+        exec('git commit -m "Initial commit"');
+        
+        echo "✅ Git Repository erstellt!\n";
+        echo "⚠️  WICHTIG: Verbinde mit GitHub:\n";
+        echo "   git remote add origin https://github.com/YOUR_USERNAME/weltenbibliothek_media.git\n";
+        echo "   git push -u origin main\n\n";
+    } else {
+        chdir($GITHUB_REPO_PATH);
+    }
+}
+
+function uploadToGitHub($localFile, $githubPath, $originalFilename) {
+    global $GITHUB_REPO_PATH, $GITHUB_RAW_BASE;
+    
+    $targetPath = $GITHUB_REPO_PATH . '/' . $githubPath . '/' . $originalFilename;
+    $targetDir = dirname($targetPath);
+    
+    // Erstelle Verzeichnis
+    if (!file_exists($targetDir)) {
+        mkdir($targetDir, 0755, true);
+    }
+    
+    // Kopiere Datei
+    if (!copy($localFile, $targetPath)) {
+        return null;
+    }
+    
+    // Git Commit + Push
+    chdir($GITHUB_REPO_PATH);
+    
+    $relativePath = $githubPath . '/' . $originalFilename;
+    exec("git add " . escapeshellarg($relativePath));
+    
+    $commitMsg = "Add media: " . basename($originalFilename) . " [" . date('Y-m-d H:i:s') . "]";
+    exec("git commit -m " . escapeshellarg($commitMsg));
+    
+    // Push (asynchron im Hintergrund)
+    exec("git push origin main > /dev/null 2>&1 &");
+    
+    // Generiere Raw URL
+    $rawUrl = $GITHUB_RAW_BASE . '/' . $relativePath;
+    
+    return $rawUrl;
+}
+
+// ============================================================================
+// FTP FUNKTIONEN (FALLBACK)
+// ============================================================================
+
+function uploadToFTP($localFile, $ftpPath, $originalFilename) {
+    global $FTP_HOST, $FTP_PORT, $FTP_USER, $FTP_PASS, $HTTP_BASE_URL;
+    
+    $conn = ftp_connect($FTP_HOST, $FTP_PORT, 10);
+    if (!$conn) return null;
+    
+    if (!ftp_login($conn, $FTP_USER, $FTP_PASS)) {
+        ftp_close($conn);
+        return null;
+    }
+    
+    ftp_pasv($conn, true);
+    
+    $dir = dirname($ftpPath);
+    @ftp_mkdir($conn, $dir);
+    
+    $success = ftp_put($conn, $ftpPath, $localFile, FTP_BINARY);
+    ftp_close($conn);
+    
+    if ($success) {
+        return $HTTP_BASE_URL . $ftpPath;
+    }
+    
+    return null;
+}
+
+// ============================================================================
+// FIRESTORE FUNKTIONEN
+// ============================================================================
+
+function saveToFirestore($collection, $data) {
+    global $FIREBASE_SDK;
+    
+    $dataJson = json_encode($data);
+    $dataJson = str_replace("'", "\\'", $dataJson);
+    
+    $pythonScript = <<<PYTHON
+import firebase_admin
+from firebase_admin import credentials, firestore
+import json
+
+if not firebase_admin._apps:
+    cred = credentials.Certificate('$FIREBASE_SDK')
+    firebase_admin.initialize_app(cred)
+
+db = firestore.client()
+
+data = json.loads('$dataJson')
+
+if 'timestamp' in data and isinstance(data['timestamp'], (int, float)):
+    from datetime import datetime
+    data['timestamp'] = datetime.fromtimestamp(data['timestamp'])
+
+doc_id = str(data.get('messageId', None))
+
+try:
+    if doc_id and doc_id != 'None':
+        db.collection('$collection').document(doc_id).set(data, merge=True)
+    else:
+        db.collection('$collection').add(data)
+    print('success')
+except Exception as e:
+    print(f'error: {e}')
+PYTHON;
+    
+    $output = shell_exec("python3 -c " . escapeshellarg($pythonScript) . " 2>&1");
+    return strpos($output, 'success') !== false;
+}
+
+function getAppMessagesToSync($collection) {
+    global $FIREBASE_SDK;
+    
+    $pythonScript = <<<PYTHON
+import firebase_admin
+from firebase_admin import credentials, firestore
+import json
+
+if not firebase_admin._apps:
+    cred = credentials.Certificate('$FIREBASE_SDK')
+    firebase_admin.initialize_app(cred)
+
+db = firestore.client()
+
+query = (
+    db.collection('$collection')
+    .where('source', '==', 'app')
+    .where('syncedToTelegram', '==', False)
+    .limit(50)
+)
+
+docs = query.get()
+messages = []
+
+for doc in docs:
+    data = doc.to_dict()
+    if 'timestamp' in data and data['timestamp']:
+        data['timestamp'] = str(data['timestamp'])
+    data['doc_id'] = doc.id
+    messages.append(data)
+
+print(json.dumps(messages))
+PYTHON;
+    
+    $output = shell_exec("python3 -c " . escapeshellarg($pythonScript) . " 2>&1");
+    
+    if (preg_match('/\[.*\]/s', $output, $matches)) {
+        $messages = json_decode($matches[0], true);
+        return is_array($messages) ? $messages : [];
+    }
+    
+    return [];
+}
+
+function markAsSynced($collection, $docId, $telegramMessageId) {
+    global $FIREBASE_SDK;
+    
+    $pythonScript = <<<PYTHON
+import firebase_admin
+from firebase_admin import credentials, firestore
+
+if not firebase_admin._apps:
+    cred = credentials.Certificate('$FIREBASE_SDK')
+    firebase_admin.initialize_app(cred)
+
+db = firestore.client()
+
+try:
+    db.collection('$collection').document('$docId').update({
+        'syncedToTelegram': True,
+        'telegramMessageId': '$telegramMessageId'
+    })
+    print('success')
+except Exception as e:
+    print(f'error: {e}')
+PYTHON;
+    
+    $output = shell_exec("python3 -c " . escapeshellarg($pythonScript) . " 2>&1");
+    return strpos($output, 'success') !== false;
+}
+
+// ============================================================================
+// MADELINE PROTO INIT
+// ============================================================================
+
+echo "🔧 Initialisiere MadelineProto...\n";
+
+$settings = new Settings;
+$appInfo = new AppInfo;
+$appInfo->setApiId(25697241);
+$appInfo->setApiHash('07ae8c7dc9109a2499f0b7e456427b49');
+
+$settings->setAppInfo($appInfo);
+$settings->getLogger()->setLevel(Logger::WARNING);
+
+$MadelineProto = new API('/home/user/madeline_backend/session.madeline', $settings);
+$MadelineProto->start();
+
+echo "✅ MadelineProto bereit!\n\n";
+
+// ============================================================================
+// GIT REPO INIT
+// ============================================================================
+
+initGitRepo();
+
+// ============================================================================
+// CHANNEL IDS AUFLÖSEN
+// ============================================================================
+
+echo "📺 Löse Channel-IDs auf...\n";
+foreach ($CHANNELS as &$channel) {
+    try {
+        $info = $MadelineProto->getInfo($channel['username']);
+        $channel['chat_id'] = $info['bot_api_id'];
+        echo "   ✅ {$channel['name']}: {$channel['chat_id']}\n";
+    } catch (Exception $e) {
+        echo "   ❌ {$channel['name']}: Fehler - {$e->getMessage()}\n";
+    }
+}
+unset($channel);
+echo "\n";
+
+// ============================================================================
+// ⚡ ECHTZEIT SYNC LOOP
+// ============================================================================
+
+$loopCount = 0;
+$channelLastMessageIds = [];
+$totalSynced = [
+    'telegram_to_firestore' => 0,
+    'firestore_to_telegram' => 0,
+    'github_uploads' => 0,
+    'ftp_uploads' => 0
+];
+
+foreach ($CHANNELS as $channel) {
+    $channelLastMessageIds[$channel['username']] = 0;
+}
+
+echo "⚡ Starte ECHTZEIT Sync mit GitHub Integration...\n";
+echo "   📍 Kanäle: " . count($CHANNELS) . "\n";
+echo "   ⏱️  Intervall: {$CHECK_INTERVAL_SECONDS} Sekunde\n";
+echo "   🎯 Upload: GitHub (Primary) + FTP (Fallback)\n\n";
+
+while (true) {
+    $loopCount++;
+    $cycleStart = microtime(true);
+    
+    echo "════════════════════════════════════════════════════════════════\n";
+    echo "⚡ SYNC #{$loopCount} - " . date('H:i:s') . "\n";
+    echo "════════════════════════════════════════════════════════════════\n";
+    
+    foreach ($CHANNELS as $channel) {
+        if ($channel['chat_id'] === null) continue;
+        
+        // TELEGRAM → FIRESTORE
+        try {
+            $history = $MadelineProto->messages->getHistory([
+                'peer' => $channel['username'],
+                'limit' => 200,
+            ]);
+            
+            $messages = $history['messages'];
+            $newCount = 0;
+            
+            foreach ($messages as $message) {
+                $msgId = $message['id'];
+                
+                if ($msgId <= $channelLastMessageIds[$channel['username']]) {
+                    continue;
+                }
+                
+                $userId = null;
+                if (is_numeric($message['from_id'])) {
+                    $userId = $message['from_id'];
+                } elseif (isset($message['from_id']['user_id'])) {
+                    $userId = $message['from_id']['user_id'];
+                }
+                
+                if (!$userId) continue;
+                
+                $userInfo = $MadelineProto->getInfo($userId);
+                $username = $userInfo['User']['username'] ?? null;
+                $firstName = $userInfo['User']['first_name'] ?? '';
+                $lastName = $userInfo['User']['last_name'] ?? '';
+                
+                $text = $message['message'] ?? '';
+                $timestamp = $message['date'] ?? time();
+                
+                $firestoreData = [
+                    'messageId' => (string)$msgId,
+                    'from_id' => (string)$userId,
+                    'from_name' => trim("$firstName $lastName"),
+                    'username' => $username,
+                    'text' => $text,
+                    'timestamp' => $timestamp,
+                    'date' => $timestamp,
+                    'source' => 'telegram',
+                    'channel' => $channel['name'],
+                    'channelUsername' => $channel['username'],
+                    'syncedToTelegram' => true,
+                    'githubUrl' => null,
+                    'ftpUrl' => null,
+                    'mediaType' => null,
+                ];
+                
+                // MEDIEN-HANDLING MIT GITHUB UPLOAD
+                if (isset($message['media'])) {
+                    $mediaType = null;
+                    $fileName = null;
+                    
+                    if (isset($message['media']['_'])) {
+                        switch ($message['media']['_']) {
+                            case 'messageMediaPhoto':
+                                $mediaType = 'photo';
+                                $fileName = "photo_{$msgId}_" . time() . ".jpg";
+                                break;
+                            case 'messageMediaDocument':
+                                $mediaType = 'document';
+                                $doc = $message['media']['document'];
+                                foreach ($doc['attributes'] ?? [] as $attr) {
+                                    if ($attr['_'] === 'documentAttributeFilename') {
+                                        $fileName = $attr['file_name'];
+                                        break;
+                                    }
+                                }
+                                if (!$fileName) {
+                                    $fileName = "file_{$msgId}_" . time();
+                                }
+                                break;
+                        }
+                    }
+                    
+                    if ($mediaType && $fileName) {
+                        $localPath = "/tmp/{$fileName}";
+                        $MadelineProto->downloadToFile($message['media'], $localPath);
+                        
+                        // 1. UPLOAD ZU GITHUB (Primary)
+                        $githubUrl = uploadToGitHub($localPath, $channel['githubFolder'], $fileName);
+                        
+                        if ($githubUrl) {
+                            $firestoreData['githubUrl'] = $githubUrl;
+                            $firestoreData['url'] = $githubUrl;  // Primary URL
+                            $totalSynced['github_uploads']++;
+                            echo "   📦 GitHub Upload: {$fileName}\n";
+                        }
+                        
+                        // 2. UPLOAD ZU FTP (Fallback)
+                        $ftpPath = $channel['ftpFolder'] . $fileName;
+                        $ftpUrl = uploadToFTP($localPath, $ftpPath, $fileName);
+                        
+                        if ($ftpUrl) {
+                            $firestoreData['ftpUrl'] = $ftpUrl;
+                            if (!$githubUrl) {
+                                $firestoreData['url'] = $ftpUrl;  // Fallback URL
+                            }
+                            $totalSynced['ftp_uploads']++;
+                        }
+                        
+                        $firestoreData['mediaType'] = $mediaType;
+                        $firestoreData['fileName'] = $fileName;
+                        
+                        @unlink($localPath);
+                    }
+                }
+                
+                if (saveToFirestore($channel['collection'], $firestoreData)) {
+                    $newCount++;
+                    $totalSynced['telegram_to_firestore']++;
+                }
+                
+                if ($msgId > $channelLastMessageIds[$channel['username']]) {
+                    $channelLastMessageIds[$channel['username']] = $msgId;
+                }
+            }
+            
+            if ($newCount > 0) {
+                echo "   ✅ {$channel['name']}: {$newCount} neue Nachrichten\n";
+            }
+            
+        } catch (Exception $e) {
+            echo "   ❌ {$channel['name']}: {$e->getMessage()}\n";
+        }
+        
+        // FIRESTORE → TELEGRAM
+        try {
+            $appMessages = getAppMessagesToSync($channel['collection']);
+            
+            foreach ($appMessages as $msg) {
+                $text = $msg['text'] ?? '';
+                $fromName = $msg['from_name'] ?? 'App User';
+                
+                $fullText = "📱 {$fromName}:\n{$text}";
+                
+                $sent = $MadelineProto->messages->sendMessage([
+                    'peer' => $channel['username'],
+                    'message' => $fullText
+                ]);
+                
+                $sentId = $sent['updates'][0]['id'] ?? null;
+                
+                if ($sentId) {
+                    markAsSynced($channel['collection'], $msg['doc_id'], $sentId);
+                    $totalSynced['firestore_to_telegram']++;
+                    echo "   📤 {$channel['name']}: App → Telegram\n";
+                }
+            }
+            
+        } catch (Exception $e) {
+            // Silent
+        }
+    }
+    
+    $cycleDuration = round((microtime(true) - $cycleStart) * 1000);
+    echo "\n📊 Statistik:\n";
+    echo "   Telegram → Firestore: {$totalSynced['telegram_to_firestore']}\n";
+    echo "   Firestore → Telegram: {$totalSynced['firestore_to_telegram']}\n";
+    echo "   GitHub Uploads: {$totalSynced['github_uploads']}\n";
+    echo "   FTP Uploads: {$totalSynced['ftp_uploads']}\n";
+    echo "   Zyklus: {$cycleDuration}ms\n\n";
+    
+    sleep($CHECK_INTERVAL_SECONDS);
+}
