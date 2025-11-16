@@ -612,21 +612,50 @@ app.get('/api/chats', authMiddleware, async (c) => {
   try {
     const userId = c.get('userId')
     
+    // Get public chats (always visible) + user's joined chats
     const result = await c.env.DB.prepare(`
       SELECT 
         c.*,
         (SELECT COUNT(*) FROM chat_members WHERE chat_id = c.id) as member_count,
-        (SELECT MAX(created_at) FROM messages WHERE chat_id = c.id) as last_message_at
+        (SELECT MAX(created_at) FROM messages WHERE chat_id = c.id) as last_message_at,
+        CASE WHEN cm.user_id IS NOT NULL THEN 1 ELSE 0 END as is_member
       FROM chats c
-      INNER JOIN chat_members cm ON c.id = cm.chat_id
-      WHERE cm.user_id = ?
-      ORDER BY last_message_at DESC NULLS LAST
-    `).bind(userId).all()
+      LEFT JOIN chat_members cm ON c.id = cm.chat_id AND cm.user_id = ?
+      WHERE c.is_public = 1 OR cm.user_id = ?
+      ORDER BY c.is_public DESC, last_message_at DESC NULLS LAST
+    `).bind(userId, userId).all()
     
     return c.json({ success: true, chats: result.results || [] })
   } catch (error) {
     console.error('Error fetching chats:', error)
     return c.json({ success: false, error: 'Failed to fetch chats' }, 500)
+  }
+})
+
+// Get single chat info
+app.get('/api/chats/:id', authMiddleware, async (c) => {
+  try {
+    const chatId = c.req.param('id')
+    const userId = c.get('userId')
+    
+    const chat = await c.env.DB.prepare(`
+      SELECT 
+        c.*,
+        (SELECT COUNT(*) FROM chat_members WHERE chat_id = c.id) as member_count,
+        CASE WHEN cm.user_id IS NOT NULL THEN 1 ELSE 0 END as is_member
+      FROM chats c
+      LEFT JOIN chat_members cm ON c.id = cm.chat_id AND cm.user_id = ?
+      WHERE c.id = ? AND (c.is_public = 1 OR cm.user_id = ?)
+    `).bind(userId, chatId, userId).first()
+    
+    if (!chat) {
+      return c.json({ success: false, error: 'Chat not found' }, 404)
+    }
+    
+    return c.json({ success: true, chat })
+  } catch (error) {
+    console.error('Error fetching chat:', error)
+    return c.json({ success: false, error: 'Failed to fetch chat' }, 500)
   }
 })
 

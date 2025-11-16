@@ -4,253 +4,526 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Weltenbibliothek - Chat</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="/static/design-system.css">
     <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
     <style>
         body {
-            background: #1a1a2e;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             overflow: hidden;
+            height: 100vh;
         }
         
+        /* Chat Sidebar */
         .chat-sidebar {
-            background: rgba(26, 26, 46, 0.95);
-            border-right: 1px solid rgba(255, 215, 0, 0.2);
+            width: 320px;
+            height: 100vh;
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
         }
         
+        /* Fixed Chats Section */
+        .fixed-chats {
+            padding: var(--spacing-md);
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .fixed-chats-header {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+            padding: var(--spacing-sm) 0;
+            color: var(--text-tertiary);
+            font-size: var(--text-sm);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        
+        /* Chat Item */
         .chat-item {
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-md);
+            padding: var(--spacing-md);
+            border-radius: var(--radius-lg);
             cursor: pointer;
-            transition: all 0.2s;
+            transition: all var(--transition);
+            border: 1px solid transparent;
+            margin-bottom: var(--spacing-sm);
         }
         
         .chat-item:hover {
-            background: rgba(255, 215, 0, 0.05);
+            background: var(--surface-light);
+            border-color: var(--border-light);
         }
         
         .chat-item.active {
-            background: rgba(255, 215, 0, 0.1);
-            border-left: 3px solid #ffd700;
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(139, 92, 246, 0.1));
+            border-color: var(--primary);
         }
         
+        .chat-item-icon {
+            font-size: 1.5rem;
+            min-width: 40px;
+            text-align: center;
+        }
+        
+        .chat-item-content {
+            flex: 1;
+            min-width: 0;
+        }
+        
+        .chat-item-title {
+            font-weight: 600;
+            color: var(--text-primary);
+            font-size: var(--text-base);
+        }
+        
+        .chat-item-description {
+            font-size: var(--text-sm);
+            color: var(--text-tertiary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        /* User Chats Section */
+        .user-chats {
+            flex: 1;
+            overflow-y: auto;
+            padding: var(--spacing-md);
+        }
+        
+        .user-chats-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: var(--spacing-sm) 0;
+            margin-bottom: var(--spacing-sm);
+            color: var(--text-tertiary);
+            font-size: var(--text-sm);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        
+        /* Chat Main Area */
         .chat-main {
-            background: #16213e;
+            flex: 1;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
         }
         
+        /* Chat Header */
+        .chat-header {
+            padding: var(--spacing-lg);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .chat-header-left {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-md);
+        }
+        
+        .chat-header-title {
+            font-size: var(--text-xl);
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+        
+        .chat-header-subtitle {
+            font-size: var(--text-sm);
+            color: var(--text-tertiary);
+        }
+        
+        /* Messages Container */
+        .messages-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: var(--spacing-lg);
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-md);
+        }
+        
+        /* Message Bubble */
         .message {
+            display: flex;
+            gap: var(--spacing-md);
             max-width: 70%;
-            word-wrap: break-word;
+            animation: fadeIn var(--transition) ease-out;
         }
         
         .message.own {
-            background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
-            color: #1a1a2e;
             margin-left: auto;
+            flex-direction: row-reverse;
         }
         
-        .message.other {
-            background: rgba(255, 255, 255, 0.05);
+        .message-avatar {
+            min-width: 40px;
+        }
+        
+        .message-content {
+            background: var(--surface);
+            padding: var(--spacing-md);
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border);
+        }
+        
+        .message.own .message-content {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
             color: white;
+            border: none;
+        }
+        
+        .message-sender {
+            font-weight: 600;
+            font-size: var(--text-sm);
+            margin-bottom: var(--spacing-xs);
+            color: var(--primary-light);
+        }
+        
+        .message.own .message-sender {
+            color: rgba(255, 255, 255, 0.9);
+        }
+        
+        .message-text {
+            word-wrap: break-word;
+            line-height: 1.5;
+        }
+        
+        .message-time {
+            font-size: var(--text-xs);
+            color: var(--text-disabled);
+            margin-top: var(--spacing-xs);
+        }
+        
+        .message.own .message-time {
+            color: rgba(255, 255, 255, 0.7);
+        }
+        
+        /* Message Input */
+        .message-input-area {
+            padding: var(--spacing-lg);
+            border-top: 1px solid var(--border);
+        }
+        
+        .message-form {
+            display: flex;
+            gap: var(--spacing-sm);
+            align-items: center;
         }
         
         .message-input {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 215, 0, 0.3);
-            color: white;
+            flex: 1;
         }
         
-        .message-input:focus {
-            outline: none;
-            border-color: #ffd700;
+        /* Floating Action Button */
+        .fab {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            width: 56px;
+            height: 56px;
+            border-radius: var(--radius-full);
+            box-shadow: var(--shadow-xl);
+            z-index: 1000;
         }
         
-        .btn-send {
-            background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
-            color: #1a1a2e;
+        /* Empty State */
+        .empty-state {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-tertiary);
         }
         
-        .btn-send:hover {
-            transform: scale(1.05);
+        .empty-state-icon {
+            font-size: 4rem;
+            margin-bottom: var(--spacing-lg);
+            opacity: 0.3;
         }
         
-        .user-avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+        .empty-state-title {
+            font-size: var(--text-2xl);
+            font-weight: 600;
+            margin-bottom: var(--spacing-sm);
+        }
+        
+        .empty-state-description {
+            font-size: var(--text-base);
+        }
+        
+        /* Modal */
+        .modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(4px);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-weight: bold;
-            color: #1a1a2e;
+            z-index: 2000;
+            animation: fadeIn var(--transition) ease-out;
         }
         
-        .user-status {
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            position: absolute;
-            bottom: 0;
-            right: 0;
-            border: 2px solid #1a1a2e;
+        .modal-content {
+            background: var(--surface);
+            border-radius: var(--radius-xl);
+            padding: var(--spacing-xl);
+            width: 90%;
+            max-width: 500px;
+            border: 1px solid var(--border-light);
+            animation: slideInRight var(--transition) ease-out;
         }
         
-        .user-status.online {
-            background: #22c55e;
+        /* User Profile Header */
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-md);
+            padding: var(--spacing-lg);
+            border-bottom: 1px solid var(--border);
         }
         
-        .user-status.offline {
-            background: #6b7280;
+        .user-profile-info {
+            flex: 1;
+            min-width: 0;
         }
         
-        #messages-container::-webkit-scrollbar {
-            width: 8px;
+        .user-profile-name {
+            font-weight: 600;
+            color: var(--text-primary);
+            font-size: var(--text-base);
         }
         
-        #messages-container::-webkit-scrollbar-track {
-            background: rgba(255, 255, 255, 0.05);
+        .user-profile-username {
+            font-size: var(--text-sm);
+            color: var(--text-tertiary);
         }
         
-        #messages-container::-webkit-scrollbar-thumb {
-            background: rgba(255, 215, 0, 0.3);
-            border-radius: 4px;
+        /* Search Bar */
+        .search-bar {
+            padding: var(--spacing-md);
+            border-bottom: 1px solid var(--border);
+        }
+        
+        /* Livestream Indicator */
+        .livestream-badge {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .chat-sidebar {
+                width: 100%;
+                position: absolute;
+                z-index: 100;
+                transform: translateX(-100%);
+                transition: transform var(--transition);
+            }
+            
+            .chat-sidebar.open {
+                transform: translateX(0);
+            }
+            
+            .message {
+                max-width: 85%;
+            }
         }
     </style>
 </head>
-<body class="flex h-screen">
+<body class="flex">
     <!-- Sidebar - Chat List -->
-    <div class="chat-sidebar w-80 flex flex-col">
-        <!-- Header -->
-        <div class="p-4 border-b border-gray-700">
-            <div class="flex items-center justify-between mb-4">
-                <div class="flex items-center">
-                    <div class="user-avatar relative">
-                        <span id="user-initials">?</span>
-                        <div class="user-status online"></div>
-                    </div>
-                    <div class="ml-3">
-                        <div class="text-white font-semibold" id="user-display-name">Laden...</div>
-                        <div class="text-gray-400 text-sm" id="user-username">@...</div>
-                    </div>
-                </div>
-                <button onclick="logout()" class="text-gray-400 hover:text-red-400" title="Abmelden">
-                    <i class="fas fa-sign-out-alt"></i>
-                </button>
+    <div class="chat-sidebar glass">
+        <!-- User Profile Header -->
+        <div class="user-profile">
+            <div class="avatar-md" id="user-avatar">
+                <span id="user-initials">?</span>
             </div>
-            
-            <!-- Search -->
+            <div class="user-profile-info">
+                <div class="user-profile-name" id="user-display-name">Laden...</div>
+                <div class="user-profile-username" id="user-username">@...</div>
+            </div>
+            <button onclick="logout()" class="btn-icon btn-ghost" title="Abmelden">
+                <i class="fas fa-sign-out-alt"></i>
+            </button>
+        </div>
+        
+        <!-- Search Bar -->
+        <div class="search-bar">
             <input 
                 type="text" 
                 id="search-chats" 
                 placeholder="Chats durchsuchen..." 
-                class="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white text-sm"
+                class="input"
             />
         </div>
         
         <!-- Tabs -->
-        <div class="flex border-b border-gray-700">
-            <button onclick="switchTab('chats')" class="flex-1 py-3 text-yellow-400 border-b-2 border-yellow-400" id="tab-chats">
+        <div class="flex border-b" style="border-color: var(--border);">
+            <button onclick="switchTab('chats')" class="flex-1 py-3 text-primary font-semibold border-b-2" style="border-color: var(--primary);" id="tab-chats">
                 <i class="fas fa-comments mr-2"></i>
                 Chats
             </button>
-            <button onclick="switchTab('map')" class="flex-1 py-3 text-gray-400" id="tab-map">
+            <button onclick="switchTab('map')" class="flex-1 py-3 text-tertiary" id="tab-map">
                 <i class="fas fa-map mr-2"></i>
                 Karte
             </button>
         </div>
         
-        <!-- Chat List -->
-        <div id="chat-list" class="flex-1 overflow-y-auto">
-            <div class="p-4 text-center text-gray-500">
-                <i class="fas fa-spinner fa-spin text-2xl mb-2"></i>
-                <p>Lade Chats...</p>
+        <!-- Fixed Chats Section -->
+        <div class="fixed-chats">
+            <div class="fixed-chats-header">
+                <i class="fas fa-star"></i>
+                <span>Standard Chats</span>
+            </div>
+            
+            <!-- Allgemein Chat -->
+            <div class="chat-item" onclick="openChat(1)" data-chat-id="1">
+                <div class="chat-item-icon">💬</div>
+                <div class="chat-item-content">
+                    <div class="chat-item-title">Allgemein</div>
+                    <div class="chat-item-description">Allgemeiner Chat für alle Themen</div>
+                </div>
+                <span class="badge badge-success livestream-badge">Live</span>
+            </div>
+            
+            <!-- Musik Chat -->
+            <div class="chat-item" onclick="openChat(2)" data-chat-id="2">
+                <div class="chat-item-icon">🎵</div>
+                <div class="chat-item-content">
+                    <div class="chat-item-title">Musik</div>
+                    <div class="chat-item-description">Musik & Livestreams</div>
+                </div>
             </div>
         </div>
         
-        <!-- New Chat Button -->
-        <div class="p-4 border-t border-gray-700">
-            <button onclick="showNewChatModal()" class="w-full py-3 bg-yellow-600 hover:bg-yellow-700 text-white font-semibold rounded-lg transition">
-                <i class="fas fa-plus mr-2"></i>
-                Neuer Chat
-            </button>
+        <!-- User Chats Section -->
+        <div class="user-chats">
+            <div class="user-chats-header">
+                <span>
+                    <i class="fas fa-user-friends mr-2"></i>
+                    Deine Chats
+                </span>
+                <button onclick="showNewChatModal()" class="btn-icon btn-sm btn-ghost" title="Neuer Chat">
+                    <i class="fas fa-plus"></i>
+                </button>
+            </div>
+            
+            <div id="user-chat-list">
+                <div class="text-center text-tertiary py-4">
+                    <i class="fas fa-spinner fa-spin text-2xl mb-2"></i>
+                    <p class="text-sm">Lade Chats...</p>
+                </div>
+            </div>
         </div>
     </div>
     
     <!-- Main Chat Area -->
-    <div class="chat-main flex-1 flex flex-col">
-        <!-- Chat Header -->
-        <div id="chat-header" class="p-4 border-b border-gray-700 bg-gray-900 hidden">
-            <div class="flex items-center justify-between">
-                <div class="flex items-center">
-                    <div class="user-avatar mr-3">
-                        <span id="chat-title-initials">?</span>
-                    </div>
-                    <div>
-                        <div class="text-white font-semibold" id="chat-title">Chat-Name</div>
-                        <div class="text-gray-400 text-sm" id="chat-subtitle">Online</div>
-                    </div>
+    <div class="chat-main">
+        <!-- Chat Header (hidden initially) -->
+        <div id="chat-header" class="chat-header hidden">
+            <div class="chat-header-left">
+                <div class="avatar-md" id="chat-avatar">
+                    <span id="chat-title-initials">?</span>
                 </div>
-                <button class="text-gray-400 hover:text-yellow-400">
+                <div>
+                    <div class="chat-header-title" id="chat-title">Chat-Name</div>
+                    <div class="chat-header-subtitle" id="chat-subtitle">Online</div>
+                </div>
+            </div>
+            <div class="flex gap-sm">
+                <button class="btn-icon btn-ghost" title="Livestream starten">
+                    <i class="fas fa-video"></i>
+                </button>
+                <button class="btn-icon btn-ghost" title="Anrufen">
+                    <i class="fas fa-phone"></i>
+                </button>
+                <button class="btn-icon btn-ghost" title="Optionen">
                     <i class="fas fa-ellipsis-v"></i>
                 </button>
             </div>
         </div>
         
-        <!-- Messages -->
-        <div id="messages-container" class="flex-1 overflow-y-auto p-4">
-            <div class="flex items-center justify-center h-full text-gray-500">
-                <div class="text-center">
-                    <i class="fas fa-comments text-6xl mb-4 text-gray-700"></i>
-                    <p class="text-xl">Wähle einen Chat aus oder starte einen neuen</p>
-                    <p class="text-sm mt-2">Tausche dich über verborgenes Wissen aus</p>
-                </div>
+        <!-- Messages Container -->
+        <div id="messages-container" class="messages-container">
+            <!-- Empty State -->
+            <div class="empty-state">
+                <i class="fas fa-comments empty-state-icon"></i>
+                <div class="empty-state-title">Willkommen im Chat</div>
+                <div class="empty-state-description">Wähle einen Chat aus oder starte einen neuen</div>
+                <button onclick="showNewChatModal()" class="btn-primary" style="margin-top: var(--spacing-lg);">
+                    <i class="fas fa-plus mr-2"></i>
+                    Neuer Chat
+                </button>
             </div>
         </div>
         
-        <!-- Message Input -->
-        <div id="message-input-area" class="p-4 border-t border-gray-700 bg-gray-900 hidden">
-            <form id="message-form" class="flex gap-2">
-                <button type="button" class="text-gray-400 hover:text-yellow-400 px-3">
-                    <i class="fas fa-paperclip text-xl"></i>
+        <!-- Message Input Area (hidden initially) -->
+        <div id="message-input-area" class="message-input-area hidden">
+            <form id="message-form" class="message-form">
+                <button type="button" class="btn-icon btn-ghost" title="Datei anhängen">
+                    <i class="fas fa-paperclip"></i>
                 </button>
                 <input 
                     type="text" 
                     id="message-input" 
                     placeholder="Nachricht schreiben..." 
-                    class="message-input flex-1 px-4 py-3 rounded-lg"
+                    class="message-input input"
                     required
                 />
-                <button type="submit" class="btn-send px-6 py-3 rounded-lg font-semibold transition">
+                <button type="button" class="btn-icon btn-ghost" title="Emoji">
+                    <i class="fas fa-smile"></i>
+                </button>
+                <button type="submit" class="btn-primary">
                     <i class="fas fa-paper-plane"></i>
                 </button>
             </form>
         </div>
     </div>
     
+    <!-- Floating Action Button (Mobile) -->
+    <button onclick="showNewChatModal()" class="fab btn-primary hidden md:hidden">
+        <i class="fas fa-plus"></i>
+    </button>
+    
     <!-- New Chat Modal -->
-    <div id="new-chat-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div class="bg-gray-900 rounded-lg p-6 w-full max-w-md">
-            <h2 class="text-2xl font-bold text-yellow-400 mb-4">
-                <i class="fas fa-plus-circle mr-2"></i>
-                Neuer Chat
-            </h2>
+    <div id="new-chat-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="flex items-center justify-between mb-lg">
+                <h2 class="text-2xl font-bold text-primary">
+                    <i class="fas fa-plus-circle mr-2"></i>
+                    Neuer Chat
+                </h2>
+                <button onclick="closeNewChatModal()" class="btn-icon btn-ghost">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
             
-            <div class="mb-4">
-                <label class="block text-gray-400 mb-2">Benutzer suchen:</label>
+            <div class="mb-md">
+                <label class="block text-secondary mb-2 font-semibold">Benutzer suchen:</label>
                 <input 
                     type="text" 
                     id="user-search" 
                     placeholder="Benutzername eingeben..." 
-                    class="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white"
+                    class="input"
                 />
             </div>
             
-            <div id="user-search-results" class="mb-4 max-h-60 overflow-y-auto">
+            <div id="user-search-results" class="mb-md" style="max-height: 300px; overflow-y: auto;">
                 <!-- Search results here -->
             </div>
             
-            <div class="flex gap-2">
-                <button onclick="closeNewChatModal()" class="flex-1 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition">
+            <div class="flex gap-sm">
+                <button onclick="closeNewChatModal()" class="flex-1 btn-secondary">
                     Abbrechen
                 </button>
             </div>

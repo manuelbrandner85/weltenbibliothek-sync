@@ -57,10 +57,11 @@ function switchTab(tab) {
     const mapTab = document.getElementById('tab-map');
     
     if (tab === 'chats') {
-        chatsTab.classList.add('text-yellow-400', 'border-b-2', 'border-yellow-400');
-        chatsTab.classList.remove('text-gray-400');
-        mapTab.classList.remove('text-yellow-400', 'border-b-2', 'border-yellow-400');
-        mapTab.classList.add('text-gray-400');
+        chatsTab.style.color = 'var(--primary)';
+        chatsTab.style.borderBottomWidth = '2px';
+        chatsTab.style.borderColor = 'var(--primary)';
+        mapTab.style.color = 'var(--text-tertiary)';
+        mapTab.style.borderBottomWidth = '0';
     } else {
         window.location.href = '/';
     }
@@ -81,49 +82,50 @@ async function loadChats() {
         }
     } catch (error) {
         console.error('Error loading chats:', error);
-        document.getElementById('chat-list').innerHTML = `
-            <div class="p-4 text-center text-gray-500">
+        document.getElementById('user-chat-list').innerHTML = `
+            <div class="text-center text-tertiary py-4">
                 <i class="fas fa-exclamation-circle text-2xl mb-2"></i>
-                <p>Fehler beim Laden der Chats</p>
+                <p class="text-sm">Fehler beim Laden der Chats</p>
             </div>
         `;
     }
 }
 
-// Display chats
+// Display chats (only user chats, not fixed chats)
 function displayChats() {
-    const chatList = document.getElementById('chat-list');
+    const chatList = document.getElementById('user-chat-list');
     
-    if (chats.length === 0) {
+    // Filter out fixed chats (ID 1 and 2)
+    const userChats = chats.filter(chat => chat.id !== 1 && chat.id !== 2);
+    
+    // Update active state for fixed chats
+    updateFixedChatActiveState();
+    
+    if (userChats.length === 0) {
         chatList.innerHTML = `
-            <div class="p-4 text-center text-gray-500">
-                <i class="fas fa-comment-slash text-4xl mb-2"></i>
-                <p>Noch keine Chats</p>
-                <p class="text-sm mt-2">Starte einen neuen Chat!</p>
+            <div class="text-center text-tertiary py-4">
+                <i class="fas fa-comment-slash text-3xl mb-2"></i>
+                <p class="text-sm">Noch keine Chats</p>
+                <p class="text-xs mt-1">Starte einen neuen Chat!</p>
             </div>
         `;
         return;
     }
     
-    chatList.innerHTML = chats.map(chat => {
+    chatList.innerHTML = userChats.map(chat => {
         const isActive = currentChatId === chat.id;
         const title = chat.title || 'Privater Chat';
         const initials = getInitials(title);
         
         return `
-            <div class="chat-item ${isActive ? 'active' : ''} p-4" onclick="selectChat(${chat.id})">
-                <div class="flex items-center">
-                    <div class="user-avatar relative mr-3">
-                        <span>${initials}</span>
-                    </div>
-                    <div class="flex-1 min-w-0">
-                        <div class="flex justify-between items-center mb-1">
-                            <div class="text-white font-semibold truncate">${title}</div>
-                            <div class="text-gray-500 text-xs">${formatTime(chat.last_message_at)}</div>
-                        </div>
-                        <div class="text-gray-400 text-sm truncate">
-                            ${chat.description || (chat.chat_type === 'private' ? 'Privater Chat' : `${chat.member_count} Mitglieder`)}
-                        </div>
+            <div class="chat-item ${isActive ? 'active' : ''}" onclick="openChat(${chat.id})">
+                <div class="avatar-sm">
+                    <span>${initials}</span>
+                </div>
+                <div class="chat-item-content">
+                    <div class="chat-item-title">${escapeHtml(title)}</div>
+                    <div class="chat-item-description">
+                        ${chat.description || (chat.chat_type === 'private' ? 'Privater Chat' : `${chat.member_count} Mitglieder`)}
                     </div>
                 </div>
             </div>
@@ -131,23 +133,55 @@ function displayChats() {
     }).join('');
 }
 
-// Select chat
-async function selectChat(chatId) {
+// Update active state for fixed chats
+function updateFixedChatActiveState() {
+    // Remove active class from all fixed chat items
+    document.querySelectorAll('.fixed-chats .chat-item').forEach(item => {
+        item.classList.remove('active');
+    });
+    
+    // Add active class to current chat if it's a fixed chat
+    if (currentChatId === 1 || currentChatId === 2) {
+        const activeItem = document.querySelector(`.fixed-chats .chat-item[data-chat-id="${currentChatId}"]`);
+        if (activeItem) {
+            activeItem.classList.add('active');
+        }
+    }
+}
+
+// Open chat (works for both fixed and user chats)
+async function openChat(chatId) {
     currentChatId = chatId;
-    displayChats(); // Update active state
+    displayChats(); // Update active state for all chats
     
     // Show chat header and input
     document.getElementById('chat-header').classList.remove('hidden');
     document.getElementById('message-input-area').classList.remove('hidden');
     
     // Update chat header
-    const chat = chats.find(c => c.id === chatId);
+    let chat = chats.find(c => c.id === chatId);
+    
+    // For fixed chats, fetch from API if not in chats array
+    if (!chat && (chatId === 1 || chatId === 2)) {
+        const token = localStorage.getItem('auth_token');
+        try {
+            const response = await axios.get(`${API_URL}/api/chats/${chatId}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (response.data.success) {
+                chat = response.data.chat;
+            }
+        } catch (error) {
+            console.error('Error loading chat info:', error);
+        }
+    }
+    
     if (chat) {
         const title = chat.title || 'Privater Chat';
         document.getElementById('chat-title').textContent = title;
         document.getElementById('chat-title-initials').textContent = getInitials(title);
         document.getElementById('chat-subtitle').textContent = 
-            chat.chat_type === 'private' ? 'Online' : `${chat.member_count} Mitglieder`;
+            chat.chat_type === 'private' ? 'Online' : `${chat.member_count || 0} Mitglieder`;
     }
     
     // Load messages
@@ -184,12 +218,10 @@ function displayMessages() {
     
     if (messages.length === 0) {
         container.innerHTML = `
-            <div class="flex items-center justify-center h-full text-gray-500">
-                <div class="text-center">
-                    <i class="fas fa-comment text-4xl mb-2"></i>
-                    <p>Noch keine Nachrichten</p>
-                    <p class="text-sm mt-2">Sende die erste Nachricht!</p>
-                </div>
+            <div class="empty-state">
+                <i class="fas fa-comment empty-state-icon"></i>
+                <div class="empty-state-title">Noch keine Nachrichten</div>
+                <div class="empty-state-description">Sende die erste Nachricht!</div>
             </div>
         `;
         return;
@@ -198,13 +230,19 @@ function displayMessages() {
     container.innerHTML = messages.map(msg => {
         const isOwn = msg.sender_id === currentUser.id;
         const senderName = msg.sender_display_name || msg.sender_username;
+        const initials = getInitials(senderName);
         
         return `
-            <div class="mb-4 flex ${isOwn ? 'justify-end' : 'justify-start'}">
-                <div class="message ${isOwn ? 'own' : 'other'} p-3 rounded-lg">
-                    ${!isOwn ? `<div class="text-xs font-semibold mb-1 ${isOwn ? 'text-gray-800' : 'text-yellow-400'}">${senderName}</div>` : ''}
-                    <div>${escapeHtml(msg.content)}</div>
-                    <div class="text-xs mt-1 ${isOwn ? 'text-gray-700' : 'text-gray-500'}">${formatTime(msg.created_at)}</div>
+            <div class="message ${isOwn ? 'own' : ''}">
+                <div class="message-avatar">
+                    <div class="avatar-sm">
+                        <span>${initials}</span>
+                    </div>
+                </div>
+                <div class="message-content">
+                    ${!isOwn ? `<div class="message-sender">${escapeHtml(senderName)}</div>` : ''}
+                    <div class="message-text">${escapeHtml(msg.content)}</div>
+                    <div class="message-time">${formatTime(msg.created_at)}</div>
                 </div>
             </div>
         `;
@@ -328,7 +366,7 @@ async function startPrivateChat(userId, username) {
         if (response.data.success) {
             closeNewChatModal();
             await loadChats();
-            selectChat(response.data.chat_id);
+            openChat(response.data.chat_id);
         }
     } catch (error) {
         console.error('Error creating chat:', error);
