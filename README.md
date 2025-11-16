@@ -1,430 +1,324 @@
-# 🌍 Weltenbibliothek - Interaktive Karte
+# 🌍 Weltenbibliothek - Alternative Theorien & Verborgenes Wissen
 
-**Die ultimative interaktive Weltkarte für verborgenes Wissen, alte Zivilisationen und mysteriöse Ereignisse**
+Eine Telegram-ähnliche Social-Mystery-App mit interaktiver Weltkarte. Entdecke verborgenes Wissen, alternative Theorien und tausche dich mit Gleichgesinnten aus.
 
-Eine moderne Web-Anwendung mit **interaktiver Leaflet-Karte**, Event-Markern, Filtern und umfangreicher Dokumenten-Bibliothek.
+## 🚀 Live URL
 
-## 🌐 Live URLs
+**Hauptanwendung**: https://3000-i1m8akgt437zr75idt4u6-82b888ba.sandbox.novita.ai
 
-- **Sandbox**: https://3000-i1m8akgt437zr75idt4u6-82b888ba.sandbox.novita.ai
-- **Produktion** (nach Deployment): `https://webapp.pages.dev`
+### Zugang
 
-## ✨ Haupt-Features
+- **Login/Register**: `/static/auth.html`
+- **Chat-Interface**: `/static/chat.html`
+- **Interaktive Karte**: `/` (Hauptseite)
 
-### 🗺️ Interaktive Weltkarte
-- ✅ **Leaflet.js Integration** - Flüssiges Zoomen & Panning
-- ✅ **Dunkles Karten-Theme** (CartoDB Dark Matter)
-- ✅ **35 mysteriöse Ereignisse** weltweit als Marker
-- ✅ **Custom Icons** - Emoji-basierte Marker für jeden Event-Typ
-- ✅ **Info-Popups** - Detaillierte Informationen beim Klick
-- ✅ **Responsive Design** - Funktioniert auf Desktop & Mobile
+## ✨ Features (Implementiert)
 
-### 🎯 Event-Marker-System
-**35 historische Ereignisse** mit präzisen Koordinaten:
+### 🔐 Authentifizierung & User-System
+- ✅ Registrierung mit Username, E-Mail, Passwort
+- ✅ Login mit JWT-Token-Authentifizierung
+- ✅ Geschützte API-Routen mit Middleware
+- ✅ User-Profile mit Avatar, Bio, Interessen
+- ✅ Online/Offline Status-Tracking
 
-**Alte Zivilisationen:**
-- 🔺 Große Pyramide von Gizeh (Ägypten)
-- 🌊 Atlantis (vermutete Lage bei Azoren)
-- 🗿 Stonehenge (UK)
-- 🛕 Angkor Wat (Kambodscha)
-- 🗿 Osterinsel Moai-Statuen
-- 🛕 Göbekli Tepe (Türkei)
+### 💬 Chat-System (Telegram-Style)
+- ✅ **Private Chats**: 1-zu-1 Gespräche
+- ✅ **Gruppenchats**: Mehrere Mitglieder
+- ✅ **Kanäle**: Öffentliche Broadcasts
+- ✅ **Real-time Updates**: Polling alle 3 Sekunden
+- ✅ **User-Suche**: Finde andere Nutzer
+- ✅ **Chat-Liste**: Alle Gespräche auf einen Blick
+- ✅ **Message-Threading**: Antworten auf Nachrichten (vorbereitet)
+- ✅ **Reactions**: Emoji-Reaktionen (Schema vorhanden)
 
-**UFO & Aliens:**
-- 🛸 Area 51 (Nevada, USA)
-- 💥 Roswell UFO-Absturz (New Mexico)
-- 🛸 Rendlesham Forest (UK)
-- 💡 Phoenix Lights (Arizona)
-- 💥 Tunguska-Ereignis (Sibirien)
+### 🗺️ Interaktive Mystery-Karte
+- ✅ 35+ detaillierte Events weltweit
+- ✅ Kategorien: UFOs, Alte Zivilisationen, Alternative Theorien, Mystik
+- ✅ Filter nach Kategorie, Event-Typ, Zeitraum
+- ✅ Custom Emoji-Marker mit Farbcodierung
+- ✅ Popup-Details mit Koordinaten und Beschreibungen
+- ✅ Leaflet.js Integration mit Dark Theme
 
-**Geheimgesellschaften:**
-- 🎭 Bohemian Grove (Kalifornien)
-- ✈️ Denver Airport (Colorado)
-- 🏛️ Pentagon (Virginia)
-- ⛪ Vatikan (Rom)
-- 💀 Skull & Bones HQ (Yale)
+### 📚 Event-Datenbank
+**35 bestehende Events + 20 neue (gesamt 55)**
 
-**Geheimdienste & Experimente:**
-- 📡 Montauk Air Force Station
-- ⛴️ Philadelphia Naval Shipyard
-- 🕵️ CIA Hauptquartier Langley
-- ☣️ Dugway Proving Ground
+Kategorien:
+- **UFOs & Aliens** (20 Events): Roswell, Area 51, Rendlesham Forest, USS Nimitz Tic-Tac, Phoenix Lights, etc.
+- **Alte Zivilisationen** (20 Events): Pyramiden von Gizeh, Atlantis, Göbekli Tepe, Stonehenge, Baalbek, Yonaguni, etc.
+- **Alternative Theorien** (8 Events): CERN, HAARP, Denver Airport, Bohemian Grove, Untersberg
+- **Mystische Orte** (5 Events): Bermuda-Dreieck, Sedona Vortex, Mount Shasta
+- **Zeitreisen & Experimente** (2 Events): Montauk Project, Philadelphia-Experiment
 
-**...und viele mehr!**
+**Neue Events (36-55) - Vollständig recherchiert:**
+1. Tempel von Baalbek (Megalithische 1.000-Tonnen-Steine)
+2. Bosnische Pyramiden (Umstrittene 29.000 Jahre alte Strukturen)
+3. Derinkuyu (Unterirdische Stadt für 20.000 Menschen)
+4. Yonaguni (Unterwasser-Monument vor Japan)
+5. Antikythera-Mechanismus (2.000 Jahre alter Computer)
+6. Sacsayhuamán (Perfekt passende 200-Tonnen-Steine)
+7. Piri Reis Karte (Zeigt Antarctica eisfrei, 1513)
+8. Longyou-Höhlen (2.000 Jahre alte künstliche Höhlen)
+9. Newgrange (5.000 Jahre alt, älter als Pyramiden)
+10. Teotihuacán (Pyramiden mit Quecksilber)
+11. Betty & Barney Hill Entführung (1961, erste dokumentierte)
+12. Westall UFO Encounter (200 Zeugen, Australien 1966)
+13. Travis Walton Entführung (5 Tage verschwunden, 1975)
+14. Iranian Air Force UFO (F-4 Jets, Teheran 1976)
+15. JAL Flight 1628 (Jumbo-Jet, Alaska 1986)
+16. Belgian UFO Wave (F-16 Verfolgung, 1989-1990)
+17. USS Nimitz Tic-Tac (Pentagon bestätigt, 2004)
+18. Ariel School (62 Kinder, Zimbabwe 1994)
+19. O'Hare Airport UFO (United Airlines, Chicago 2006)
+20. Rendlesham Forest (Britischer Roswell, 1980)
 
-### 🔍 Filter & Such-System
-- ✅ **Echtzeit-Suche** - Suche nach Titel, Beschreibung, Ort
-- ✅ **Kategorien-Filter** - 11 Kategorien (UFOs, Alte Zivilisationen, etc.)
-- ✅ **Event-Typ-Filter** - ancient, ufo, conspiracy, mystery
-- ✅ **Zeitraum-Filter** - Von/Bis Jahr
-- ✅ **Kombinerbare Filter** - Mehrere Filter gleichzeitig aktiv
-
-### 🎨 Modern UI/UX
-- ✅ **Top Bar** - Logo, Suchfeld, Filter-Button
-- ✅ **Bottom Navigation** - Karte, Liste, Dokumente, Timeline
-- ✅ **Side Panel** - Ausklappbare Filter-Sidebar
-- ✅ **Dark Theme** - Mystisches dunkles Design
-- ✅ **Glow-Effekte** - Goldene Akzente
-- ✅ **Responsive Layout** - Mobile-First Design
-
-### 📚 Dokumenten-Bibliothek
-- ✅ **20 Dokumente** über Verschwörungstheorien
-- ✅ **17 Kategorien** - Von Illuminaten bis Zeitreisen
-- ✅ **Volltext-Suche** - FTS5 SQLite Integration
-- ✅ **Verknüpfung** - Events können Dokumente referenzieren
-
-## 🗄️ Datenbank-Architektur
-
-### Cloudflare D1 Datenbank
-**Database Name**: `weltenbibliothek_db_v2`  
-**Database ID**: `6da1abb7-8ebf-40cb-bc7e-1656b35f2880`
-
-### Events Table
-```sql
-CREATE TABLE events (
-  id INTEGER PRIMARY KEY,
-  title TEXT NOT NULL,
-  description TEXT,
-  latitude REAL NOT NULL,
-  longitude REAL NOT NULL,
-  category TEXT,
-  event_type TEXT,
-  year INTEGER,
-  date_text TEXT,
-  icon_type TEXT,
-  image_url TEXT,
-  related_document_id INTEGER
-)
-```
-
-**Aktueller Bestand:**
-- **35 Events** auf der Weltkarte
-- **11 Kategorien** (UFOs, Geheimgesellschaften, etc.)
-- **4 Event-Typen** (ancient, ufo, conspiracy, mystery)
-- **Zeitspanne**: 9600 v.Chr. bis Heute
-
-### Documents Table
-```sql
-CREATE TABLE documents (
-  id INTEGER PRIMARY KEY,
-  title TEXT NOT NULL,
-  author TEXT,
-  category TEXT,
-  description TEXT,
-  file_path TEXT,
-  created_at DATETIME
-)
-```
-
-**Aktueller Bestand:**
-- **20 Dokumente**
-- **17 Kategorien**
-
-### Cloudflare R2 Storage
-**Bucket**: `weltenbibliothek-media`  
-- PDF-Dokumente
-- Bilder & Icons
-- Event-Medien
-
-## 🛠️ Tech Stack
+## 🏗️ Technologie-Stack
 
 ### Backend
-- **Hono v4** - Lightweight Edge Framework
-- **Cloudflare Workers** - Serverless Runtime
-- **Cloudflare D1** - SQLite Datenbank
-- **Cloudflare R2** - Object Storage
-- **TypeScript** - Type Safety
+- **Hono v4** - Lightweight Web Framework
+- **Cloudflare Workers** - Edge Runtime
+- **Cloudflare D1** - SQLite Database (weltenbibliothek_db_v2)
+- **Cloudflare R2** - Object Storage (weltenbibliothek-media)
+- **TypeScript** - Type-safe Development
+- **JWT** - Authentication Tokens
 
 ### Frontend
+- **Vanilla JavaScript** - No framework overhead
 - **Leaflet.js 1.9.4** - Interactive Maps
-- **Vanilla JavaScript** - No Framework Bloat
-- **TailwindCSS** - Utility-First CSS
-- **FontAwesome** - Icons
+- **TailwindCSS** - Utility-first CSS
+- **FontAwesome 6.4** - Icons
 - **Axios** - HTTP Client
 
-### Development
-- **Vite** - Build Tool
-- **PM2** - Process Manager
-- **Wrangler** - Cloudflare CLI
-- **Git** - Version Control
+### Database Schema
+```sql
+-- Core Tables
+users (id, username, email, password_hash, display_name, avatar_url, bio, interests, status)
+chats (id, chat_type, title, description, creator_id, member_count)
+chat_members (id, chat_id, user_id, role, joined_at, last_read_message_id)
+messages (id, chat_id, sender_id, content, message_type, reply_to_message_id)
+message_reactions (id, message_id, user_id, reaction)
 
-## 📋 API Endpoints
+-- Events & Interactions
+events (id, title, description, latitude, longitude, category, event_type, year, full_description, sources, keywords)
+event_comments (id, event_id, user_id, parent_comment_id, content)
+event_bookmarks (id, event_id, user_id, notes)
+event_views (id, event_id, user_id, view_duration)
 
-### Map & Events API
-
-#### `GET /api/events`
-Alle Events für die Karte abrufen.
-
-**Query Parameters:**
-- `category` - Filter nach Kategorie
-- `type` - Filter nach Event-Typ
-- `year_from` - Minimum Jahr
-- `year_to` - Maximum Jahr
-
-**Response:**
-```json
-{
-  "success": true,
-  "events": [
-    {
-      "id": 1,
-      "title": "Die Große Pyramide von Gizeh",
-      "latitude": 29.9792,
-      "longitude": 31.1342,
-      "category": "Alte Zivilisationen",
-      "event_type": "ancient",
-      "year": -2560,
-      "icon_type": "pyramid"
-    }
-  ]
-}
+-- Notifications
+notifications (id, user_id, notification_type, title, body, data, is_read)
+push_subscriptions (id, user_id, endpoint, auth_key, device_type)
 ```
 
-#### `GET /api/events/:id`
-Einzelnes Event mit Details.
+## 🔗 API-Endpunkte
 
-#### `GET /api/events/categories`
-Alle verfügbaren Kategorien mit Anzahl.
+### Authentication
+- `POST /api/auth/register` - Neues Konto erstellen
+- `POST /api/auth/login` - Anmelden
+- `GET /api/auth/me` - Aktueller User (geschützt)
+- `PUT /api/auth/profile` - Profil aktualisieren (geschützt)
+- `POST /api/auth/logout` - Abmelden (geschützt)
 
-#### `GET /api/events/types`
-Alle Event-Typen mit Anzahl.
+### Chat
+- `GET /api/chats` - Alle Chats des Users (geschützt)
+- `POST /api/chats` - Neuen Chat erstellen (geschützt)
+- `GET /api/chats/:id/messages` - Nachrichten laden (geschützt)
+- `POST /api/chats/:id/messages` - Nachricht senden (geschützt)
+- `GET /api/chats/:id/members` - Chat-Mitglieder (geschützt)
+- `GET /api/users/search?q=...` - User suchen (geschützt)
 
-### Documents API
+### Events & Map
+- `GET /api/events` - Alle Events (mit Filtern: category, type, year_from, year_to)
+- `GET /api/events/:id` - Einzelnes Event mit Details
+- `GET /api/events/categories` - Event-Kategorien mit Counts
+- `GET /api/events/types` - Event-Typen mit Counts
 
-#### `GET /api/search`
-Dokumente durchsuchen.
+### Documents
+- `GET /api/search?q=...` - Volltext-Suche in Dokumenten
+- `GET /api/files/:path` - R2-Datei-Zugriff
+- `POST /api/upload` - Datei hochladen zu R2
 
-**Query Parameters:**
-- `q` - Suchbegriff
-- `category` - Kategorie
-- `limit` - Anzahl Ergebnisse
-- `offset` - Pagination
+## 🎨 UI-Komponenten
 
-#### `GET /api/documents/:id`
-Einzelnes Dokument abrufen.
+### Chat-Interface (Telegram-Style)
+- **Sidebar**: Chat-Liste mit Suche, Tabs (Chats/Karte), Neuer-Chat-Button
+- **Main Area**: 
+  - Chat-Header mit Avatar und Status
+  - Messages-Container mit Auto-Scroll
+  - Message-Input mit Attachment-Button
+- **Modals**: New Chat mit User-Suche
+- **Design**: Dark Theme, Glassmorphismus, Gold-Akzente (#ffd700)
 
-#### `GET /api/categories`
-Dokument-Kategorien.
+### Map-Interface
+- **Top Bar**: Logo, Search, Filter-Button, Chat-Button, Auth-Button
+- **Map**: Vollbild Leaflet-Karte mit Custom Markers
+- **Side Panel**: Filter (Kategorien, Event-Typen, Zeitraum)
+- **Bottom Nav**: Map, List, Documents, Timeline (Coming Soon)
+- **Popups**: Event-Details beim Marker-Click
 
-#### `GET /api/stats`
-Statistiken über Dokumente und Events.
+### Auth-Interface
+- **Tabs**: Login / Registrieren
+- **Login Form**: Username/Email, Passwort
+- **Register Form**: Username, Email, Anzeigename, Passwort
+- **Design**: Gradient Background, Glassmorphism, Responsive
+- **Validation**: Client & Server-Side
 
-**Response:**
-```json
-{
-  "total_documents": 20,
-  "total_events": 35,
-  "categories": [...]
-}
-```
+## 📱 User Experience
 
-### File Management
+### Flow: Neue User
+1. Öffne App → Sehe Karte (ungeschützt)
+2. Klicke "Login" → Weiterleitung zu `/static/auth.html`
+3. Registriere Konto → Token gespeichert
+4. Automatische Weiterleitung zur Karte
+5. Klicke "Chat" → Öffne `/static/chat.html`
+6. Starte neuen Chat → Suche User → Sende Messages
 
-#### `GET /api/files/:path`
-Datei aus R2 Storage laden.
+### Flow: Bestehende User
+1. Öffne App → Auto-Login (Token im LocalStorage)
+2. Sehe Username statt "Login"
+3. Direkter Zugang zu allen Features
+4. Click auf Username → Logout
 
-#### `POST /api/upload`
-Datei hochladen (Multipart Form Data).
+## 🚧 Features in Entwicklung
 
-## 🚀 Lokale Entwicklung
+### Geplant für nächste Schritte:
+- [ ] **WebSocket/Durable Objects** für Live-Chat (aktuell: Polling)
+- [ ] **Push-Notifications** mit Cloudflare (ersetzt Firebase)
+- [ ] **Event-Detail-Modal** mit vollständigen Texten und Quellen
+- [ ] **Event-Kommentare** und Diskussionen
+- [ ] **Timeline-Ansicht** für chronologische Navigation
+- [ ] **List-Ansicht** für Event-Tabelle
+- [ ] **Documents-Ansicht** für Bibliothek
+- [ ] **Weitere 100 Events** (Ziel: 155 total)
 
-### Setup
+### Zukünftige Features:
+- [ ] Audio/Video-Nachrichten (Agora RTC)
+- [ ] YouTube-Integration in Events
+- [ ] Datei-Sharing zwischen Usern
+- [ ] Event-Bookmarks mit persönlichen Notizen
+- [ ] User-Reputation-System
+- [ ] Themen-basierte Kanäle
+- [ ] Event-Proximity-Benachrichtigungen
+
+## 🛠️ Development
+
+### Lokale Entwicklung
 ```bash
-# 1. Dependencies installieren
+# Dependencies installieren
 npm install
 
-# 2. Migrationen anwenden
-npx wrangler d1 migrations apply weltenbibliothek_db_v2 --local
+# Migrationen anwenden
+npm run db:migrate:local
 
-# 3. Events laden
-npx wrangler d1 execute weltenbibliothek_db_v2 --local --file=./seed_events.sql
+# Entwicklungsserver starten
+npm run dev:sandbox
 
-# 4. Dokumente laden
-npx wrangler d1 execute weltenbibliothek_db_v2 --local --file=./seed.sql
+# Build für Production
+npm run build
+```
 
-# 5. Build
+### PM2 Commands
+```bash
+pm2 list                      # Services anzeigen
+pm2 logs weltenbibliothek     # Logs anzeigen (--nostream)
+pm2 restart weltenbibliothek  # Neustart
+pm2 delete weltenbibliothek   # Stoppen
+```
+
+### Git Workflow
+```bash
+git add .
+git commit -m "Feature description"
+git push origin main
+```
+
+### Deployment zu Cloudflare Pages
+```bash
+# Build & Deploy
+npm run deploy:prod
+
+# Nur Build
 npm run build
 
-# 6. Server starten
-pm2 start ecosystem.config.cjs
+# Preview lokal
+npm run preview
 ```
 
-### Entwicklung
-```bash
-# Status prüfen
-pm2 list
-
-# Logs ansehen
-pm2 logs weltenbibliothek --nostream
-
-# Neustart nach Code-Änderungen
-pm2 restart weltenbibliothek
-
-# Datenbank-Konsole
-npx wrangler d1 execute weltenbibliothek_db_v2 --local
-```
-
-## 📦 Deployment
-
-### Cloudflare Pages
-```bash
-# 1. Setup API Key
-# Call setup_cloudflare_api_key first
-
-# 2. Migrationen auf Produktion
-npx wrangler d1 migrations apply weltenbibliothek_db_v2
-
-# 3. Daten laden
-npx wrangler d1 execute weltenbibliothek_db_v2 --file=./seed_events.sql
-npx wrangler d1 execute weltenbibliothek_db_v2 --file=./seed.sql
-
-# 4. Deployment
-npm run deploy:prod
-```
-
-## 🗂️ Projekt-Struktur
+## 📊 Projekt-Struktur
 
 ```
 webapp/
 ├── src/
-│   └── index.tsx           # Hono Backend mit Map & Documents API
+│   ├── index.tsx           # Hauptanwendung (Hono-App + Map HTML)
+│   └── auth.ts             # Auth-Utilities (JWT, Hashing)
 ├── public/
 │   └── static/
-│       ├── app.js          # Leaflet Map Frontend
-│       ├── app_icon.png    # App Icon
-│       └── style.css       # Custom Styles
+│       ├── auth.html       # Login/Register-Seite
+│       ├── chat.html       # Chat-Interface
+│       ├── chat.js         # Chat-Logic
+│       └── app.js          # Map-Logic (derzeit leer, inline im HTML)
 ├── migrations/
 │   ├── 0001_create_documents.sql
-│   └── 0002_create_events.sql
-├── seed.sql                # 20 Dokumente
-├── seed_events.sql         # 35 Weltkarten-Events
-├── ecosystem.config.cjs    # PM2 Config
-├── wrangler.jsonc          # Cloudflare Config
-├── package.json            # Dependencies
+│   ├── 0002_create_events.sql
+│   ├── 0003_create_users.sql
+│   ├── 0004_create_chats.sql
+│   ├── 0005_create_messages.sql
+│   ├── 0006_create_notifications.sql
+│   ├── 0007_create_event_interactions.sql
+│   └── 0008_extend_events.sql
+├── seed_events.sql         # 35 originale Events
+├── seed_batch1_events.sql  # 20 neue Events (36-55)
+├── ecosystem.config.cjs    # PM2-Konfiguration
+├── wrangler.jsonc          # Cloudflare-Konfiguration
+├── vite.config.ts          # Vite Build-Konfiguration
+├── package.json            # Dependencies & Scripts
 └── README.md               # Diese Datei
 ```
 
-## 🎨 UI-Komponenten
+## 🎯 Projekt-Philosophie
 
-### Top Bar
-- **Logo** - Weltenbibliothek Icon & Name
-- **Suchfeld** - Echtzeit-Event-Suche
-- **Filter-Button** - Öffnet Side Panel
+### Verborgenes Wissen & Alternative Theorien
+Weltenbibliothek ist eine Plattform für den Austausch von Wissen, das oft unterdrückt oder ignoriert wird:
+- **Alternative Geschichtsschreibung**: Hinterfrage die offizielle Narrative
+- **Unerklärliche Phänomene**: UFOs, Zeitanomalien, mystische Orte
+- **Vergessene Zivilisationen**: Antike Technologien und Bauwerke
+- **Moderne Geheimnisse**: Geheimgesellschaften, Experimente, Vertuschungen
 
-### Map Container
-- **Leaflet Map** - Vollbild, interaktiv
-- **Custom Markers** - Emoji-Icons mit Glow
-- **Popups** - Event-Details beim Klick
+Wir verwenden Begriffe wie "Alternative Theorien", "Verborgenes Wissen" und "Unterdrückte Geschichte" statt polemischer Bezeichnungen.
 
-### Side Panel (Filter)
-- **Kategorien** - 11 Filter-Chips
-- **Event-Typen** - 4 Typ-Filter
-- **Zeitraum** - Von/Bis Jahr Eingabe
-- **Aktionen** - Anwenden & Zurücksetzen
+### Community-First
+- **Respektvoller Austausch**: Diskutiere, ohne zu diskreditieren
+- **Quellenbasiert**: Referenzen zu Büchern, Dokumenten, Zeugenaussagen
+- **Open-Minded**: Kritisches Denken ohne Dogmatismus
+- **Wissensnetzwerk**: Gemeinsam die Wahrheit suchen
 
-### Bottom Navigation
-- **Karte** - Haupt-Ansicht (aktiv)
-- **Liste** - Event-Liste (coming soon)
-- **Dokumente** - Bibliothek (coming soon)
-- **Timeline** - Zeitstrahl (coming soon)
+## 🔮 Vision
 
-## 🎯 Event-Kategorien
+Weltenbibliothek wird zur **größten deutschsprachigen Community** für verborgenes Wissen:
+- **155 detaillierte Events** mit Quellen und Hintergründen
+- **Live-Diskussionen** zu jedem Event
+- **User-Generated Content**: Eigene Theorien und Entdeckungen teilen
+- **Multimedia-Archiv**: Dokumente, Videos, Audio-Aufnahmen
+- **Globales Netzwerk**: Verbindung zu Forschern weltweit
 
-1. **Alte Zivilisationen** (8 Events) - Pyramiden, Stonehenge, Atlantis
-2. **UFOs** (6 Events) - Area 51, Roswell, Phoenix Lights
-3. **Geheimgesellschaften** (4 Events) - Illuminaten, Bohemian Grove
-4. **Verschwörungen** (3 Events) - Denver Airport, Pentagon
-5. **Zeitreisen** (3 Events) - Philadelphia, Montauk
-6. **Geheimdienste** (2 Events) - CIA, MK-Ultra
-7. **Hohle Erde** (3 Events) - Mount Shasta, Nordpol
-8. **Mystik** (2 Events) - Sedona Vortex
-9. **Klimamanipulation** (2 Events) - Chemtrails, HAARP
-10. **Paralleluniversen** (3 Events) - CERN, Bermuda-Dreieck
-11. **Alte Astronauten** (2 Events) - Nazca, Anunnaki
+## 📝 Status
 
-## 📊 Statistiken
+- **Version**: 0.3.0 (Beta)
+- **Letztes Update**: 2025-11-16
+- **Aktive Features**: Auth, Chat, Map, 55 Events
+- **In Entwicklung**: Live-Chat (WebSocket), Push-Notifications, Event-Details-Modal
+- **Deployment**: Sandbox (Development)
 
-- **Total Events**: 35
-- **Total Documents**: 20
-- **Kategorien**: 11
-- **Event-Typen**: 4
-- **Zeitspanne**: 9600 v.Chr. - Heute
-- **Geografische Abdeckung**: Weltweit
-- **Code-Zeilen**: ~1000 (TypeScript + JavaScript)
+## 👥 Credits
 
-## 🔮 Kommende Features
+- **Framework**: Hono by Yusuke Wada
+- **Maps**: Leaflet.js by Vladimir Agafonkin
+- **Tiles**: CartoDB Dark Matter
+- **Icons**: FontAwesome
+- **Event-Recherche**: Diverse Quellen (siehe Event-Descriptions)
 
-### In Entwicklung:
-- ⏳ **Listen-Ansicht** - Tabellarische Event-Liste
-- ⏳ **Timeline-Ansicht** - Chronologischer Zeitstrahl
-- ⏳ **Dokument-Detail-Seiten** - Vollständige Dokument-Ansicht
-- ⏳ **YouTube-Integration** - Embedded Videos
-- ⏳ **Cloudflare Upload** - Neue Events hinzufügen
+## 📄 Lizenz
 
-### Geplant:
-- 📱 **Progressive Web App** - Offline-Funktionalität
-- 🔔 **Cloudflare Notifications** - Event-Benachrichtigungen
-- 🌙 **Theme-Wechsel** - Hell/Dunkel-Modus
-- 🎥 **Media-Galerie** - Bilder & Videos zu Events
-- 📍 **GPS-Integration** - Standort-basierte Events
-- 🗣️ **Multi-Language** - Deutsch, English, weitere
-
-## 🎭 Icon-Mapping
-
-Jeder Event-Typ hat sein eigenes Emoji-Icon:
-
-| Icon | Typ | Beispiel |
-|------|-----|----------|
-| 🔺 | pyramid | Pyramiden |
-| 🌊 | atlantis | Atlantis |
-| 🗿 | stone/moai | Stonehenge, Osterinsel |
-| 🛸 | ufo | UFO-Sichtungen |
-| 💥 | crash/explosion | Roswell, Tunguska |
-| 🎭 | cult | Geheimgesellschaften |
-| 🕵️ | cia | Geheimdienste |
-| ⛰️ | mountain | Mount Shasta |
-| 📡 | radar/station | Montauk, HAARP |
-| ⚛️ | cern | Teilchenbeschleuniger |
-
-## 🔐 Sicherheit
-
-- **API-Schutz** - CORS konfiguriert
-- **SQL Injection** - Prepared Statements
-- **Input Validation** - Server-seitige Validierung
-- **Rate Limiting** - Cloudflare automatisch
-- **HTTPS** - Verschlüsselte Verbindung
-
-## 📜 Changelog
-
-### Version 2.0.0 (2025-11-16) - Interactive Map Release
-
-**Major Features:**
-- ✅ Interaktive Leaflet-Karte mit 35 Events
-- ✅ Event-Marker mit Custom Icons & Popups
-- ✅ Filter-System (Kategorien, Typen, Zeitraum)
-- ✅ Echtzeit-Suche über Events
-- ✅ Modern Bottom Navigation
-- ✅ Side Panel mit Filtern
-- ✅ Dark Theme mit Glow-Effekten
-- ✅ Responsive Mobile-Design
-- ✅ Events-Tabelle mit Geolocation
-- ✅ Migrations & Seed-Daten
-
-### Version 1.0.0 (2025-11-16) - Initial Release
-
-- ✅ Dokumenten-Bibliothek
-- ✅ Volltext-Suche
-- ✅ 20 Dokumente, 17 Kategorien
-- ✅ Cloudflare D1 & R2 Integration
-
-## 📞 Support
-
-Bei Fragen oder Problemen:
-- **GitHub Issues**: (coming soon)
-- **Email**: support@weltenbibliothek.de
+Dieses Projekt ist für Forschungs- und Bildungszwecke. Alle Event-Informationen sind aus öffentlich zugänglichen Quellen zusammengetragen.
 
 ---
 
-**⚠️ Hinweis**: Diese Anwendung dient Bildungs- und Forschungszwecken. Die dargestellten Ereignisse und Theorien repräsentieren verschiedene Perspektiven und sollten kritisch betrachtet werden.
-
-**🌍 "Die Wahrheit liegt auf der Karte..."**
+**🌟 Entdecke die Wahrheit. Teile dein Wissen. Hinterfrage alles.**
