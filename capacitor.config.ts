@@ -7,9 +7,9 @@ const config: CapacitorConfig = {
   
   // Server configuration for production
   server: {
-    // When deployed, use your Cloudflare Pages URL
-    // url: 'https://weltenbibliothek.pages.dev',
-    // cleartext: true
+    // Production URL from Cloudflare Pages
+    url: 'https://efbbace7.weltenbibliothek.pages.dev',
+    cleartext: true
   },
   
   // Android specific configuration
