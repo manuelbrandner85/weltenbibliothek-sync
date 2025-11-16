@@ -10,16 +10,32 @@ Eine Telegram-ähnliche Social-Mystery-App mit interaktiver Weltkarte. Entdecke 
 
 - **Login/Register**: `/static/auth.html`
 - **Chat-Interface**: `/static/chat.html`
+- **Admin-Panel**: `/static/admin.html` (nur für Admins)
 - **Interaktive Karte**: `/` (Hauptseite)
+
+### Super Admin Login
+- **Username**: Weltenbibliothek
+- **Passwort**: Jolene2305
+- **Zugriff**: Alle Admin-Funktionen, Moderatoren ernennen
 
 ## ✨ Features (Implementiert)
 
 ### 🔐 Authentifizierung & User-System
-- ✅ Registrierung mit Username, E-Mail, Passwort
+- ✅ **Vereinfachte Registrierung**: Nur Username + Passwort
+- ✅ **Eindeutige Benutzernamen**: Kann nicht doppelt vergeben werden
 - ✅ Login mit JWT-Token-Authentifizierung
 - ✅ Geschützte API-Routen mit Middleware
 - ✅ User-Profile mit Avatar, Bio, Interessen
-- ✅ Online/Offline Status-Tracking
+- ✅ Online/Offline/Banned Status-Tracking
+
+### 👑 Admin-System & Moderation
+- ✅ **Super Admin Account**: Weltenbibliothek / Jolene2305
+- ✅ **Rollen-System**: superadmin, admin, moderator, user
+- ✅ **Admin-Panel**: User-Verwaltung, Statistiken
+- ✅ **Moderatoren ernennen**: Super Admin kann Rollen zuweisen
+- ✅ **User bannen/entbannen**: Admin-/Moderator-Funktion
+- ✅ **Zugriff auf /static/admin.html**: Nur für Admins
+- ✅ **Rollen-basierte Berechtigungen**: API-Level-Kontrolle
 
 ### 💬 Chat-System (Telegram-Style)
 - ✅ **Private Chats**: 1-zu-1 Gespräche
@@ -40,7 +56,7 @@ Eine Telegram-ähnliche Social-Mystery-App mit interaktiver Weltkarte. Entdecke 
 - ✅ Leaflet.js Integration mit Dark Theme
 
 ### 📚 Event-Datenbank
-**35 bestehende Events + 20 neue (gesamt 55)**
+**35 aktive Events + 45 vorbereitet (gesamt 80 Events recherchiert)**
 
 Kategorien:
 - **UFOs & Aliens** (20 Events): Roswell, Area 51, Rendlesham Forest, USS Nimitz Tic-Tac, Phoenix Lights, etc.
@@ -49,7 +65,9 @@ Kategorien:
 - **Mystische Orte** (5 Events): Bermuda-Dreieck, Sedona Vortex, Mount Shasta
 - **Zeitreisen & Experimente** (2 Events): Montauk Project, Philadelphia-Experiment
 
-**Neue Events (36-55) - Vollständig recherchiert:**
+**Neue Events (36-80) - Vollständig recherchiert (45 Events):**
+
+**BATCH 1 - Antike Zivilisationen & UFO Sichtungen (36-55):**
 1. Tempel von Baalbek (Megalithische 1.000-Tonnen-Steine)
 2. Bosnische Pyramiden (Umstrittene 29.000 Jahre alte Strukturen)
 3. Derinkuyu (Unterirdische Stadt für 20.000 Menschen)
@@ -70,6 +88,33 @@ Kategorien:
 18. Ariel School (62 Kinder, Zimbabwe 1994)
 19. O'Hare Airport UFO (United Airlines, Chicago 2006)
 20. Rendlesham Forest (Britischer Roswell, 1980)
+
+**BATCH 2 - Geheime Experimente & Kryptozoologie (56-80):**
+21. MK-Ultra Programm (CIA Mind Control, LSD-Experimente)
+22. Tuskegee Syphilis-Studie (600 Afroamerikaner unbehandelt)
+23. Unit 731 (Japanische Bio-Waffen, Menschenversuche)
+24. Edgewood Arsenal (US Army testete Nervengas an Soldaten)
+25. Guatemala Syphilis-Experimente (USA infizierte 1.300 Menschen)
+26. Patterson-Gimlin Bigfoot-Film (Berühmtestes Bigfoot-Video)
+27. Loch Ness Sonar-Kontakt (Operation Deepscan, große Anomalie)
+28. Mothman von Point Pleasant (Vor Brückeneinsturz, 1966-67)
+29. Skinwalker Ranch (Paranormaler Hotspot, Utah)
+30. Hessdalen-Lichtphänomen (Wissenschaftlich dokumentierte Lichter)
+31. Kelly-Hopkinsville-Begegnung (11 Zeugen, Alien-Angriff)
+32. Varginha UFO-Vorfall (Brasilien, UFO-Crash, lebende Aliens)
+33. Colares UFO-Angriffe (Operation Prato, offizielle Untersuchung)
+34. Kecksburg UFO-Crash (Nazi-Glocke vom Himmel? Pennsylvania)
+35. Shag Harbour Unterwasser-UFO (Kanadische Marine-Verfolgung)
+36. Pororoca-Welle (Amazonas, mystische Anomalien)
+37. SS Ourang Medan (Gesamte Besatzung tot, Schiff explodierte)
+38. Taos Hum (Mysteriöses Brummen, nur 2% hören es)
+39. Oakville Blobs (Gele artige Masse fiel vom Himmel)
+40. Wow! Signal (Außerirdisches Signal, nie wiederholt)
+41. Philadelphia-Experiment (Unsichtbares Kriegsschiff, Zeitreise)
+42. Mary Celeste (Geisterschiff, Besatzung verschwunden)
+43. Schwarzer Ritter-Satellit (13.000 Jahre alt? NASA-Fotos)
+44. Solway Firth Spaceman (Foto zeigt Astronauten - niemand war da)
+45. Flannan-Leuchtturm (Drei Wärter verschwanden spurlos)
 
 ## 🏗️ Technologie-Stack
 
@@ -130,6 +175,13 @@ push_subscriptions (id, user_id, endpoint, auth_key, device_type)
 - `GET /api/events/:id` - Einzelnes Event mit Details
 - `GET /api/events/categories` - Event-Kategorien mit Counts
 - `GET /api/events/types` - Event-Typen mit Counts
+
+### Admin (geschützt - nur für admins/moderators)
+- `GET /api/admin/users` - Alle User auflisten
+- `GET /api/admin/stats` - Statistiken (Users, Chats, Messages, Events)
+- `PUT /api/admin/users/:id/role` - Rolle ändern (nur superadmin)
+- `PUT /api/admin/users/:id/ban` - User bannen/entbannen
+- `DELETE /api/admin/users/:id` - User löschen (nur superadmin)
 
 ### Documents
 - `GET /api/search?q=...` - Volltext-Suche in Dokumenten
@@ -301,9 +353,9 @@ Weltenbibliothek wird zur **größten deutschsprachigen Community** für verborg
 
 ## 📝 Status
 
-- **Version**: 0.3.0 (Beta)
+- **Version**: 0.4.0 (Beta)
 - **Letztes Update**: 2025-11-16
-- **Aktive Features**: Auth, Chat, Map, 55 Events
+- **Aktive Features**: Auth, Chat, Map, Admin-System, 35 aktive Events (80 recherchiert)
 - **In Entwicklung**: Live-Chat (WebSocket), Push-Notifications, Event-Details-Modal
 - **Deployment**: Sandbox (Development)
 
