@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - Weltenbibliothek</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body { background: #1a1a2e; font-family: 'Segoe UI', sans-serif; }
+        .stat-card { background: rgba(26, 26, 46, 0.8); border: 1px solid rgba(255, 215, 0, 0.3); }
+        .role-badge { padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; }
+        .role-superadmin { background: #dc2626; color: white; }
+        .role-admin { background: #ea580c; color: white; }
+        .role-moderator { background: #0891b2; color: white; }
+        .role-user { background: #6b7280; color: white; }
+    </style>
+</head>
+<body class="p-6">
+    <div class="max-w-7xl mx-auto">
+        <!-- Header -->
+        <div class="flex justify-between items-center mb-8">
+            <h1 class="text-3xl font-bold text-yellow-400">
+                <i class="fas fa-shield-alt mr-2"></i>
+                Admin Panel
+            </h1>
+            <div class="flex gap-2">
+                <button onclick="window.location.href='/static/chat.html'" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-white">
+                    <i class="fas fa-comments mr-2"></i>Chat
+                </button>
+                <button onclick="window.location.href='/'" class="px-4 py-2 bg-green-600 hover:bg-green-700 rounded-lg text-white">
+                    <i class="fas fa-map mr-2"></i>Karte
+                </button>
+            </div>
+        </div>
+
+        <!-- Stats -->
+        <div id="stats" class="grid grid-cols-4 gap-4 mb-8">
+            <div class="stat-card p-6 rounded-lg text-center">
+                <i class="fas fa-users text-4xl text-blue-400 mb-2"></i>
+                <div class="text-3xl font-bold text-white" id="stat-users">-</div>
+                <div class="text-gray-400">Benutzer</div>
+            </div>
+            <div class="stat-card p-6 rounded-lg text-center">
+                <i class="fas fa-comments text-4xl text-green-400 mb-2"></i>
+                <div class="text-3xl font-bold text-white" id="stat-chats">-</div>
+                <div class="text-gray-400">Chats</div>
+            </div>
+            <div class="stat-card p-6 rounded-lg text-center">
+                <i class="fas fa-envelope text-4xl text-yellow-400 mb-2"></i>
+                <div class="text-3xl font-bold text-white" id="stat-messages">-</div>
+                <div class="text-gray-400">Nachrichten</div>
+            </div>
+            <div class="stat-card p-6 rounded-lg text-center">
+                <i class="fas fa-map-marker-alt text-4xl text-red-400 mb-2"></i>
+                <div class="text-3xl font-bold text-white" id="stat-events">-</div>
+                <div class="text-gray-400">Events</div>
+            </div>
+        </div>
+
+        <!-- Users Table -->
+        <div class="stat-card rounded-lg p-6">
+            <h2 class="text-2xl font-bold text-yellow-400 mb-4">
+                <i class="fas fa-users mr-2"></i>
+                Benutzerverwaltung
+            </h2>
+            <div id="users-list" class="overflow-x-auto">
+                <div class="text-center text-gray-500 py-8">
+                    <i class="fas fa-spinner fa-spin text-3xl mb-2"></i>
+                    <p>Lade Benutzer...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/axios@1.6.0/dist/axios.min.js"></script>
+    <script>
+        const API_URL = window.location.origin;
+        let currentUser = null;
+
+        // Check auth
+        function checkAuth() {
+            const token = localStorage.getItem('auth_token');
+            const user = localStorage.getItem('user');
+            
+            if (!token || !user) {
+                alert('Bitte zuerst anmelden');
+                window.location.href = '/static/auth.html';
+                return;
+            }
+            
+            currentUser = JSON.parse(user);
+            
+            if (!currentUser.is_admin) {
+                alert('Zugriff verweigert - Nur für Admins');
+                window.location.href = '/';
+                return;
+            }
+            
+            loadStats();
+            loadUsers();
+        }
+
+        // Load stats
+        async function loadStats() {
+            const token = localStorage.getItem('auth_token');
+            try {
+                const response = await axios.get(`${API_URL}/api/admin/stats`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                if (response.data.success) {
+                    const stats = response.data.stats;
+                    document.getElementById('stat-users').textContent = stats.users;
+                    document.getElementById('stat-chats').textContent = stats.chats;
+                    document.getElementById('stat-messages').textContent = stats.messages;
+                    document.getElementById('stat-events').textContent = stats.events;
+                }
+            } catch (error) {
+                console.error('Error loading stats:', error);
+            }
+        }
+
+        // Load users
+        async function loadUsers() {
+            const token = localStorage.getItem('auth_token');
+            try {
+                const response = await axios.get(`${API_URL}/api/admin/users`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                if (response.data.success) {
+                    displayUsers(response.data.users);
+                }
+            } catch (error) {
+                console.error('Error loading users:', error);
+                document.getElementById('users-list').innerHTML = '<p class="text-red-400 p-4">Fehler beim Laden</p>';
+            }
+        }
+
+        // Display users
+        function displayUsers(users) {
+            const isSuperAdmin = currentUser.username === 'Weltenbibliothek';
+            
+            const html = `
+                <table class="w-full text-white">
+                    <thead>
+                        <tr class="border-b border-gray-700">
+                            <th class="text-left p-3">Benutzer</th>
+                            <th class="text-left p-3">Rolle</th>
+                            <th class="text-left p-3">Status</th>
+                            <th class="text-left p-3">Erstellt</th>
+                            ${isSuperAdmin ? '<th class="text-left p-3">Aktionen</th>' : ''}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${users.map(user => `
+                            <tr class="border-b border-gray-800 hover:bg-gray-900">
+                                <td class="p-3">
+                                    <div class="font-semibold">${user.display_name}</div>
+                                    <div class="text-sm text-gray-400">@${user.username}</div>
+                                </td>
+                                <td class="p-3">
+                                    <span class="role-badge role-${user.role || 'user'}">${user.role || 'user'}</span>
+                                </td>
+                                <td class="p-3">
+                                    <span class="text-${user.status === 'online' ? 'green' : user.status === 'banned' ? 'red' : 'gray'}-400">
+                                        ${user.status || 'offline'}
+                                    </span>
+                                </td>
+                                <td class="p-3 text-sm text-gray-400">
+                                    ${new Date(user.created_at).toLocaleDateString('de-DE')}
+                                </td>
+                                ${isSuperAdmin && user.role !== 'superadmin' ? `
+                                    <td class="p-3">
+                                        <select onchange="changeRole(${user.id}, this.value)" class="bg-gray-800 text-white p-1 rounded">
+                                            <option value="">Rolle ändern...</option>
+                                            <option value="user">User</option>
+                                            <option value="moderator">Moderator</option>
+                                            <option value="admin">Admin</option>
+                                        </select>
+                                        <button onclick="toggleBan(${user.id}, '${user.status === 'banned'}')" 
+                                                class="ml-2 px-2 py-1 bg-red-600 hover:bg-red-700 rounded text-sm">
+                                            ${user.status === 'banned' ? 'Entbannen' : 'Bannen'}
+                                        </button>
+                                    </td>
+                                ` : isSuperAdmin ? '<td class="p-3 text-gray-500">Super Admin</td>' : ''}
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+            
+            document.getElementById('users-list').innerHTML = html;
+        }
+
+        // Change role
+        async function changeRole(userId, role) {
+            if (!role) return;
+            
+            const token = localStorage.getItem('auth_token');
+            try {
+                await axios.put(`${API_URL}/api/admin/users/${userId}/role`, 
+                    { role },
+                    { headers: { 'Authorization': `Bearer ${token}` } }
+                );
+                loadUsers();
+                alert('Rolle geändert');
+            } catch (error) {
+                alert(error.response?.data?.error || 'Fehler beim Ändern der Rolle');
+            }
+        }
+
+        // Toggle ban
+        async function toggleBan(userId, isBanned) {
+            const token = localStorage.getItem('auth_token');
+            try {
+                await axios.put(`${API_URL}/api/admin/users/${userId}/ban`,
+                    { banned: isBanned !== 'true' },
+                    { headers: { 'Authorization': `Bearer ${token}` } }
+                );
+                loadUsers();
+                alert(isBanned === 'true' ? 'Ban aufgehoben' : 'User gebannt');
+            } catch (error) {
+                alert(error.response?.data?.error || 'Fehler');
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', checkAuth);
+    </script>
+</body>
+</html>

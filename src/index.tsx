@@ -18,45 +18,49 @@ app.use('/static/*', serveStatic({ root: './public' }))
 
 // ===== Authentication API =====
 
-// Register new user
+// Register new user (simplified: only username + password)
 app.post('/api/auth/register', async (c) => {
   try {
-    const { username, email, password, display_name } = await c.req.json()
+    const { username, password } = await c.req.json()
     
     // Validation
-    if (!username || !email || !password) {
-      return c.json({ success: false, error: 'Username, email and password are required' }, 400)
+    if (!username || !password) {
+      return c.json({ success: false, error: 'Benutzername und Passwort sind erforderlich' }, 400)
     }
     
     if (password.length < 6) {
-      return c.json({ success: false, error: 'Password must be at least 6 characters' }, 400)
+      return c.json({ success: false, error: 'Passwort muss mindestens 6 Zeichen haben' }, 400)
     }
     
-    // Check if user already exists
+    if (username.length < 3) {
+      return c.json({ success: false, error: 'Benutzername muss mindestens 3 Zeichen haben' }, 400)
+    }
+    
+    // Check if username already exists
     const existing = await c.env.DB.prepare(`
-      SELECT id FROM users WHERE username = ? OR email = ?
-    `).bind(username, email).first()
+      SELECT id FROM users WHERE username = ?
+    `).bind(username).first()
     
     if (existing) {
-      return c.json({ success: false, error: 'Username or email already exists' }, 409)
+      return c.json({ success: false, error: 'Dieser Benutzername ist bereits vergeben' }, 409)
     }
     
     // Hash password
     const passwordHash = await hashPassword(password)
     
-    // Create user
+    // Create user (email is optional now, display_name = username)
     const result = await c.env.DB.prepare(`
       INSERT INTO users (username, email, password_hash, display_name, created_at)
       VALUES (?, ?, ?, ?, datetime('now'))
-    `).bind(username, email, passwordHash, display_name || username).run()
+    `).bind(username, `${username}@weltenbibliothek.local`, passwordHash, username).run()
     
     if (!result.success) {
-      return c.json({ success: false, error: 'Failed to create user' }, 500)
+      return c.json({ success: false, error: 'Registrierung fehlgeschlagen' }, 500)
     }
     
     // Get the created user
     const user = await c.env.DB.prepare(`
-      SELECT id, username, email, display_name, created_at
+      SELECT id, username, display_name, is_admin, created_at
       FROM users WHERE username = ?
     `).bind(username).first()
     
@@ -68,15 +72,15 @@ app.post('/api/auth/register', async (c) => {
       user: {
         id: user.id,
         username: user.username,
-        email: user.email,
         display_name: user.display_name,
+        is_admin: user.is_admin,
         created_at: user.created_at
       },
       token
     })
   } catch (error) {
     console.error('Register error:', error)
-    return c.json({ success: false, error: 'Registration failed' }, 500)
+    return c.json({ success: false, error: 'Registrierung fehlgeschlagen' }, 500)
   }
 })
 
@@ -91,9 +95,9 @@ app.post('/api/auth/login', async (c) => {
     
     // Find user
     const user = await c.env.DB.prepare(`
-      SELECT id, username, email, password_hash, display_name, avatar_url, bio, created_at
-      FROM users WHERE username = ? OR email = ?
-    `).bind(username, username).first()
+      SELECT id, username, email, password_hash, display_name, avatar_url, bio, is_admin, created_at
+      FROM users WHERE username = ?
+    `).bind(username).first()
     
     if (!user) {
       return c.json({ success: false, error: 'Invalid credentials' }, 401)
@@ -123,6 +127,7 @@ app.post('/api/auth/login', async (c) => {
         display_name: user.display_name,
         avatar_url: user.avatar_url,
         bio: user.bio,
+        is_admin: user.is_admin,
         created_at: user.created_at
       },
       token
@@ -190,6 +195,163 @@ app.post('/api/auth/logout', authMiddleware, async (c) => {
   } catch (error) {
     console.error('Logout error:', error)
     return c.json({ success: false, error: 'Logout failed' }, 500)
+  }
+})
+
+// ===== Admin API =====
+
+// Middleware for admin-only routes
+async function adminMiddleware(c: any, next: Function) {
+  await authMiddleware(c, async () => {
+    const userId = c.get('userId')
+    
+    const user = await c.env.DB.prepare(`
+      SELECT role, is_admin FROM users WHERE id = ?
+    `).bind(userId).first()
+    
+    if (!user || (user.role !== 'superadmin' && user.role !== 'admin' && user.role !== 'moderator')) {
+      return c.json({ success: false, error: 'Zugriff verweigert' }, 403)
+    }
+    
+    c.set('userRole', user.role)
+    await next()
+  })
+}
+
+// Get all users (admin only)
+app.get('/api/admin/users', adminMiddleware, async (c) => {
+  try {
+    const result = await c.env.DB.prepare(`
+      SELECT id, username, display_name, role, is_admin, is_verified, status, created_at, last_seen
+      FROM users
+      ORDER BY created_at DESC
+    `).all()
+    
+    return c.json({ success: true, users: result.results || [] })
+  } catch (error) {
+    console.error('Error fetching users:', error)
+    return c.json({ success: false, error: 'Failed to fetch users' }, 500)
+  }
+})
+
+// Update user role (superadmin only)
+app.put('/api/admin/users/:id/role', adminMiddleware, async (c) => {
+  try {
+    const userRole = c.get('userRole')
+    
+    if (userRole !== 'superadmin') {
+      return c.json({ success: false, error: 'Nur Super Admin kann Rollen ändern' }, 403)
+    }
+    
+    const userId = c.req.param('id')
+    const { role } = await c.req.json()
+    
+    if (!['user', 'moderator', 'admin'].includes(role)) {
+      return c.json({ success: false, error: 'Ungültige Rolle' }, 400)
+    }
+    
+    // Cannot change superadmin role
+    const targetUser = await c.env.DB.prepare(`
+      SELECT role FROM users WHERE id = ?
+    `).bind(userId).first()
+    
+    if (targetUser?.role === 'superadmin') {
+      return c.json({ success: false, error: 'Super Admin Rolle kann nicht geändert werden' }, 403)
+    }
+    
+    await c.env.DB.prepare(`
+      UPDATE users SET role = ?, is_admin = ?, updated_at = datetime('now')
+      WHERE id = ?
+    `).bind(role, role !== 'user' ? 1 : 0, userId).run()
+    
+    return c.json({ success: true, message: 'Rolle aktualisiert' })
+  } catch (error) {
+    console.error('Error updating role:', error)
+    return c.json({ success: false, error: 'Failed to update role' }, 500)
+  }
+})
+
+// Ban/Unban user (admin only)
+app.put('/api/admin/users/:id/ban', adminMiddleware, async (c) => {
+  try {
+    const userRole = c.get('userRole')
+    const userId = c.req.param('id')
+    const { banned } = await c.req.json()
+    
+    // Moderators can't ban admins
+    const targetUser = await c.env.DB.prepare(`
+      SELECT role FROM users WHERE id = ?
+    `).bind(userId).first()
+    
+    if (targetUser?.role === 'superadmin') {
+      return c.json({ success: false, error: 'Super Admin kann nicht gebannt werden' }, 403)
+    }
+    
+    if (userRole === 'moderator' && (targetUser?.role === 'admin' || targetUser?.role === 'moderator')) {
+      return c.json({ success: false, error: 'Moderatoren können keine Admins/Moderatoren bannen' }, 403)
+    }
+    
+    await c.env.DB.prepare(`
+      UPDATE users SET status = ?, updated_at = datetime('now')
+      WHERE id = ?
+    `).bind(banned ? 'banned' : 'offline', userId).run()
+    
+    return c.json({ success: true, message: banned ? 'User gebannt' : 'Ban aufgehoben' })
+  } catch (error) {
+    console.error('Error banning user:', error)
+    return c.json({ success: false, error: 'Failed to ban user' }, 500)
+  }
+})
+
+// Delete user (superadmin only)
+app.delete('/api/admin/users/:id', adminMiddleware, async (c) => {
+  try {
+    const userRole = c.get('userRole')
+    
+    if (userRole !== 'superadmin') {
+      return c.json({ success: false, error: 'Nur Super Admin kann User löschen' }, 403)
+    }
+    
+    const userId = c.req.param('id')
+    
+    // Cannot delete superadmin
+    const targetUser = await c.env.DB.prepare(`
+      SELECT role FROM users WHERE id = ?
+    `).bind(userId).first()
+    
+    if (targetUser?.role === 'superadmin') {
+      return c.json({ success: false, error: 'Super Admin kann nicht gelöscht werden' }, 403)
+    }
+    
+    await c.env.DB.prepare(`DELETE FROM users WHERE id = ?`).bind(userId).run()
+    
+    return c.json({ success: true, message: 'User gelöscht' })
+  } catch (error) {
+    console.error('Error deleting user:', error)
+    return c.json({ success: false, error: 'Failed to delete user' }, 500)
+  }
+})
+
+// Get admin stats (admin only)
+app.get('/api/admin/stats', adminMiddleware, async (c) => {
+  try {
+    const userCount = await c.env.DB.prepare(`SELECT COUNT(*) as count FROM users`).first()
+    const chatCount = await c.env.DB.prepare(`SELECT COUNT(*) as count FROM chats`).first()
+    const messageCount = await c.env.DB.prepare(`SELECT COUNT(*) as count FROM messages`).first()
+    const eventCount = await c.env.DB.prepare(`SELECT COUNT(*) as count FROM events`).first()
+    
+    return c.json({
+      success: true,
+      stats: {
+        users: userCount?.count || 0,
+        chats: chatCount?.count || 0,
+        messages: messageCount?.count || 0,
+        events: eventCount?.count || 0
+      }
+    })
+  } catch (error) {
+    console.error('Error fetching stats:', error)
+    return c.json({ success: false, error: 'Failed to fetch stats' }, 500)
   }
 })
 
