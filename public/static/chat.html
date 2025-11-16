@@ -3,22 +3,64 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Weltenbibliothek - Chat</title>
+    <title>Weltenbibliothek - Chat & Karte</title>
     <link rel="stylesheet" href="/static/design-system.css">
     <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
         body {
             overflow: hidden;
             height: 100vh;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        /* Main Content Area */
+        .main-content {
+            flex: 1;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        /* Tab Panels */
+        .tab-panel {
+            display: none;
+            flex: 1;
+            overflow: hidden;
+        }
+        
+        .tab-panel.active {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        /* Map Tab */
+        #map-container {
+            flex: 1;
+            position: relative;
+        }
+        
+        #map {
+            width: 100%;
+            height: 100%;
+        }
+        
+        /* Chat Tab Layout */
+        .chat-layout {
+            display: flex;
+            height: 100%;
+            overflow: hidden;
         }
         
         /* Chat Sidebar */
         .chat-sidebar {
             width: 320px;
-            height: 100vh;
             border-right: 1px solid var(--border);
             display: flex;
             flex-direction: column;
+            overflow: hidden;
         }
         
         /* Fixed Chats Section */
@@ -87,14 +129,14 @@
             text-overflow: ellipsis;
         }
         
-        /* User Chats Section */
-        .user-chats {
+        /* User Groups Section */
+        .user-groups {
             flex: 1;
             overflow-y: auto;
             padding: var(--spacing-md);
         }
         
-        .user-chats-header {
+        .user-groups-header {
             display: flex;
             align-items: center;
             justify-content: space-between;
@@ -107,12 +149,17 @@
             letter-spacing: 0.05em;
         }
         
+        .btn-create-group {
+            width: 100%;
+            margin-top: var(--spacing-md);
+        }
+        
         /* Chat Main Area */
         .chat-main {
             flex: 1;
-            height: 100vh;
             display: flex;
             flex-direction: column;
+            overflow: hidden;
         }
         
         /* Chat Header */
@@ -223,18 +270,6 @@
             flex: 1;
         }
         
-        /* Floating Action Button */
-        .fab {
-            position: fixed;
-            bottom: 24px;
-            right: 24px;
-            width: 56px;
-            height: 56px;
-            border-radius: var(--radius-full);
-            box-shadow: var(--shadow-xl);
-            z-index: 1000;
-        }
-        
         /* Empty State */
         .empty-state {
             flex: 1;
@@ -261,66 +296,49 @@
             font-size: var(--text-base);
         }
         
-        /* Modal */
-        .modal {
-            position: fixed;
-            inset: 0;
-            background: rgba(0, 0, 0, 0.7);
-            backdrop-filter: blur(4px);
+        /* Bottom Navigation */
+        .bottom-nav {
             display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 2000;
-            animation: fadeIn var(--transition) ease-out;
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border-top: 1px solid var(--border);
+            padding: var(--spacing-sm) 0;
+            z-index: 1000;
         }
         
-        .modal-content {
-            background: var(--surface);
-            border-radius: var(--radius-xl);
-            padding: var(--spacing-xl);
-            width: 90%;
-            max-width: 500px;
-            border: 1px solid var(--border-light);
-            animation: slideInRight var(--transition) ease-out;
-        }
-        
-        /* User Profile Header */
-        .user-profile {
-            display: flex;
-            align-items: center;
-            gap: var(--spacing-md);
-            padding: var(--spacing-lg);
-            border-bottom: 1px solid var(--border);
-        }
-        
-        .user-profile-info {
+        .nav-item {
             flex: 1;
-            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            padding: var(--spacing-sm);
+            cursor: pointer;
+            transition: all var(--transition);
+            border: none;
+            background: transparent;
+            color: var(--text-secondary);
         }
         
-        .user-profile-name {
-            font-weight: 600;
+        .nav-item:hover {
             color: var(--text-primary);
-            font-size: var(--text-base);
+            background: rgba(99, 102, 241, 0.05);
         }
         
-        .user-profile-username {
-            font-size: var(--text-sm);
-            color: var(--text-tertiary);
+        .nav-item.active {
+            color: var(--primary);
+            font-weight: 600;
         }
         
-        /* Search Bar */
-        .search-bar {
-            padding: var(--spacing-md);
-            border-bottom: 1px solid var(--border);
+        .nav-item i {
+            font-size: 1.25rem;
         }
         
-        /* Livestream Indicator */
-        .livestream-badge {
-            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        .nav-item-label {
+            font-size: var(--text-xs);
         }
         
-        /* Livestream Container */
+        /* Livestream Container (same as before but adjusted) */
         .livestream-container {
             flex: 1;
             display: flex;
@@ -380,32 +398,27 @@
             padding: var(--spacing-lg);
         }
         
-        /* Minimized Stream (Picture-in-Picture) */
-        .livestream-container.minimized {
+        /* Modal */
+        .modal {
             position: fixed;
-            bottom: 80px;
-            right: 20px;
-            width: 320px;
-            height: 240px;
-            z-index: 1000;
-            padding: 0;
-            border-radius: var(--radius-xl);
-            box-shadow: var(--shadow-xl);
-        }
-        
-        .livestream-container.minimized .video-grid {
-            grid-template-columns: 1fr;
-            height: 100%;
-        }
-        
-        .livestream-container.minimized .livestream-controls {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
+            inset: 0;
             background: rgba(0, 0, 0, 0.7);
-            backdrop-filter: blur(8px);
-            padding: var(--spacing-sm);
+            backdrop-filter: blur(4px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            animation: fadeIn var(--transition) ease-out;
+        }
+        
+        .modal-content {
+            background: var(--surface);
+            border-radius: var(--radius-xl);
+            padding: var(--spacing-xl);
+            width: 90%;
+            max-width: 500px;
+            border: 1px solid var(--border-light);
+            animation: slideInRight var(--transition) ease-out;
         }
         
         /* Responsive */
@@ -414,6 +427,7 @@
                 width: 100%;
                 position: absolute;
                 z-index: 100;
+                height: calc(100% - 60px);
                 transform: translateX(-100%);
                 transition: transform var(--transition);
             }
@@ -425,249 +439,230 @@
             .message {
                 max-width: 85%;
             }
-            
-            .livestream-container.minimized {
-                width: 200px;
-                height: 150px;
-                bottom: 60px;
-                right: 10px;
-            }
         }
     </style>
 </head>
-<body class="flex">
-    <!-- Sidebar - Chat List -->
-    <div class="chat-sidebar glass">
-        <!-- User Profile Header -->
-        <div class="user-profile">
-            <div class="avatar-md" id="user-avatar">
-                <span id="user-initials">?</span>
-            </div>
-            <div class="user-profile-info">
-                <div class="user-profile-name" id="user-display-name">Laden...</div>
-                <div class="user-profile-username" id="user-username">@...</div>
-            </div>
-            <button onclick="logout()" class="btn-icon btn-ghost" title="Abmelden">
-                <i class="fas fa-sign-out-alt"></i>
-            </button>
-        </div>
-        
-        <!-- Search Bar -->
-        <div class="search-bar">
-            <input 
-                type="text" 
-                id="search-chats" 
-                placeholder="Chats durchsuchen..." 
-                class="input"
-            />
-        </div>
-        
-        <!-- Tabs -->
-        <div class="flex border-b" style="border-color: var(--border);">
-            <button onclick="switchTab('chats')" class="flex-1 py-3 text-primary font-semibold border-b-2" style="border-color: var(--primary);" id="tab-chats">
-                <i class="fas fa-comments mr-2"></i>
-                Chats
-            </button>
-            <button onclick="switchTab('map')" class="flex-1 py-3 text-tertiary" id="tab-map">
-                <i class="fas fa-map mr-2"></i>
-                Karte
-            </button>
-        </div>
-        
-        <!-- Fixed Chats Section -->
-        <div class="fixed-chats">
-            <div class="fixed-chats-header">
-                <i class="fas fa-star"></i>
-                <span>Standard Chats</span>
-            </div>
-            
-            <!-- Allgemein Chat -->
-            <div class="chat-item" onclick="openChat(1)" data-chat-id="1">
-                <div class="chat-item-icon">💬</div>
-                <div class="chat-item-content">
-                    <div class="chat-item-title">Allgemein</div>
-                    <div class="chat-item-description">Allgemeiner Chat für alle Themen</div>
-                </div>
-                <span class="badge badge-success livestream-badge">Live</span>
-            </div>
-            
-            <!-- Musik Chat -->
-            <div class="chat-item" onclick="openChat(2)" data-chat-id="2">
-                <div class="chat-item-icon">🎵</div>
-                <div class="chat-item-content">
-                    <div class="chat-item-title">Musik</div>
-                    <div class="chat-item-description">Musik & Livestreams</div>
-                </div>
+<body>
+    <!-- Main Content Area -->
+    <div class="main-content">
+        <!-- Map Tab Panel -->
+        <div id="map-panel" class="tab-panel">
+            <div id="map-container">
+                <div id="map"></div>
             </div>
         </div>
         
-        <!-- User Chats Section -->
-        <div class="user-chats">
-            <div class="user-chats-header">
-                <span>
-                    <i class="fas fa-user-friends mr-2"></i>
-                    Deine Chats
-                </span>
-                <button onclick="showNewChatModal()" class="btn-icon btn-sm btn-ghost" title="Neuer Chat">
-                    <i class="fas fa-plus"></i>
-                </button>
-            </div>
-            
-            <div id="user-chat-list">
-                <div class="text-center text-tertiary py-4">
-                    <i class="fas fa-spinner fa-spin text-2xl mb-2"></i>
-                    <p class="text-sm">Lade Chats...</p>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Main Chat Area -->
-    <div class="chat-main">
-        <!-- Chat Header (hidden initially) -->
-        <div id="chat-header" class="chat-header hidden">
-            <div class="chat-header-left">
-                <div class="avatar-md" id="chat-avatar">
-                    <span id="chat-title-initials">?</span>
-                </div>
-                <div>
-                    <div class="chat-header-title" id="chat-title">Chat-Name</div>
-                    <div class="chat-header-subtitle" id="chat-subtitle">Online</div>
-                </div>
-            </div>
-            <div class="flex gap-sm">
-                <button id="btn-quota-dashboard" class="btn-icon btn-ghost" onclick="window.costMonitor.showQuotaDashboard()" title="Kostenlose Kontingente">
-                    <i class="fas fa-chart-bar"></i>
-                </button>
-                <button id="btn-ai-chat" class="btn-icon btn-ghost" onclick="openAIChatPanel()" title="AI Assistant">
-                    <i class="fas fa-robot"></i>
-                </button>
-                <button id="btn-start-livestream" class="btn-icon btn-ghost" onclick="startLivestreamInChat()" title="Livestream starten">
-                    <i class="fas fa-video"></i>
-                </button>
-                <button class="btn-icon btn-ghost" title="Whiteboard öffnen" onclick="openWhiteboard()">
-                    <i class="fas fa-chalkboard"></i>
-                </button>
-                <button class="btn-icon btn-ghost" title="Optionen">
-                    <i class="fas fa-ellipsis-v"></i>
-                </button>
-            </div>
-        </div>
-        
-        <!-- Messages Container -->
-        <div id="messages-container" class="messages-container">
-            <!-- Empty State -->
-            <div class="empty-state">
-                <i class="fas fa-comments empty-state-icon"></i>
-                <div class="empty-state-title">Willkommen im Chat</div>
-                <div class="empty-state-description">Wähle einen Chat aus oder starte einen neuen</div>
-                <button onclick="showNewChatModal()" class="btn-primary" style="margin-top: var(--spacing-lg);">
-                    <i class="fas fa-plus mr-2"></i>
-                    Neuer Chat
-                </button>
-            </div>
-        </div>
-        
-        <!-- Livestream Container (hidden initially) -->
-        <div id="livestream-container" class="livestream-container hidden">
-            <div class="video-grid">
-                <!-- Local Video -->
-                <div class="video-tile glass">
-                    <div id="local-video-player"></div>
-                    <div class="video-overlay">
-                        <span class="badge badge-danger livestream-badge">LIVE</span>
-                        <span class="username">Du</span>
+        <!-- Chat Tab Panel -->
+        <div id="chat-panel" class="tab-panel active">
+            <div class="chat-layout">
+                <!-- Chat Sidebar -->
+                <div class="chat-sidebar glass">
+                    <!-- Fixed Chats Section -->
+                    <div class="fixed-chats">
+                        <div class="fixed-chats-header">
+                            <i class="fas fa-star"></i>
+                            <span>Standard Chats</span>
+                        </div>
+                        
+                        <!-- Allgemein Chat -->
+                        <div class="chat-item" onclick="openChat(1)" data-chat-id="1">
+                            <div class="chat-item-icon">💬</div>
+                            <div class="chat-item-content">
+                                <div class="chat-item-title">Allgemein</div>
+                                <div class="chat-item-description">Alle Themen - Livestreaming verfügbar</div>
+                            </div>
+                            <button class="btn-icon btn-ghost" onclick="startLivestream(event, 1)" title="Stream starten">
+                                <i class="fas fa-video"></i>
+                            </button>
+                        </div>
+                        
+                        <!-- Musik Chat -->
+                        <div class="chat-item" onclick="openChat(2)" data-chat-id="2">
+                            <div class="chat-item-icon">🎵</div>
+                            <div class="chat-item-content">
+                                <div class="chat-item-title">Musik</div>
+                                <div class="chat-item-description">Musik & Streams - Live verfügbar</div>
+                            </div>
+                            <button class="btn-icon btn-ghost" onclick="startLivestream(event, 2)" title="Stream starten">
+                                <i class="fas fa-video"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- User Groups Section -->
+                    <div class="user-groups">
+                        <div class="user-groups-header">
+                            <span>
+                                <i class="fas fa-users mr-2"></i>
+                                Deine Gruppen
+                            </span>
+                        </div>
+                        
+                        <div id="user-groups-list">
+                            <div class="text-center text-tertiary py-4">
+                                <i class="fas fa-spinner fa-spin text-2xl mb-2"></i>
+                                <p class="text-sm">Lade Gruppen...</p>
+                            </div>
+                        </div>
+                        
+                        <!-- Create Group Button -->
+                        <button onclick="showCreateGroupModal()" class="btn-primary btn-create-group">
+                            <i class="fas fa-plus mr-2"></i>
+                            Gruppe erstellen
+                        </button>
                     </div>
                 </div>
                 
-                <!-- Remote Videos (dynamically added) -->
-                <div id="remote-videos" style="display: contents;">
-                    <!-- Remote user videos will be added here -->
+                <!-- Chat Main Area -->
+                <div class="chat-main">
+                    <!-- Chat Header -->
+                    <div id="chat-header" class="chat-header hidden">
+                        <div class="chat-header-left">
+                            <div class="avatar-md" id="chat-avatar">
+                                <span id="chat-title-initials">?</span>
+                            </div>
+                            <div>
+                                <div class="chat-header-title" id="chat-title">Chat-Name</div>
+                                <div class="chat-header-subtitle" id="chat-subtitle">Online</div>
+                            </div>
+                        </div>
+                        <div class="flex gap-sm">
+                            <button class="btn-icon btn-ghost" onclick="window.costMonitor.showQuotaDashboard()" title="Kontingente">
+                                <i class="fas fa-chart-bar"></i>
+                            </button>
+                            <button class="btn-icon btn-ghost" onclick="openAIChatPanel()" title="AI Assistant">
+                                <i class="fas fa-robot"></i>
+                            </button>
+                            <button id="btn-stream-toggle" class="btn-icon btn-ghost" onclick="toggleLivestreamInChat()" title="Livestream">
+                                <i class="fas fa-video"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Messages Container -->
+                    <div id="messages-container" class="messages-container">
+                        <div class="empty-state">
+                            <i class="fas fa-comments empty-state-icon"></i>
+                            <div class="empty-state-title">Willkommen</div>
+                            <div class="empty-state-description">Wähle einen Chat oder erstelle eine Gruppe</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Livestream Container (hidden initially) -->
+                    <div id="livestream-container" class="livestream-container hidden">
+                        <div class="video-grid">
+                            <div class="video-tile glass">
+                                <div id="local-video-player"></div>
+                                <div class="video-overlay">
+                                    <span class="badge badge-danger livestream-badge">LIVE</span>
+                                    <span class="username">Du</span>
+                                </div>
+                            </div>
+                            <div id="remote-videos" style="display: contents;"></div>
+                        </div>
+                        
+                        <div class="livestream-controls glass">
+                            <button id="btn-toggle-audio" class="btn-icon btn-ghost" onclick="window.livestreamModule.toggleAudio()">
+                                <i class="fas fa-microphone"></i>
+                            </button>
+                            <button id="btn-toggle-video" class="btn-icon btn-ghost" onclick="window.livestreamModule.toggleVideo()">
+                                <i class="fas fa-video"></i>
+                            </button>
+                            <button class="btn-danger" onclick="window.livestreamModule.stopLivestream()">
+                                <i class="fas fa-phone-slash mr-2"></i>
+                                Beenden
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Message Input -->
+                    <div id="message-input-area" class="message-input-area hidden">
+                        <form id="message-form" class="message-form">
+                            <button type="button" class="btn-icon btn-ghost">
+                                <i class="fas fa-paperclip"></i>
+                            </button>
+                            <input 
+                                type="text" 
+                                id="message-input" 
+                                placeholder="Nachricht schreiben..." 
+                                class="message-input input"
+                                required
+                            />
+                            <button type="submit" class="btn-primary">
+                                <i class="fas fa-paper-plane"></i>
+                            </button>
+                        </form>
+                    </div>
                 </div>
             </div>
-            
-            <!-- Livestream Controls -->
-            <div class="livestream-controls glass">
-                <button id="btn-toggle-audio" class="btn-icon btn-ghost" onclick="window.livestreamModule.toggleAudio()" title="Mikrofon stumm schalten">
-                    <i class="fas fa-microphone"></i>
-                </button>
-                <button id="btn-toggle-video" class="btn-icon btn-ghost" onclick="window.livestreamModule.toggleVideo()" title="Kamera ausschalten">
-                    <i class="fas fa-video"></i>
-                </button>
-                <button class="btn-icon btn-ghost" onclick="window.livestreamModule.toggleMinimizeStream()" title="Minimieren">
-                    <i class="fas fa-compress"></i>
-                </button>
-                <button class="btn-danger" onclick="window.livestreamModule.stopLivestream()" title="Stream beenden">
-                    <i class="fas fa-phone-slash mr-2"></i>
-                    Beenden
-                </button>
-            </div>
-        </div>
-        
-        <!-- Message Input Area (hidden initially) -->
-        <div id="message-input-area" class="message-input-area hidden">
-            <form id="message-form" class="message-form">
-                <button type="button" class="btn-icon btn-ghost" title="Datei anhängen">
-                    <i class="fas fa-paperclip"></i>
-                </button>
-                <input 
-                    type="text" 
-                    id="message-input" 
-                    placeholder="Nachricht schreiben..." 
-                    class="message-input input"
-                    required
-                />
-                <button type="button" class="btn-icon btn-ghost" title="Emoji">
-                    <i class="fas fa-smile"></i>
-                </button>
-                <button type="submit" class="btn-primary">
-                    <i class="fas fa-paper-plane"></i>
-                </button>
-            </form>
         </div>
     </div>
     
-    <!-- Floating Action Button (Mobile) -->
-    <button onclick="showNewChatModal()" class="fab btn-primary hidden md:hidden">
-        <i class="fas fa-plus"></i>
-    </button>
+    <!-- Bottom Navigation -->
+    <div class="bottom-nav">
+        <button class="nav-item" onclick="switchToTab('map')" id="nav-map">
+            <i class="fas fa-map"></i>
+            <span class="nav-item-label">Karte</span>
+        </button>
+        <button class="nav-item active" onclick="switchToTab('chat')" id="nav-chat">
+            <i class="fas fa-comments"></i>
+            <span class="nav-item-label">Chat</span>
+        </button>
+        <button class="nav-item" onclick="logout()">
+            <i class="fas fa-sign-out-alt"></i>
+            <span class="nav-item-label">Logout</span>
+        </button>
+    </div>
     
-    <!-- New Chat Modal -->
-    <div id="new-chat-modal" class="modal hidden">
+    <!-- Create Group Modal -->
+    <div id="create-group-modal" class="modal hidden">
         <div class="modal-content">
             <div class="flex items-center justify-between mb-lg">
                 <h2 class="text-2xl font-bold text-primary">
-                    <i class="fas fa-plus-circle mr-2"></i>
-                    Neuer Chat
+                    <i class="fas fa-users mr-2"></i>
+                    Gruppe erstellen
                 </h2>
-                <button onclick="closeNewChatModal()" class="btn-icon btn-ghost">
+                <button onclick="closeCreateGroupModal()" class="btn-icon btn-ghost">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
             
-            <div class="mb-md">
-                <label class="block text-secondary mb-2 font-semibold">Benutzer suchen:</label>
-                <input 
-                    type="text" 
-                    id="user-search" 
-                    placeholder="Benutzername eingeben..." 
-                    class="input"
-                />
-            </div>
-            
-            <div id="user-search-results" class="mb-md" style="max-height: 300px; overflow-y: auto;">
-                <!-- Search results here -->
-            </div>
-            
-            <div class="flex gap-sm">
-                <button onclick="closeNewChatModal()" class="flex-1 btn-secondary">
-                    Abbrechen
-                </button>
-            </div>
+            <form id="create-group-form">
+                <div class="mb-md">
+                    <label class="block text-secondary mb-2 font-semibold">Gruppenname:</label>
+                    <input 
+                        type="text" 
+                        id="group-name" 
+                        placeholder="z.B. Mysterien-Diskussion" 
+                        class="input"
+                        required
+                    />
+                </div>
+                
+                <div class="mb-md">
+                    <label class="block text-secondary mb-2 font-semibold">Beschreibung:</label>
+                    <textarea 
+                        id="group-description" 
+                        placeholder="Worum geht es in dieser Gruppe?" 
+                        class="input"
+                        rows="3"
+                    ></textarea>
+                </div>
+                
+                <div class="flex gap-sm">
+                    <button type="button" onclick="closeCreateGroupModal()" class="flex-1 btn-secondary">
+                        Abbrechen
+                    </button>
+                    <button type="submit" class="flex-1 btn-primary">
+                        <i class="fas fa-check mr-2"></i>
+                        Erstellen
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
     
-    <!-- AI Chat Panel (hidden by default) -->
+    <!-- AI Chat Panel (reuse from original) -->
     <div id="ai-chat-panel" class="modal hidden">
         <div class="modal-content" style="max-width: 800px; height: 80vh; display: flex; flex-direction: column;">
             <div class="flex items-center justify-between mb-lg">
@@ -680,35 +675,19 @@
                 </button>
             </div>
             
-            <!-- AI Chat Messages -->
             <div id="ai-chat-messages" class="flex-1 overflow-y-auto mb-md" style="display: flex; flex-direction: column; gap: var(--spacing-md);">
                 <div class="text-center text-tertiary py-lg">
                     <i class="fas fa-robot" style="font-size: 3rem; opacity: 0.3; margin-bottom: var(--spacing-md);"></i>
                     <p class="font-semibold">Willkommen beim AI Assistant!</p>
-                    <p class="text-sm mt-2">Stelle Fragen, analysiere Bilder oder nutze Spracherkennung.</p>
-                    <div class="flex gap-sm justify-center mt-md">
-                        <span class="badge badge-success">
-                            <i class="fas fa-check mr-1"></i>
-                            Kostenlos
-                        </span>
-                        <span class="badge badge-primary">
-                            <i class="fas fa-language mr-1"></i>
-                            Deutsch
-                        </span>
-                        <span class="badge badge-primary">
-                            <i class="fas fa-image mr-1"></i>
-                            Bildanalyse
-                        </span>
-                    </div>
+                    <p class="text-sm mt-2">Stelle Fragen oder nutze Spracherkennung.</p>
                 </div>
             </div>
             
-            <!-- AI Chat Input -->
             <div class="flex gap-sm">
-                <button type="button" id="btn-voice-input" class="btn-icon btn-ghost" onclick="window.aiChatModule.toggleVoiceRecognition()" title="Spracheingabe">
+                <button type="button" id="btn-voice-input" class="btn-icon btn-ghost" onclick="window.aiChatModule.toggleVoiceRecognition()">
                     <i class="fas fa-microphone"></i>
                 </button>
-                <button type="button" class="btn-icon btn-ghost" onclick="captureVideoForAI()" title="Video-Frame analysieren">
+                <button type="button" class="btn-icon btn-ghost" onclick="captureVideoForAI()">
                     <i class="fas fa-camera"></i>
                 </button>
                 <input 
@@ -725,34 +704,127 @@
         </div>
     </div>
     
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/axios@1.6.0/dist/axios.min.js"></script>
     <script src="/static/cost-monitor.js"></script>
     <script src="/static/livestream.js"></script>
     <script src="/static/ai-chat.js"></script>
     <script src="/static/chat.js"></script>
     <script>
-        // Integration function for starting livestream from chat
-        function startLivestreamInChat() {
-            if (!currentChatId) {
-                alert('Bitte wähle zuerst einen Chat aus.');
-                return;
-            }
+        // Tab Switching
+        function switchToTab(tab) {
+            const mapPanel = document.getElementById('map-panel');
+            const chatPanel = document.getElementById('chat-panel');
+            const navMap = document.getElementById('nav-map');
+            const navChat = document.getElementById('nav-chat');
             
-            // Start livestream for current chat
-            window.livestreamModule.startLivestream(currentChatId);
+            if (tab === 'map') {
+                mapPanel.classList.add('active');
+                chatPanel.classList.remove('active');
+                navMap.classList.add('active');
+                navChat.classList.remove('active');
+                
+                // Initialize map if not done yet
+                if (!window.mapInitialized) {
+                    initMap();
+                    window.mapInitialized = true;
+                }
+            } else {
+                chatPanel.classList.add('active');
+                mapPanel.classList.remove('active');
+                navChat.classList.add('active');
+                navMap.classList.remove('active');
+            }
         }
         
-        // Open AI Chat Panel
+        // Initialize Map
+        function initMap() {
+            const map = L.map('map').setView([51.1657, 10.4515], 6);
+            
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors'
+            }).addTo(map);
+            
+            // TODO: Load events from API
+            console.log('Map initialized');
+        }
+        
+        // Livestream Functions
+        function startLivestream(event, chatId) {
+            event.stopPropagation();
+            openChat(chatId);
+            setTimeout(() => {
+                toggleLivestreamInChat();
+            }, 100);
+        }
+        
+        function toggleLivestreamInChat() {
+            if (!currentChatId) return;
+            
+            const container = document.getElementById('livestream-container');
+            const messages = document.getElementById('messages-container');
+            
+            if (container.classList.contains('hidden')) {
+                // Start livestream
+                window.livestreamModule.startLivestream(currentChatId);
+                container.classList.remove('hidden');
+                messages.classList.add('hidden');
+            } else {
+                // Stop livestream
+                window.livestreamModule.stopLivestream();
+                container.classList.add('hidden');
+                messages.classList.remove('hidden');
+            }
+        }
+        
+        // Create Group Modal
+        function showCreateGroupModal() {
+            document.getElementById('create-group-modal').classList.remove('hidden');
+        }
+        
+        function closeCreateGroupModal() {
+            document.getElementById('create-group-modal').classList.add('hidden');
+            document.getElementById('create-group-form').reset();
+        }
+        
+        // Create Group Form Handler
+        document.getElementById('create-group-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const name = document.getElementById('group-name').value;
+            const description = document.getElementById('group-description').value;
+            const token = localStorage.getItem('auth_token');
+            
+            try {
+                const response = await axios.post(`${window.location.origin}/api/chats`, {
+                    chat_type: 'group',
+                    title: name,
+                    description: description
+                }, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                if (response.data.success) {
+                    closeCreateGroupModal();
+                    loadChats(); // Reload chat list
+                    openChat(response.data.chat_id);
+                    alert('✅ Gruppe erfolgreich erstellt!');
+                }
+            } catch (error) {
+                console.error('Error creating group:', error);
+                alert('❌ Fehler beim Erstellen der Gruppe');
+            }
+        });
+        
+        // AI Chat Functions
         function openAIChatPanel() {
             document.getElementById('ai-chat-panel').classList.remove('hidden');
         }
         
-        // Close AI Chat Panel
         function closeAIChatPanel() {
             document.getElementById('ai-chat-panel').classList.add('hidden');
         }
         
-        // Send message to AI
         function sendAIChatMessage() {
             const input = document.getElementById('ai-chat-input');
             const message = input.value.trim();
@@ -763,7 +835,6 @@
             input.value = '';
         }
         
-        // Capture video frame and send to AI for analysis
         function captureVideoForAI() {
             if (!window.livestreamModule.isLivestreaming()) {
                 alert('⚠️ Kein Livestream aktiv\n\nStarte zuerst einen Livestream um Video-Frames zu analysieren.');
@@ -773,10 +844,10 @@
             window.aiChatModule.captureAndAnalyzeVideoFrame();
         }
         
-        // Placeholder for whiteboard functionality
-        function openWhiteboard() {
-            alert('🎨 Whiteboard-Funktion\n\nDas interaktive Whiteboard kommt bald!\n\nGeplant: Excalidraw Integration für gemeinsames Zeichnen und Brainstorming.');
-        }
+        // Initialize on load
+        document.addEventListener('DOMContentLoaded', () => {
+            checkAuth();
+        });
     </script>
 </body>
 </html>
