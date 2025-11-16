@@ -5,7 +5,6 @@ import { hashPassword, verifyPassword, generateToken, verifyToken, authMiddlewar
 
 type Bindings = {
   DB: D1Database
-  MEDIA: R2Bucket
 }
 
 const app = new Hono<{ Bindings: Bindings }>()
@@ -197,6 +196,93 @@ app.post('/api/auth/logout', authMiddleware, async (c) => {
     return c.json({ success: false, error: 'Logout failed' }, 500)
   }
 })
+
+// ===== Notifications API =====
+
+// Get user notifications (protected)
+app.get('/api/notifications', authMiddleware, async (c) => {
+  const userId = c.get('userId')
+  const limit = parseInt(c.req.query('limit') || '50')
+  const unreadOnly = c.req.query('unread_only') === 'true'
+  
+  try {
+    let query = `
+      SELECT * FROM notifications 
+      WHERE user_id = ?
+    `
+    if (unreadOnly) {
+      query += ` AND is_read = 0`
+    }
+    query += ` ORDER BY created_at DESC LIMIT ?`
+    
+    const result = await c.env.DB.prepare(query).bind(userId, limit).all()
+    
+    return c.json({ 
+      success: true, 
+      notifications: result.results || [],
+      unread_count: result.results?.filter((n: any) => !n.is_read).length || 0
+    })
+  } catch (error) {
+    console.error('Error fetching notifications:', error)
+    return c.json({ success: false, error: 'Failed to fetch notifications' }, 500)
+  }
+})
+
+// Mark notification as read (protected)
+app.put('/api/notifications/:id/read', authMiddleware, async (c) => {
+  const notificationId = c.req.param('id')
+  const userId = c.get('userId')
+  
+  try {
+    await c.env.DB.prepare(`
+      UPDATE notifications 
+      SET is_read = 1, read_at = datetime('now')
+      WHERE id = ? AND user_id = ?
+    `).bind(notificationId, userId).run()
+    
+    return c.json({ success: true })
+  } catch (error) {
+    console.error('Error marking notification as read:', error)
+    return c.json({ success: false }, 500)
+  }
+})
+
+// Mark all notifications as read (protected)
+app.put('/api/notifications/read-all', authMiddleware, async (c) => {
+  const userId = c.get('userId')
+  
+  try {
+    await c.env.DB.prepare(`
+      UPDATE notifications 
+      SET is_read = 1, read_at = datetime('now')
+      WHERE user_id = ? AND is_read = 0
+    `).bind(userId).run()
+    
+    return c.json({ success: true })
+  } catch (error) {
+    console.error('Error marking all as read:', error)
+    return c.json({ success: false }, 500)
+  }
+})
+
+// Create notification (internal helper - called when events happen)
+async function createNotification(
+  db: D1Database,
+  userId: number,
+  type: string,
+  title: string,
+  body: string,
+  data?: any
+) {
+  try {
+    await db.prepare(`
+      INSERT INTO notifications (user_id, notification_type, title, body, data, created_at)
+      VALUES (?, ?, ?, ?, ?, datetime('now'))
+    `).bind(userId, type, title, body, JSON.stringify(data || {})).run()
+  } catch (error) {
+    console.error('Error creating notification:', error)
+  }
+}
 
 // ===== Admin API =====
 
