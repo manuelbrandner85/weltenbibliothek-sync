@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weltenbibliothek - Chat</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: #1a1a2e;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden;
+        }
+        
+        .chat-sidebar {
+            background: rgba(26, 26, 46, 0.95);
+            border-right: 1px solid rgba(255, 215, 0, 0.2);
+        }
+        
+        .chat-item {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .chat-item:hover {
+            background: rgba(255, 215, 0, 0.05);
+        }
+        
+        .chat-item.active {
+            background: rgba(255, 215, 0, 0.1);
+            border-left: 3px solid #ffd700;
+        }
+        
+        .chat-main {
+            background: #16213e;
+        }
+        
+        .message {
+            max-width: 70%;
+            word-wrap: break-word;
+        }
+        
+        .message.own {
+            background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+            color: #1a1a2e;
+            margin-left: auto;
+        }
+        
+        .message.other {
+            background: rgba(255, 255, 255, 0.05);
+            color: white;
+        }
+        
+        .message-input {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 215, 0, 0.3);
+            color: white;
+        }
+        
+        .message-input:focus {
+            outline: none;
+            border-color: #ffd700;
+        }
+        
+        .btn-send {
+            background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+            color: #1a1a2e;
+        }
+        
+        .btn-send:hover {
+            transform: scale(1.05);
+        }
+        
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: #1a1a2e;
+        }
+        
+        .user-status {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            border: 2px solid #1a1a2e;
+        }
+        
+        .user-status.online {
+            background: #22c55e;
+        }
+        
+        .user-status.offline {
+            background: #6b7280;
+        }
+        
+        #messages-container::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        #messages-container::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+        }
+        
+        #messages-container::-webkit-scrollbar-thumb {
+            background: rgba(255, 215, 0, 0.3);
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body class="flex h-screen">
+    <!-- Sidebar - Chat List -->
+    <div class="chat-sidebar w-80 flex flex-col">
+        <!-- Header -->
+        <div class="p-4 border-b border-gray-700">
+            <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center">
+                    <div class="user-avatar relative">
+                        <span id="user-initials">?</span>
+                        <div class="user-status online"></div>
+                    </div>
+                    <div class="ml-3">
+                        <div class="text-white font-semibold" id="user-display-name">Laden...</div>
+                        <div class="text-gray-400 text-sm" id="user-username">@...</div>
+                    </div>
+                </div>
+                <button onclick="logout()" class="text-gray-400 hover:text-red-400" title="Abmelden">
+                    <i class="fas fa-sign-out-alt"></i>
+                </button>
+            </div>
+            
+            <!-- Search -->
+            <input 
+                type="text" 
+                id="search-chats" 
+                placeholder="Chats durchsuchen..." 
+                class="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white text-sm"
+            />
+        </div>
+        
+        <!-- Tabs -->
+        <div class="flex border-b border-gray-700">
+            <button onclick="switchTab('chats')" class="flex-1 py-3 text-yellow-400 border-b-2 border-yellow-400" id="tab-chats">
+                <i class="fas fa-comments mr-2"></i>
+                Chats
+            </button>
+            <button onclick="switchTab('map')" class="flex-1 py-3 text-gray-400" id="tab-map">
+                <i class="fas fa-map mr-2"></i>
+                Karte
+            </button>
+        </div>
+        
+        <!-- Chat List -->
+        <div id="chat-list" class="flex-1 overflow-y-auto">
+            <div class="p-4 text-center text-gray-500">
+                <i class="fas fa-spinner fa-spin text-2xl mb-2"></i>
+                <p>Lade Chats...</p>
+            </div>
+        </div>
+        
+        <!-- New Chat Button -->
+        <div class="p-4 border-t border-gray-700">
+            <button onclick="showNewChatModal()" class="w-full py-3 bg-yellow-600 hover:bg-yellow-700 text-white font-semibold rounded-lg transition">
+                <i class="fas fa-plus mr-2"></i>
+                Neuer Chat
+            </button>
+        </div>
+    </div>
+    
+    <!-- Main Chat Area -->
+    <div class="chat-main flex-1 flex flex-col">
+        <!-- Chat Header -->
+        <div id="chat-header" class="p-4 border-b border-gray-700 bg-gray-900 hidden">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center">
+                    <div class="user-avatar mr-3">
+                        <span id="chat-title-initials">?</span>
+                    </div>
+                    <div>
+                        <div class="text-white font-semibold" id="chat-title">Chat-Name</div>
+                        <div class="text-gray-400 text-sm" id="chat-subtitle">Online</div>
+                    </div>
+                </div>
+                <button class="text-gray-400 hover:text-yellow-400">
+                    <i class="fas fa-ellipsis-v"></i>
+                </button>
+            </div>
+        </div>
+        
+        <!-- Messages -->
+        <div id="messages-container" class="flex-1 overflow-y-auto p-4">
+            <div class="flex items-center justify-center h-full text-gray-500">
+                <div class="text-center">
+                    <i class="fas fa-comments text-6xl mb-4 text-gray-700"></i>
+                    <p class="text-xl">Wähle einen Chat aus oder starte einen neuen</p>
+                    <p class="text-sm mt-2">Tausche dich über verborgenes Wissen aus</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Message Input -->
+        <div id="message-input-area" class="p-4 border-t border-gray-700 bg-gray-900 hidden">
+            <form id="message-form" class="flex gap-2">
+                <button type="button" class="text-gray-400 hover:text-yellow-400 px-3">
+                    <i class="fas fa-paperclip text-xl"></i>
+                </button>
+                <input 
+                    type="text" 
+                    id="message-input" 
+                    placeholder="Nachricht schreiben..." 
+                    class="message-input flex-1 px-4 py-3 rounded-lg"
+                    required
+                />
+                <button type="submit" class="btn-send px-6 py-3 rounded-lg font-semibold transition">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </form>
+        </div>
+    </div>
+    
+    <!-- New Chat Modal -->
+    <div id="new-chat-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-gray-900 rounded-lg p-6 w-full max-w-md">
+            <h2 class="text-2xl font-bold text-yellow-400 mb-4">
+                <i class="fas fa-plus-circle mr-2"></i>
+                Neuer Chat
+            </h2>
+            
+            <div class="mb-4">
+                <label class="block text-gray-400 mb-2">Benutzer suchen:</label>
+                <input 
+                    type="text" 
+                    id="user-search" 
+                    placeholder="Benutzername eingeben..." 
+                    class="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white"
+                />
+            </div>
+            
+            <div id="user-search-results" class="mb-4 max-h-60 overflow-y-auto">
+                <!-- Search results here -->
+            </div>
+            
+            <div class="flex gap-2">
+                <button onclick="closeNewChatModal()" class="flex-1 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition">
+                    Abbrechen
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/axios@1.6.0/dist/axios.min.js"></script>
+    <script src="/static/chat.js"></script>
+</body>
+</html>

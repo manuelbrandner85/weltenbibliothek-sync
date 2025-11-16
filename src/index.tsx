@@ -1,6 +1,7 @@
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import { serveStatic } from 'hono/cloudflare-workers'
+import { hashPassword, verifyPassword, generateToken, verifyToken, authMiddleware, optionalAuthMiddleware } from './auth'
 
 type Bindings = {
   DB: D1Database
@@ -14,6 +15,183 @@ app.use('/api/*', cors())
 
 // Serve static files
 app.use('/static/*', serveStatic({ root: './public' }))
+
+// ===== Authentication API =====
+
+// Register new user
+app.post('/api/auth/register', async (c) => {
+  try {
+    const { username, email, password, display_name } = await c.req.json()
+    
+    // Validation
+    if (!username || !email || !password) {
+      return c.json({ success: false, error: 'Username, email and password are required' }, 400)
+    }
+    
+    if (password.length < 6) {
+      return c.json({ success: false, error: 'Password must be at least 6 characters' }, 400)
+    }
+    
+    // Check if user already exists
+    const existing = await c.env.DB.prepare(`
+      SELECT id FROM users WHERE username = ? OR email = ?
+    `).bind(username, email).first()
+    
+    if (existing) {
+      return c.json({ success: false, error: 'Username or email already exists' }, 409)
+    }
+    
+    // Hash password
+    const passwordHash = await hashPassword(password)
+    
+    // Create user
+    const result = await c.env.DB.prepare(`
+      INSERT INTO users (username, email, password_hash, display_name, created_at)
+      VALUES (?, ?, ?, ?, datetime('now'))
+    `).bind(username, email, passwordHash, display_name || username).run()
+    
+    if (!result.success) {
+      return c.json({ success: false, error: 'Failed to create user' }, 500)
+    }
+    
+    // Get the created user
+    const user = await c.env.DB.prepare(`
+      SELECT id, username, email, display_name, created_at
+      FROM users WHERE username = ?
+    `).bind(username).first()
+    
+    // Generate token
+    const token = await generateToken(user.id as number, user.username as string)
+    
+    return c.json({
+      success: true,
+      user: {
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        display_name: user.display_name,
+        created_at: user.created_at
+      },
+      token
+    })
+  } catch (error) {
+    console.error('Register error:', error)
+    return c.json({ success: false, error: 'Registration failed' }, 500)
+  }
+})
+
+// Login
+app.post('/api/auth/login', async (c) => {
+  try {
+    const { username, password } = await c.req.json()
+    
+    if (!username || !password) {
+      return c.json({ success: false, error: 'Username and password are required' }, 400)
+    }
+    
+    // Find user
+    const user = await c.env.DB.prepare(`
+      SELECT id, username, email, password_hash, display_name, avatar_url, bio, created_at
+      FROM users WHERE username = ? OR email = ?
+    `).bind(username, username).first()
+    
+    if (!user) {
+      return c.json({ success: false, error: 'Invalid credentials' }, 401)
+    }
+    
+    // Verify password
+    const validPassword = await verifyPassword(password, user.password_hash as string)
+    
+    if (!validPassword) {
+      return c.json({ success: false, error: 'Invalid credentials' }, 401)
+    }
+    
+    // Update last_seen
+    await c.env.DB.prepare(`
+      UPDATE users SET last_seen = datetime('now'), status = 'online' WHERE id = ?
+    `).bind(user.id).run()
+    
+    // Generate token
+    const token = await generateToken(user.id as number, user.username as string)
+    
+    return c.json({
+      success: true,
+      user: {
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        display_name: user.display_name,
+        avatar_url: user.avatar_url,
+        bio: user.bio,
+        created_at: user.created_at
+      },
+      token
+    })
+  } catch (error) {
+    console.error('Login error:', error)
+    return c.json({ success: false, error: 'Login failed' }, 500)
+  }
+})
+
+// Get current user profile (protected)
+app.get('/api/auth/me', authMiddleware, async (c) => {
+  try {
+    const userId = c.get('userId')
+    
+    const user = await c.env.DB.prepare(`
+      SELECT id, username, email, display_name, avatar_url, bio, interests, is_verified, created_at, last_seen
+      FROM users WHERE id = ?
+    `).bind(userId).first()
+    
+    if (!user) {
+      return c.json({ success: false, error: 'User not found' }, 404)
+    }
+    
+    return c.json({ success: true, user })
+  } catch (error) {
+    console.error('Get profile error:', error)
+    return c.json({ success: false, error: 'Failed to fetch profile' }, 500)
+  }
+})
+
+// Update user profile (protected)
+app.put('/api/auth/profile', authMiddleware, async (c) => {
+  try {
+    const userId = c.get('userId')
+    const { display_name, bio, interests, avatar_url } = await c.req.json()
+    
+    await c.env.DB.prepare(`
+      UPDATE users 
+      SET display_name = COALESCE(?, display_name),
+          bio = COALESCE(?, bio),
+          interests = COALESCE(?, interests),
+          avatar_url = COALESCE(?, avatar_url),
+          updated_at = datetime('now')
+      WHERE id = ?
+    `).bind(display_name, bio, interests, avatar_url, userId).run()
+    
+    return c.json({ success: true, message: 'Profile updated' })
+  } catch (error) {
+    console.error('Update profile error:', error)
+    return c.json({ success: false, error: 'Failed to update profile' }, 500)
+  }
+})
+
+// Logout (update status)
+app.post('/api/auth/logout', authMiddleware, async (c) => {
+  try {
+    const userId = c.get('userId')
+    
+    await c.env.DB.prepare(`
+      UPDATE users SET status = 'offline', last_seen = datetime('now') WHERE id = ?
+    `).bind(userId).run()
+    
+    return c.json({ success: true, message: 'Logged out successfully' })
+  } catch (error) {
+    console.error('Logout error:', error)
+    return c.json({ success: false, error: 'Logout failed' }, 500)
+  }
+})
 
 // ===== Map & Events API =====
 
@@ -123,6 +301,257 @@ app.get('/api/events/types', async (c) => {
   } catch (error) {
     console.error('Error fetching types:', error)
     return c.json({ success: false, types: [] }, 500)
+  }
+})
+
+// ===== Chat API =====
+
+// Get all chats for current user (protected)
+app.get('/api/chats', authMiddleware, async (c) => {
+  try {
+    const userId = c.get('userId')
+    
+    const result = await c.env.DB.prepare(`
+      SELECT 
+        c.*,
+        (SELECT COUNT(*) FROM chat_members WHERE chat_id = c.id) as member_count,
+        (SELECT MAX(created_at) FROM messages WHERE chat_id = c.id) as last_message_at
+      FROM chats c
+      INNER JOIN chat_members cm ON c.id = cm.chat_id
+      WHERE cm.user_id = ?
+      ORDER BY last_message_at DESC NULLS LAST
+    `).bind(userId).all()
+    
+    return c.json({ success: true, chats: result.results || [] })
+  } catch (error) {
+    console.error('Error fetching chats:', error)
+    return c.json({ success: false, error: 'Failed to fetch chats' }, 500)
+  }
+})
+
+// Create new chat (private or group)
+app.post('/api/chats', authMiddleware, async (c) => {
+  try {
+    const userId = c.get('userId')
+    const { chat_type, title, description, member_ids } = await c.req.json()
+    
+    if (!chat_type || !['private', 'group', 'channel'].includes(chat_type)) {
+      return c.json({ success: false, error: 'Invalid chat type' }, 400)
+    }
+    
+    if (chat_type === 'private' && (!member_ids || member_ids.length !== 1)) {
+      return c.json({ success: false, error: 'Private chat requires exactly one other member' }, 400)
+    }
+    
+    // Check if private chat already exists
+    if (chat_type === 'private') {
+      const existing = await c.env.DB.prepare(`
+        SELECT c.id FROM chats c
+        INNER JOIN chat_members cm1 ON c.id = cm1.chat_id
+        INNER JOIN chat_members cm2 ON c.id = cm2.chat_id
+        WHERE c.chat_type = 'private'
+          AND cm1.user_id = ?
+          AND cm2.user_id = ?
+      `).bind(userId, member_ids[0]).first()
+      
+      if (existing) {
+        return c.json({ success: true, chat_id: existing.id, existing: true })
+      }
+    }
+    
+    // Create chat
+    const chatResult = await c.env.DB.prepare(`
+      INSERT INTO chats (chat_type, title, description, creator_id, created_at)
+      VALUES (?, ?, ?, ?, datetime('now'))
+    `).bind(chat_type, title, description, userId).run()
+    
+    if (!chatResult.success) {
+      return c.json({ success: false, error: 'Failed to create chat' }, 500)
+    }
+    
+    const chatId = chatResult.meta.last_row_id
+    
+    // Add creator as admin
+    await c.env.DB.prepare(`
+      INSERT INTO chat_members (chat_id, user_id, role, joined_at)
+      VALUES (?, ?, 'admin', datetime('now'))
+    `).bind(chatId, userId).run()
+    
+    // Add other members
+    if (member_ids && member_ids.length > 0) {
+      for (const memberId of member_ids) {
+        await c.env.DB.prepare(`
+          INSERT INTO chat_members (chat_id, user_id, role, joined_at)
+          VALUES (?, ?, 'member', datetime('now'))
+        `).bind(chatId, memberId).run()
+      }
+    }
+    
+    return c.json({ success: true, chat_id: chatId })
+  } catch (error) {
+    console.error('Error creating chat:', error)
+    return c.json({ success: false, error: 'Failed to create chat' }, 500)
+  }
+})
+
+// Get messages for a chat (protected)
+app.get('/api/chats/:id/messages', authMiddleware, async (c) => {
+  try {
+    const userId = c.get('userId')
+    const chatId = c.req.param('id')
+    const limit = parseInt(c.req.query('limit') || '50')
+    const before = c.req.query('before') // Message ID for pagination
+    
+    // Check if user is member
+    const membership = await c.env.DB.prepare(`
+      SELECT id FROM chat_members WHERE chat_id = ? AND user_id = ?
+    `).bind(chatId, userId).first()
+    
+    if (!membership) {
+      return c.json({ success: false, error: 'Not a member of this chat' }, 403)
+    }
+    
+    let sql = `
+      SELECT 
+        m.*,
+        u.username as sender_username,
+        u.display_name as sender_display_name,
+        u.avatar_url as sender_avatar_url
+      FROM messages m
+      INNER JOIN users u ON m.sender_id = u.id
+      WHERE m.chat_id = ? AND m.is_deleted = 0
+    `
+    const params: any[] = [chatId]
+    
+    if (before) {
+      sql += ` AND m.id < ?`
+      params.push(before)
+    }
+    
+    sql += ` ORDER BY m.created_at DESC LIMIT ?`
+    params.push(limit)
+    
+    const result = await c.env.DB.prepare(sql).bind(...params).all()
+    
+    // Reverse to get chronological order
+    const messages = (result.results || []).reverse()
+    
+    return c.json({ success: true, messages })
+  } catch (error) {
+    console.error('Error fetching messages:', error)
+    return c.json({ success: false, error: 'Failed to fetch messages' }, 500)
+  }
+})
+
+// Send message (protected)
+app.post('/api/chats/:id/messages', authMiddleware, async (c) => {
+  try {
+    const userId = c.get('userId')
+    const chatId = c.req.param('id')
+    const { content, message_type, reply_to_message_id } = await c.req.json()
+    
+    if (!content) {
+      return c.json({ success: false, error: 'Message content is required' }, 400)
+    }
+    
+    // Check if user is member
+    const membership = await c.env.DB.prepare(`
+      SELECT id FROM chat_members WHERE chat_id = ? AND user_id = ?
+    `).bind(chatId, userId).first()
+    
+    if (!membership) {
+      return c.json({ success: false, error: 'Not a member of this chat' }, 403)
+    }
+    
+    // Create message
+    const result = await c.env.DB.prepare(`
+      INSERT INTO messages (chat_id, sender_id, content, message_type, reply_to_message_id, created_at)
+      VALUES (?, ?, ?, ?, ?, datetime('now'))
+    `).bind(chatId, userId, content, message_type || 'text', reply_to_message_id || null).run()
+    
+    if (!result.success) {
+      return c.json({ success: false, error: 'Failed to send message' }, 500)
+    }
+    
+    const messageId = result.meta.last_row_id
+    
+    // Get the created message with user info
+    const message = await c.env.DB.prepare(`
+      SELECT 
+        m.*,
+        u.username as sender_username,
+        u.display_name as sender_display_name,
+        u.avatar_url as sender_avatar_url
+      FROM messages m
+      INNER JOIN users u ON m.sender_id = u.id
+      WHERE m.id = ?
+    `).bind(messageId).first()
+    
+    return c.json({ success: true, message })
+  } catch (error) {
+    console.error('Error sending message:', error)
+    return c.json({ success: false, error: 'Failed to send message' }, 500)
+  }
+})
+
+// Get chat members (protected)
+app.get('/api/chats/:id/members', authMiddleware, async (c) => {
+  try {
+    const userId = c.get('userId')
+    const chatId = c.req.param('id')
+    
+    // Check if user is member
+    const membership = await c.env.DB.prepare(`
+      SELECT id FROM chat_members WHERE chat_id = ? AND user_id = ?
+    `).bind(chatId, userId).first()
+    
+    if (!membership) {
+      return c.json({ success: false, error: 'Not a member of this chat' }, 403)
+    }
+    
+    const result = await c.env.DB.prepare(`
+      SELECT 
+        cm.role,
+        cm.joined_at,
+        u.id,
+        u.username,
+        u.display_name,
+        u.avatar_url,
+        u.status,
+        u.last_seen
+      FROM chat_members cm
+      INNER JOIN users u ON cm.user_id = u.id
+      WHERE cm.chat_id = ?
+      ORDER BY cm.role DESC, u.username ASC
+    `).bind(chatId).all()
+    
+    return c.json({ success: true, members: result.results || [] })
+  } catch (error) {
+    console.error('Error fetching members:', error)
+    return c.json({ success: false, error: 'Failed to fetch members' }, 500)
+  }
+})
+
+// Search users (protected)
+app.get('/api/users/search', authMiddleware, async (c) => {
+  try {
+    const query = c.req.query('q') || ''
+    
+    if (query.length < 2) {
+      return c.json({ success: true, users: [] })
+    }
+    
+    const result = await c.env.DB.prepare(`
+      SELECT id, username, display_name, avatar_url, status
+      FROM users
+      WHERE username LIKE ? OR display_name LIKE ?
+      LIMIT 20
+    `).bind(`%${query}%`, `%${query}%`).all()
+    
+    return c.json({ success: true, users: result.results || [] })
+  } catch (error) {
+    console.error('Error searching users:', error)
+    return c.json({ success: false, error: 'Failed to search users' }, 500)
   }
 })
 
@@ -655,10 +1084,20 @@ app.get('/', (c) => {
             <div id="search-container">
                 <input type="text" id="search-input" placeholder="Suche nach Ereignissen, Orten, Verschwörungen..." />
             </div>
-            <button onclick="toggleFilters()" class="px-4 py-2 bg-yellow-600 hover:bg-yellow-700 rounded-lg transition">
-                <i class="fas fa-filter mr-2"></i>
-                Filter
-            </button>
+            <div class="flex gap-2">
+                <button onclick="window.location.href='/static/chat.html'" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg transition">
+                    <i class="fas fa-comments mr-2"></i>
+                    Chat
+                </button>
+                <button onclick="toggleFilters()" class="px-4 py-2 bg-yellow-600 hover:bg-yellow-700 rounded-lg transition">
+                    <i class="fas fa-filter mr-2"></i>
+                    Filter
+                </button>
+                <button id="auth-button" onclick="handleAuth()" class="px-4 py-2 bg-green-600 hover:bg-green-700 rounded-lg transition">
+                    <i class="fas fa-sign-in-alt mr-2"></i>
+                    <span id="auth-text">Login</span>
+                </button>
+            </div>
         </div>
 
         <!-- Map Container -->
@@ -729,6 +1168,43 @@ app.get('/', (c) => {
         <!-- Axios -->
         <script src="https://cdn.jsdelivr.net/npm/axios@1.6.0/dist/axios.min.js"></script>
         
+        <script>
+          // Auth handling
+          function checkAuthStatus() {
+            const token = localStorage.getItem('auth_token');
+            const user = localStorage.getItem('user');
+            const authButton = document.getElementById('auth-button');
+            const authText = document.getElementById('auth-text');
+            
+            if (token && user) {
+              const userData = JSON.parse(user);
+              authText.textContent = userData.username;
+              authButton.classList.remove('bg-green-600', 'hover:bg-green-700');
+              authButton.classList.add('bg-red-600', 'hover:bg-red-700');
+              authButton.innerHTML = '<i class="fas fa-sign-out-alt mr-2"></i><span>' + userData.username + '</span>';
+            } else {
+              authText.textContent = 'Login';
+            }
+          }
+          
+          function handleAuth() {
+            const token = localStorage.getItem('auth_token');
+            if (token) {
+              // Logout
+              if (confirm('Möchtest du dich abmelden?')) {
+                localStorage.removeItem('auth_token');
+                localStorage.removeItem('user');
+                window.location.reload();
+              }
+            } else {
+              // Redirect to login
+              window.location.href = '/static/auth.html';
+            }
+          }
+          
+          // Check auth on load
+          document.addEventListener('DOMContentLoaded', checkAuthStatus);
+        </script>
         <script src="/static/app.js"></script>
     </body>
     </html>

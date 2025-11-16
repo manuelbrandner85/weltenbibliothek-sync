@@ -1,396 +1,430 @@
-# 📚 Weltenbibliothek
+# 🌍 Weltenbibliothek - Interaktive Karte
 
-**Die Bibliothek des verborgenen Wissens, alter Weisheiten und mysteriöser Wahrheiten**
+**Die ultimative interaktive Weltkarte für verborgenes Wissen, alte Zivilisationen und mysteriöse Ereignisse**
 
-Eine moderne Web-Anwendung zur Verwaltung und Durchsuchung einer umfangreichen Sammlung von Dokumenten über Verschwörungstheorien, alte Zivilisationen, Mystik und verborgenes Wissen.
+Eine moderne Web-Anwendung mit **interaktiver Leaflet-Karte**, Event-Markern, Filtern und umfangreicher Dokumenten-Bibliothek.
 
 ## 🌐 Live URLs
 
-- **Sandbox-Entwicklung**: https://3000-i1m8akgt437zr75idt4u6-82b888ba.sandbox.novita.ai
+- **Sandbox**: https://3000-i1m8akgt437zr75idt4u6-82b888ba.sandbox.novita.ai
 - **Produktion** (nach Deployment): `https://webapp.pages.dev`
 
-## ✨ Features
+## ✨ Haupt-Features
 
-### ✅ Bereits implementiert
+### 🗺️ Interaktive Weltkarte
+- ✅ **Leaflet.js Integration** - Flüssiges Zoomen & Panning
+- ✅ **Dunkles Karten-Theme** (CartoDB Dark Matter)
+- ✅ **35 mysteriöse Ereignisse** weltweit als Marker
+- ✅ **Custom Icons** - Emoji-basierte Marker für jeden Event-Typ
+- ✅ **Info-Popups** - Detaillierte Informationen beim Klick
+- ✅ **Responsive Design** - Funktioniert auf Desktop & Mobile
 
-- 🔍 **Volltext-Suche** - Durchsuche Titel, Beschreibung und Autoren
-- 🏷️ **Kategorie-Filter** - 17 verschiedene Kategorien
-  - Geheimgesellschaften, Alte Zivilisationen, Mystik
-  - UFOs, Zeitreisen, Paralleluniversen
-  - Außerirdische, Hohle Erde, Kryptozoologie
-  - Verschwörungen, Geheimdienste, Alchemie
-  - Und viele mehr...
-- 📊 **Statistiken** - Übersicht über Dokumentenanzahl und Kategorien
-- 📱 **Responsive Design** - Optimiert für Desktop und Mobile
-- 🎨 **Dunkles Theme** - Mystisches Design mit Glow-Effekten
-- 💾 **Cloudflare D1** - Serverlose SQLite-Datenbank
-- 📦 **R2 Storage** - Dokumentenspeicher (PDFs, Bilder)
-- ⚡ **Edge Computing** - Blitzschnelle Antwortzeiten weltweit
+### 🎯 Event-Marker-System
+**35 historische Ereignisse** mit präzisen Koordinaten:
 
-### 🚀 Geplante Features
+**Alte Zivilisationen:**
+- 🔺 Große Pyramide von Gizeh (Ägypten)
+- 🌊 Atlantis (vermutete Lage bei Azoren)
+- 🗿 Stonehenge (UK)
+- 🛕 Angkor Wat (Kambodscha)
+- 🗿 Osterinsel Moai-Statuen
+- 🛕 Göbekli Tepe (Türkei)
 
-- 📤 **Upload-Funktion** - Neue Dokumente hochladen
-- 📄 **PDF-Viewer** - Dokumente direkt im Browser anzeigen
-- 🔖 **Lesezeichen** - Dokumente für später speichern
-- 👤 **Benutzer-Accounts** - Persönliche Sammlungen
-- 💬 **Kommentare** - Diskussionen zu Dokumenten
-- 🌙 **Theme-Wechsel** - Hell/Dunkel-Modus
+**UFO & Aliens:**
+- 🛸 Area 51 (Nevada, USA)
+- 💥 Roswell UFO-Absturz (New Mexico)
+- 🛸 Rendlesham Forest (UK)
+- 💡 Phoenix Lights (Arizona)
+- 💥 Tunguska-Ereignis (Sibirien)
 
-## 🗄️ Datenarchitektur
+**Geheimgesellschaften:**
+- 🎭 Bohemian Grove (Kalifornien)
+- ✈️ Denver Airport (Colorado)
+- 🏛️ Pentagon (Virginia)
+- ⛪ Vatikan (Rom)
+- 💀 Skull & Bones HQ (Yale)
+
+**Geheimdienste & Experimente:**
+- 📡 Montauk Air Force Station
+- ⛴️ Philadelphia Naval Shipyard
+- 🕵️ CIA Hauptquartier Langley
+- ☣️ Dugway Proving Ground
+
+**...und viele mehr!**
+
+### 🔍 Filter & Such-System
+- ✅ **Echtzeit-Suche** - Suche nach Titel, Beschreibung, Ort
+- ✅ **Kategorien-Filter** - 11 Kategorien (UFOs, Alte Zivilisationen, etc.)
+- ✅ **Event-Typ-Filter** - ancient, ufo, conspiracy, mystery
+- ✅ **Zeitraum-Filter** - Von/Bis Jahr
+- ✅ **Kombinerbare Filter** - Mehrere Filter gleichzeitig aktiv
+
+### 🎨 Modern UI/UX
+- ✅ **Top Bar** - Logo, Suchfeld, Filter-Button
+- ✅ **Bottom Navigation** - Karte, Liste, Dokumente, Timeline
+- ✅ **Side Panel** - Ausklappbare Filter-Sidebar
+- ✅ **Dark Theme** - Mystisches dunkles Design
+- ✅ **Glow-Effekte** - Goldene Akzente
+- ✅ **Responsive Layout** - Mobile-First Design
+
+### 📚 Dokumenten-Bibliothek
+- ✅ **20 Dokumente** über Verschwörungstheorien
+- ✅ **17 Kategorien** - Von Illuminaten bis Zeitreisen
+- ✅ **Volltext-Suche** - FTS5 SQLite Integration
+- ✅ **Verknüpfung** - Events können Dokumente referenzieren
+
+## 🗄️ Datenbank-Architektur
 
 ### Cloudflare D1 Datenbank
-
 **Database Name**: `weltenbibliothek_db_v2`  
 **Database ID**: `6da1abb7-8ebf-40cb-bc7e-1656b35f2880`
 
-**Schema:**
+### Events Table
 ```sql
-documents (
+CREATE TABLE events (
+  id INTEGER PRIMARY KEY,
+  title TEXT NOT NULL,
+  description TEXT,
+  latitude REAL NOT NULL,
+  longitude REAL NOT NULL,
+  category TEXT,
+  event_type TEXT,
+  year INTEGER,
+  date_text TEXT,
+  icon_type TEXT,
+  image_url TEXT,
+  related_document_id INTEGER
+)
+```
+
+**Aktueller Bestand:**
+- **35 Events** auf der Weltkarte
+- **11 Kategorien** (UFOs, Geheimgesellschaften, etc.)
+- **4 Event-Typen** (ancient, ufo, conspiracy, mystery)
+- **Zeitspanne**: 9600 v.Chr. bis Heute
+
+### Documents Table
+```sql
+CREATE TABLE documents (
   id INTEGER PRIMARY KEY,
   title TEXT NOT NULL,
   author TEXT,
   category TEXT,
   description TEXT,
   file_path TEXT,
-  tags TEXT,
-  created_at DATETIME,
-  updated_at DATETIME
+  created_at DATETIME
 )
 ```
 
-**Aktueller Bestand**: 20 Dokumente in 17 Kategorien
+**Aktueller Bestand:**
+- **20 Dokumente**
+- **17 Kategorien**
 
 ### Cloudflare R2 Storage
-
-**Bucket Name**: `weltenbibliothek-media`  
-**Endpoint**: `https://3472f5994537c3a30c5caeaff4de21fb.r2.cloudflarestorage.com`
-
-**Verwendung:**
+**Bucket**: `weltenbibliothek-media`  
 - PDF-Dokumente
-- Bilder und Icons
-- Audio-Dateien (zukünftig)
+- Bilder & Icons
+- Event-Medien
 
 ## 🛠️ Tech Stack
 
-- **Framework**: Hono v4 (Lightweight Web Framework)
-- **Runtime**: Cloudflare Workers/Pages
-- **Datenbank**: Cloudflare D1 (SQLite)
-- **Storage**: Cloudflare R2 (S3-kompatibel)
-- **Frontend**: Vanilla JavaScript + Tailwind CSS
-- **Build Tool**: Vite
-- **Development**: PM2 + Wrangler CLI
+### Backend
+- **Hono v4** - Lightweight Edge Framework
+- **Cloudflare Workers** - Serverless Runtime
+- **Cloudflare D1** - SQLite Datenbank
+- **Cloudflare R2** - Object Storage
+- **TypeScript** - Type Safety
+
+### Frontend
+- **Leaflet.js 1.9.4** - Interactive Maps
+- **Vanilla JavaScript** - No Framework Bloat
+- **TailwindCSS** - Utility-First CSS
+- **FontAwesome** - Icons
+- **Axios** - HTTP Client
+
+### Development
+- **Vite** - Build Tool
+- **PM2** - Process Manager
+- **Wrangler** - Cloudflare CLI
+- **Git** - Version Control
 
 ## 📋 API Endpoints
 
-### GET `/api/categories`
-Gibt alle verfügbaren Kategorien zurück.
+### Map & Events API
 
-**Response:**
-```json
-{
-  "categories": [
-    { "category": "Geheimgesellschaften" },
-    { "category": "Mystik" },
-    ...
-  ]
-}
-```
+#### `GET /api/events`
+Alle Events für die Karte abrufen.
 
-### GET `/api/search?q=<query>&category=<category>&limit=<limit>&offset=<offset>`
-Durchsucht Dokumente mit optionalen Filtern.
-
-**Parameter:**
-- `q` - Suchbegriff (optional)
-- `category` - Kategorie-Filter (optional)
-- `limit` - Anzahl Ergebnisse (default: 20)
-- `offset` - Pagination offset (default: 0)
-
-**Response:**
-```json
-{
-  "documents": [
-    {
-      "id": 1,
-      "title": "Die Geheimnisse der Illuminaten",
-      "author": "Adam Weishaupt",
-      "category": "Geheimgesellschaften",
-      "description": "Ein tiefgehender Einblick...",
-      "file_path": "documents/illuminati.pdf",
-      "created_at": "2025-11-16T12:00:00Z"
-    }
-  ],
-  "query": "illuminati",
-  "category": "",
-  "limit": 20,
-  "offset": 0
-}
-```
-
-### GET `/api/documents/:id`
-Gibt ein einzelnes Dokument zurück.
-
-**Response:**
-```json
-{
-  "document": {
-    "id": 1,
-    "title": "Die Geheimnisse der Illuminaten",
-    ...
-  }
-}
-```
-
-### GET `/api/stats`
-Gibt Statistiken über die Bibliothek zurück.
-
-**Response:**
-```json
-{
-  "total_documents": 20,
-  "categories": [
-    { "category": "Geheimgesellschaften", "count": 2 },
-    ...
-  ]
-}
-```
-
-### GET `/api/files/:path`
-Lädt eine Datei aus R2 Storage.
-
-**Example:**
-```
-GET /api/files/documents/illuminati.pdf
-```
-
-### POST `/api/upload`
-Lädt eine neue Datei hoch (Multipart Form Data).
-
-**Form Data:**
-- `file` - Die hochzuladende Datei
+**Query Parameters:**
+- `category` - Filter nach Kategorie
+- `type` - Filter nach Event-Typ
+- `year_from` - Minimum Jahr
+- `year_to` - Maximum Jahr
 
 **Response:**
 ```json
 {
   "success": true,
-  "fileName": "uploads/1234567890-document.pdf",
-  "url": "/api/files/uploads/1234567890-document.pdf"
+  "events": [
+    {
+      "id": 1,
+      "title": "Die Große Pyramide von Gizeh",
+      "latitude": 29.9792,
+      "longitude": 31.1342,
+      "category": "Alte Zivilisationen",
+      "event_type": "ancient",
+      "year": -2560,
+      "icon_type": "pyramid"
+    }
+  ]
 }
 ```
 
-### POST `/api/documents`
-Erstellt einen neuen Dokumenten-Eintrag.
+#### `GET /api/events/:id`
+Einzelnes Event mit Details.
 
-**Body:**
+#### `GET /api/events/categories`
+Alle verfügbaren Kategorien mit Anzahl.
+
+#### `GET /api/events/types`
+Alle Event-Typen mit Anzahl.
+
+### Documents API
+
+#### `GET /api/search`
+Dokumente durchsuchen.
+
+**Query Parameters:**
+- `q` - Suchbegriff
+- `category` - Kategorie
+- `limit` - Anzahl Ergebnisse
+- `offset` - Pagination
+
+#### `GET /api/documents/:id`
+Einzelnes Dokument abrufen.
+
+#### `GET /api/categories`
+Dokument-Kategorien.
+
+#### `GET /api/stats`
+Statistiken über Dokumente und Events.
+
+**Response:**
 ```json
 {
-  "title": "Neues Dokument",
-  "author": "Autor Name",
-  "category": "Kategorie",
-  "description": "Beschreibung",
-  "file_path": "uploads/document.pdf"
+  "total_documents": 20,
+  "total_events": 35,
+  "categories": [...]
 }
 ```
+
+### File Management
+
+#### `GET /api/files/:path`
+Datei aus R2 Storage laden.
+
+#### `POST /api/upload`
+Datei hochladen (Multipart Form Data).
 
 ## 🚀 Lokale Entwicklung
 
-### Voraussetzungen
-- Node.js 18+
-- npm 10+
-- PM2 (bereits installiert)
-
 ### Setup
-
 ```bash
 # 1. Dependencies installieren
 npm install
 
-# 2. Datenbank-Migrationen anwenden
-npm run db:migrate:local
+# 2. Migrationen anwenden
+npx wrangler d1 migrations apply weltenbibliothek_db_v2 --local
 
-# 3. Testdaten laden
-npm run db:seed
+# 3. Events laden
+npx wrangler d1 execute weltenbibliothek_db_v2 --local --file=./seed_events.sql
 
-# 4. Build durchführen
+# 4. Dokumente laden
+npx wrangler d1 execute weltenbibliothek_db_v2 --local --file=./seed.sql
+
+# 5. Build
 npm run build
 
-# 5. Development Server starten
+# 6. Server starten
 pm2 start ecosystem.config.cjs
-
-# 6. Server testen
-curl http://localhost:3000
 ```
 
-### Nützliche Befehle
-
+### Entwicklung
 ```bash
-# Port 3000 bereinigen
-npm run clean-port
-
-# PM2 Status prüfen
+# Status prüfen
 pm2 list
 
-# Logs anzeigen (non-blocking)
+# Logs ansehen
 pm2 logs weltenbibliothek --nostream
 
-# Server neustarten
+# Neustart nach Code-Änderungen
 pm2 restart weltenbibliothek
 
-# Server stoppen
-pm2 stop weltenbibliothek
-
-# Datenbank-Konsole (lokal)
-npm run db:console:local
-
-# Datenbank-Konsole (Produktion)
-npm run db:console:prod
-
-# Git Status
-npm run git:status
+# Datenbank-Konsole
+npx wrangler d1 execute weltenbibliothek_db_v2 --local
 ```
 
-## 📦 Deployment auf Cloudflare Pages
+## 📦 Deployment
 
-### 1. Cloudflare API einrichten
-
+### Cloudflare Pages
 ```bash
-# Setup Cloudflare API Key
-# Folge den Anweisungen im Deploy-Tab
-```
+# 1. Setup API Key
+# Call setup_cloudflare_api_key first
 
-### 2. Migrationen auf Produktion anwenden
-
-```bash
-# Datenbank-Migrationen
+# 2. Migrationen auf Produktion
 npx wrangler d1 migrations apply weltenbibliothek_db_v2
 
-# Testdaten laden (optional)
+# 3. Daten laden
+npx wrangler d1 execute weltenbibliothek_db_v2 --file=./seed_events.sql
 npx wrangler d1 execute weltenbibliothek_db_v2 --file=./seed.sql
-```
 
-### 3. Deployment durchführen
-
-```bash
-# Build und Deploy
+# 4. Deployment
 npm run deploy:prod
-
-# Oder manuell
-npm run build
-npx wrangler pages deploy dist --project-name webapp
 ```
 
-### 4. URLs nach Deployment
-
-- Production: `https://webapp.pages.dev`
-- Branch: `https://main.webapp.pages.dev`
-
-## 🗂️ Projektstruktur
+## 🗂️ Projekt-Struktur
 
 ```
 webapp/
 ├── src/
-│   ├── index.tsx          # Haupt-Hono-App mit allen Routes
-│   └── renderer.tsx       # JSX Renderer (falls benötigt)
+│   └── index.tsx           # Hono Backend mit Map & Documents API
 ├── public/
-│   └── static/            # Statische Assets
+│   └── static/
+│       ├── app.js          # Leaflet Map Frontend
+│       ├── app_icon.png    # App Icon
+│       └── style.css       # Custom Styles
 ├── migrations/
-│   └── 0001_create_documents.sql  # DB Schema
-├── dist/                  # Build Output (generiert)
-├── .wrangler/            # Lokale D1 Datenbank (generiert)
-├── ecosystem.config.cjs   # PM2 Konfiguration
-├── wrangler.jsonc        # Cloudflare Workers Config
-├── package.json          # Dependencies & Scripts
-├── vite.config.ts        # Vite Build Config
-├── seed.sql              # Testdaten
-└── README.md             # Diese Datei
+│   ├── 0001_create_documents.sql
+│   └── 0002_create_events.sql
+├── seed.sql                # 20 Dokumente
+├── seed_events.sql         # 35 Weltkarten-Events
+├── ecosystem.config.cjs    # PM2 Config
+├── wrangler.jsonc          # Cloudflare Config
+├── package.json            # Dependencies
+└── README.md               # Diese Datei
 ```
 
-## 🎨 Design-Philosophie
+## 🎨 UI-Komponenten
 
-Die Weltenbibliothek verwendet ein **mystisches, dunkles Design**, das die Atmosphäre verborgenen Wissens vermittelt:
+### Top Bar
+- **Logo** - Weltenbibliothek Icon & Name
+- **Suchfeld** - Echtzeit-Event-Suche
+- **Filter-Button** - Öffnet Side Panel
 
-- **Farbschema**: Dunkle Blautöne (#1a1a2e, #16213e) mit goldenen Akzenten
-- **Effekte**: Glow-Effekte für Überschriften, Glassmorphismus für Karten
-- **Icons**: FontAwesome für konsistente Symbolik
-- **Responsive**: Mobile-First Approach mit Tailwind CSS
+### Map Container
+- **Leaflet Map** - Vollbild, interaktiv
+- **Custom Markers** - Emoji-Icons mit Glow
+- **Popups** - Event-Details beim Klick
 
-## 📊 Datenbank-Kategorien
+### Side Panel (Filter)
+- **Kategorien** - 11 Filter-Chips
+- **Event-Typen** - 4 Typ-Filter
+- **Zeitraum** - Von/Bis Jahr Eingabe
+- **Aktionen** - Anwenden & Zurücksetzen
 
-Die Bibliothek organisiert Dokumente in folgende Kategorien:
+### Bottom Navigation
+- **Karte** - Haupt-Ansicht (aktiv)
+- **Liste** - Event-Liste (coming soon)
+- **Dokumente** - Bibliothek (coming soon)
+- **Timeline** - Zeitstrahl (coming soon)
 
-1. **Geheimgesellschaften** - Illuminaten, Freimaurer, Skull & Bones
-2. **Alte Zivilisationen** - Atlantis, Lemuria, Mu
-3. **Mystik** - Drittes Auge, Chakren, Meditation
-4. **Alte Astronauten** - Anunnaki, Götter-Astronauten
-5. **Archäologie** - Verborgene Kammern, Artefakte
-6. **Verschwörungen** - NWO, Deep State, False Flags
-7. **Esoterik** - Frequenzen, Kristalle, Energien
-8. **Hohle Erde** - Agartha, innere Welten
-9. **Geheimdienste** - MK-Ultra, CIA-Programme
-10. **Zeitreisen** - Philadelphia-Experiment, Montauk
-11. **Klimamanipulation** - Chemtrails, HAARP, Geoengineering
-12. **Alchemie** - Transmutation, Smaragdtafeln
-13. **Außerirdische** - Reptiloiden, Graue, Nordics
-14. **UFOs** - Area 51, Roswell, Begegnungen
-15. **Unterdrückte Technologie** - Freie Energie, Tesla
-16. **Kryptozoologie** - Bigfoot, Nessie, Chupacabra
-17. **Paralleluniversen** - Mandela-Effekt, Zeitlinien
+## 🎯 Event-Kategorien
+
+1. **Alte Zivilisationen** (8 Events) - Pyramiden, Stonehenge, Atlantis
+2. **UFOs** (6 Events) - Area 51, Roswell, Phoenix Lights
+3. **Geheimgesellschaften** (4 Events) - Illuminaten, Bohemian Grove
+4. **Verschwörungen** (3 Events) - Denver Airport, Pentagon
+5. **Zeitreisen** (3 Events) - Philadelphia, Montauk
+6. **Geheimdienste** (2 Events) - CIA, MK-Ultra
+7. **Hohle Erde** (3 Events) - Mount Shasta, Nordpol
+8. **Mystik** (2 Events) - Sedona Vortex
+9. **Klimamanipulation** (2 Events) - Chemtrails, HAARP
+10. **Paralleluniversen** (3 Events) - CERN, Bermuda-Dreieck
+11. **Alte Astronauten** (2 Events) - Nazca, Anunnaki
+
+## 📊 Statistiken
+
+- **Total Events**: 35
+- **Total Documents**: 20
+- **Kategorien**: 11
+- **Event-Typen**: 4
+- **Zeitspanne**: 9600 v.Chr. - Heute
+- **Geografische Abdeckung**: Weltweit
+- **Code-Zeilen**: ~1000 (TypeScript + JavaScript)
+
+## 🔮 Kommende Features
+
+### In Entwicklung:
+- ⏳ **Listen-Ansicht** - Tabellarische Event-Liste
+- ⏳ **Timeline-Ansicht** - Chronologischer Zeitstrahl
+- ⏳ **Dokument-Detail-Seiten** - Vollständige Dokument-Ansicht
+- ⏳ **YouTube-Integration** - Embedded Videos
+- ⏳ **Cloudflare Upload** - Neue Events hinzufügen
+
+### Geplant:
+- 📱 **Progressive Web App** - Offline-Funktionalität
+- 🔔 **Cloudflare Notifications** - Event-Benachrichtigungen
+- 🌙 **Theme-Wechsel** - Hell/Dunkel-Modus
+- 🎥 **Media-Galerie** - Bilder & Videos zu Events
+- 📍 **GPS-Integration** - Standort-basierte Events
+- 🗣️ **Multi-Language** - Deutsch, English, weitere
+
+## 🎭 Icon-Mapping
+
+Jeder Event-Typ hat sein eigenes Emoji-Icon:
+
+| Icon | Typ | Beispiel |
+|------|-----|----------|
+| 🔺 | pyramid | Pyramiden |
+| 🌊 | atlantis | Atlantis |
+| 🗿 | stone/moai | Stonehenge, Osterinsel |
+| 🛸 | ufo | UFO-Sichtungen |
+| 💥 | crash/explosion | Roswell, Tunguska |
+| 🎭 | cult | Geheimgesellschaften |
+| 🕵️ | cia | Geheimdienste |
+| ⛰️ | mountain | Mount Shasta |
+| 📡 | radar/station | Montauk, HAARP |
+| ⚛️ | cern | Teilchenbeschleuniger |
 
 ## 🔐 Sicherheit
 
-- **API Keys**: Niemals im Code committen
-- **Environment Variables**: Nutzung von `.dev.vars` (lokal) und Cloudflare Secrets (Produktion)
-- **Input Validation**: SQL Injection Schutz durch Prepared Statements
-- **CORS**: Konfiguriert für API-Routes
-- **Rate Limiting**: Über Cloudflare automatisch
+- **API-Schutz** - CORS konfiguriert
+- **SQL Injection** - Prepared Statements
+- **Input Validation** - Server-seitige Validierung
+- **Rate Limiting** - Cloudflare automatisch
+- **HTTPS** - Verschlüsselte Verbindung
 
-## 🤝 Beitragen
+## 📜 Changelog
 
-Neue Dokumente können über die API hinzugefügt werden:
+### Version 2.0.0 (2025-11-16) - Interactive Map Release
 
-```bash
-# 1. Datei hochladen
-curl -X POST -F "file=@dokument.pdf" http://localhost:3000/api/upload
+**Major Features:**
+- ✅ Interaktive Leaflet-Karte mit 35 Events
+- ✅ Event-Marker mit Custom Icons & Popups
+- ✅ Filter-System (Kategorien, Typen, Zeitraum)
+- ✅ Echtzeit-Suche über Events
+- ✅ Modern Bottom Navigation
+- ✅ Side Panel mit Filtern
+- ✅ Dark Theme mit Glow-Effekten
+- ✅ Responsive Mobile-Design
+- ✅ Events-Tabelle mit Geolocation
+- ✅ Migrations & Seed-Daten
 
-# 2. Dokumenten-Eintrag erstellen
-curl -X POST http://localhost:3000/api/documents \
-  -H "Content-Type: application/json" \
-  -d '{
-    "title": "Neues mystisches Wissen",
-    "author": "Unbekannt",
-    "category": "Mystik",
-    "description": "Beschreibung...",
-    "file_path": "uploads/1234567890-dokument.pdf"
-  }'
-```
+### Version 1.0.0 (2025-11-16) - Initial Release
 
-## 📝 Changelog
+- ✅ Dokumenten-Bibliothek
+- ✅ Volltext-Suche
+- ✅ 20 Dokumente, 17 Kategorien
+- ✅ Cloudflare D1 & R2 Integration
 
-### Version 1.0.0 (2025-11-16)
-
-**Initial Release:**
-- ✅ Hono Backend mit Cloudflare Workers
-- ✅ D1 SQLite Datenbank Integration
-- ✅ R2 Object Storage für Dateien
-- ✅ Volltext-Suche über 20 Dokumente
-- ✅ 17 Kategorien mit Filter-Funktion
-- ✅ Responsive Frontend mit Tailwind CSS
-- ✅ API mit 8 Endpoints
-- ✅ PM2 Development Environment
-- ✅ Migrations & Seed Data
-
-## 📞 Kontakt & Support
+## 📞 Support
 
 Bei Fragen oder Problemen:
-
-- **GitHub Issues**: (noch nicht verfügbar)
-- **Email**: manuel.brandner@example.com
-
-## 📜 Lizenz
-
-Dieses Projekt ist für **Bildungs- und Forschungszwecke** erstellt worden.
+- **GitHub Issues**: (coming soon)
+- **Email**: support@weltenbibliothek.de
 
 ---
 
-**⚠️ Hinweis**: Die in dieser Bibliothek gesammelten Dokumente dienen ausschließlich der Information und Aufklärung über Verschwörungstheorien und alternative Sichtweisen. Sie stellen nicht notwendigerweise die Meinung der Entwickler dar.
+**⚠️ Hinweis**: Diese Anwendung dient Bildungs- und Forschungszwecken. Die dargestellten Ereignisse und Theorien repräsentieren verschiedene Perspektiven und sollten kritisch betrachtet werden.
 
-**🔮 "Die Wahrheit ist irgendwo da draußen..."**
+**🌍 "Die Wahrheit liegt auf der Karte..."**
