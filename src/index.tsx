@@ -466,6 +466,59 @@ app.get('/api/events/types', async (c) => {
   }
 })
 
+// Update event view count (optional auth)
+app.put('/api/events/:id/view', optionalAuthMiddleware, async (c) => {
+  const eventId = c.req.param('id')
+  
+  try {
+    await c.env.DB.prepare(`
+      UPDATE events 
+      SET view_count = view_count + 1 
+      WHERE id = ?
+    `).bind(eventId).run()
+    
+    return c.json({ success: true })
+  } catch (error) {
+    console.error('Error updating view count:', error)
+    return c.json({ success: false }, 500)
+  }
+})
+
+// Bookmark event (protected)
+app.post('/api/events/:id/bookmark', authMiddleware, async (c) => {
+  const eventId = c.req.param('id')
+  const userId = c.get('userId')
+  
+  try {
+    // Check if already bookmarked
+    const existing = await c.env.DB.prepare(`
+      SELECT id FROM event_bookmarks WHERE event_id = ? AND user_id = ?
+    `).bind(eventId, userId).first()
+    
+    if (existing) {
+      return c.json({ success: true, message: 'Already bookmarked' })
+    }
+    
+    // Add bookmark
+    await c.env.DB.prepare(`
+      INSERT INTO event_bookmarks (event_id, user_id, created_at)
+      VALUES (?, ?, datetime('now'))
+    `).bind(eventId, userId).run()
+    
+    // Update bookmark count
+    await c.env.DB.prepare(`
+      UPDATE events 
+      SET bookmark_count = bookmark_count + 1 
+      WHERE id = ?
+    `).bind(eventId).run()
+    
+    return c.json({ success: true, message: 'Bookmark added' })
+  } catch (error) {
+    console.error('Error bookmarking event:', error)
+    return c.json({ success: false, error: 'Failed to bookmark' }, 500)
+  }
+})
+
 // ===== Chat API =====
 
 // Get all chats for current user (protected)
@@ -1219,6 +1272,255 @@ app.get('/', (c) => {
             100% { transform: rotate(360deg); }
           }
           
+          /* Event Detail Modal */
+          .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(10px);
+            z-index: 10000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            animation: fadeIn 0.3s ease;
+          }
+          
+          @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+          }
+          
+          .modal-content {
+            background: rgba(26, 26, 46, 0.98);
+            border: 2px solid rgba(255, 215, 0, 0.5);
+            border-radius: 15px;
+            max-width: 800px;
+            width: 100%;
+            max-height: 90vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 10px 50px rgba(0, 0, 0, 0.7);
+            animation: slideUp 0.3s ease;
+          }
+          
+          @keyframes slideUp {
+            from { transform: translateY(50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+          }
+          
+          .modal-header {
+            padding: 20px 25px;
+            border-bottom: 1px solid rgba(255, 215, 0, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(255, 215, 0, 0.05);
+          }
+          
+          .modal-header h2 {
+            font-size: 24px;
+            font-weight: bold;
+            color: #ffd700;
+            margin: 0;
+          }
+          
+          .modal-close {
+            background: none;
+            border: none;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 24px;
+            cursor: pointer;
+            transition: all 0.3s;
+            padding: 5px 10px;
+          }
+          
+          .modal-close:hover {
+            color: #ffd700;
+            transform: rotate(90deg);
+          }
+          
+          .modal-body {
+            padding: 25px;
+            overflow-y: auto;
+            flex: 1;
+          }
+          
+          .modal-body::-webkit-scrollbar {
+            width: 8px;
+          }
+          
+          .modal-body::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+          }
+          
+          .modal-body::-webkit-scrollbar-thumb {
+            background: rgba(255, 215, 0, 0.3);
+            border-radius: 4px;
+          }
+          
+          .event-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 20px;
+          }
+          
+          .meta-badge {
+            padding: 6px 12px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 215, 0, 0.3);
+            border-radius: 20px;
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.9);
+          }
+          
+          .meta-badge i {
+            color: #ffd700;
+            margin-right: 5px;
+          }
+          
+          .evidence-proven {
+            background: rgba(0, 255, 0, 0.2);
+            border-color: #00ff00;
+          }
+          
+          .evidence-documented {
+            background: rgba(0, 150, 255, 0.2);
+            border-color: #0096ff;
+          }
+          
+          .evidence-military {
+            background: rgba(255, 150, 0, 0.2);
+            border-color: #ff9600;
+          }
+          
+          .evidence-speculative {
+            background: rgba(147, 112, 219, 0.2);
+            border-color: #9370db;
+          }
+          
+          .event-description,
+          .event-full-description,
+          .event-sources,
+          .event-keywords {
+            margin-bottom: 25px;
+          }
+          
+          .event-description h3,
+          .event-full-description h3,
+          .event-sources h3,
+          .event-keywords h3 {
+            font-size: 18px;
+            font-weight: bold;
+            color: #ffd700;
+            margin-bottom: 12px;
+          }
+          
+          .event-description p,
+          .full-text {
+            font-size: 15px;
+            line-height: 1.7;
+            color: rgba(255, 255, 255, 0.9);
+          }
+          
+          .full-text {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 3px solid #ffd700;
+          }
+          
+          .event-sources ul {
+            list-style: none;
+            padding: 0;
+          }
+          
+          .event-sources li {
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 5px;
+            margin-bottom: 8px;
+            border-left: 3px solid rgba(255, 215, 0, 0.5);
+          }
+          
+          .event-sources li strong {
+            color: #ffd700;
+          }
+          
+          .keywords-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+          }
+          
+          .keyword-tag {
+            padding: 6px 12px;
+            background: rgba(255, 215, 0, 0.15);
+            border: 1px solid rgba(255, 215, 0, 0.4);
+            border-radius: 15px;
+            font-size: 13px;
+            color: #ffd700;
+          }
+          
+          .event-stats {
+            display: flex;
+            gap: 20px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 215, 0, 0.2);
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 14px;
+          }
+          
+          .event-stats i {
+            color: #ffd700;
+            margin-right: 5px;
+          }
+          
+          .modal-footer {
+            padding: 20px 25px;
+            border-top: 1px solid rgba(255, 215, 0, 0.3);
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            background: rgba(255, 215, 0, 0.05);
+          }
+          
+          .btn-primary,
+          .btn-secondary {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+          }
+          
+          .btn-primary {
+            background: linear-gradient(135deg, #ffd700, #ffed4e);
+            color: #1a1a2e;
+          }
+          
+          .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 215, 0, 0.4);
+          }
+          
+          .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.9);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+          }
+          
+          .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.15);
+          }
+          
           /* Mobile responsive */
           @media (max-width: 768px) {
             #side-panel {
@@ -1232,6 +1534,15 @@ app.get('/', (c) => {
             
             #top-bar {
               padding: 0 10px;
+            }
+            
+            .modal-content {
+              max-width: 100%;
+              max-height: 95vh;
+            }
+            
+            .modal-header h2 {
+              font-size: 20px;
             }
           }
         </style>
