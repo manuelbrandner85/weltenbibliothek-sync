@@ -9,13 +9,124 @@ type Bindings = {
 
 const app = new Hono<{ Bindings: Bindings }>()
 
-// Enable CORS for API routes
+// Enable CORS
 app.use('/api/*', cors())
 
 // Serve static files
 app.use('/static/*', serveStatic({ root: './public' }))
 
-// ===== API Routes =====
+// ===== Map & Events API =====
+
+// Get all events for map
+app.get('/api/events', async (c) => {
+  try {
+    const category = c.req.query('category') || ''
+    const type = c.req.query('type') || ''
+    const year_from = c.req.query('year_from') || ''
+    const year_to = c.req.query('year_to') || ''
+
+    let sql = `
+      SELECT id, title, description, latitude, longitude, category, 
+             event_type, year, date_text, icon_type, image_url, related_document_id
+      FROM events 
+      WHERE 1=1
+    `
+    const params: any[] = []
+
+    if (category) {
+      sql += ` AND category = ?`
+      params.push(category)
+    }
+
+    if (type) {
+      sql += ` AND event_type = ?`
+      params.push(type)
+    }
+
+    if (year_from) {
+      sql += ` AND year >= ?`
+      params.push(parseInt(year_from))
+    }
+
+    if (year_to) {
+      sql += ` AND year <= ?`
+      params.push(parseInt(year_to))
+    }
+
+    sql += ` ORDER BY created_at DESC`
+
+    const result = await c.env.DB.prepare(sql).bind(...params).all()
+    
+    return c.json({ 
+      success: true,
+      events: result.results || []
+    })
+  } catch (error) {
+    console.error('Error fetching events:', error)
+    return c.json({ success: false, error: 'Failed to fetch events', events: [] }, 500)
+  }
+})
+
+// Get single event
+app.get('/api/events/:id', async (c) => {
+  const id = c.req.param('id')
+  
+  try {
+    const result = await c.env.DB.prepare(`
+      SELECT e.*, d.title as document_title, d.file_path as document_path
+      FROM events e
+      LEFT JOIN documents d ON e.related_document_id = d.id
+      WHERE e.id = ?
+    `).bind(id).first()
+
+    if (!result) {
+      return c.json({ success: false, error: 'Event not found' }, 404)
+    }
+
+    return c.json({ success: true, event: result })
+  } catch (error) {
+    console.error('Error fetching event:', error)
+    return c.json({ success: false, error: 'Failed to fetch event' }, 500)
+  }
+})
+
+// Get event categories
+app.get('/api/events/categories', async (c) => {
+  try {
+    const result = await c.env.DB.prepare(`
+      SELECT DISTINCT category, COUNT(*) as count
+      FROM events 
+      WHERE category IS NOT NULL 
+      GROUP BY category 
+      ORDER BY count DESC
+    `).all()
+    
+    return c.json({ success: true, categories: result.results || [] })
+  } catch (error) {
+    console.error('Error fetching categories:', error)
+    return c.json({ success: false, categories: [] }, 500)
+  }
+})
+
+// Get event types
+app.get('/api/events/types', async (c) => {
+  try {
+    const result = await c.env.DB.prepare(`
+      SELECT DISTINCT event_type, COUNT(*) as count
+      FROM events 
+      WHERE event_type IS NOT NULL 
+      GROUP BY event_type 
+      ORDER BY count DESC
+    `).all()
+    
+    return c.json({ success: true, types: result.results || [] })
+  } catch (error) {
+    console.error('Error fetching types:', error)
+    return c.json({ success: false, types: [] }, 500)
+  }
+})
+
+// ===== Documents API =====
 
 // Get all categories
 app.get('/api/categories', async (c) => {
@@ -78,7 +189,7 @@ app.get('/api/search', async (c) => {
   }
 })
 
-// Get single document by ID
+// Get single document
 app.get('/api/documents/:id', async (c) => {
   const id = c.req.param('id')
   
@@ -97,6 +208,38 @@ app.get('/api/documents/:id', async (c) => {
     return c.json({ error: 'Failed to fetch document' }, 500)
   }
 })
+
+// Get statistics
+app.get('/api/stats', async (c) => {
+  try {
+    const totalDocs = await c.env.DB.prepare(`
+      SELECT COUNT(*) as count FROM documents
+    `).first()
+
+    const totalEvents = await c.env.DB.prepare(`
+      SELECT COUNT(*) as count FROM events
+    `).first()
+
+    const categoryCounts = await c.env.DB.prepare(`
+      SELECT category, COUNT(*) as count 
+      FROM documents 
+      WHERE category IS NOT NULL 
+      GROUP BY category 
+      ORDER BY count DESC
+    `).all()
+
+    return c.json({
+      total_documents: totalDocs?.count || 0,
+      total_events: totalEvents?.count || 0,
+      categories: categoryCounts.results || []
+    })
+  } catch (error) {
+    console.error('Error fetching stats:', error)
+    return c.json({ error: 'Failed to fetch statistics' }, 500)
+  }
+})
+
+// ===== File Management =====
 
 // Get file from R2
 app.get('/api/files/:path{.+}', async (c) => {
@@ -121,7 +264,7 @@ app.get('/api/files/:path{.+}', async (c) => {
   }
 })
 
-// Upload file to R2 (POST)
+// Upload file to R2
 app.post('/api/upload', async (c) => {
   try {
     const formData = await c.req.formData()
@@ -151,57 +294,9 @@ app.post('/api/upload', async (c) => {
   }
 })
 
-// Create new document entry
-app.post('/api/documents', async (c) => {
-  try {
-    const body = await c.req.json()
-    const { title, author, category, description, file_path } = body
+// ===== Frontend Routes =====
 
-    if (!title || !file_path) {
-      return c.json({ error: 'Title and file_path are required' }, 400)
-    }
-
-    const result = await c.env.DB.prepare(`
-      INSERT INTO documents (title, author, category, description, file_path, created_at)
-      VALUES (?, ?, ?, ?, ?, datetime('now'))
-    `).bind(title, author || null, category || null, description || null, file_path).run()
-
-    return c.json({ 
-      success: true,
-      id: result.meta.last_row_id
-    })
-  } catch (error) {
-    console.error('Error creating document:', error)
-    return c.json({ error: 'Failed to create document' }, 500)
-  }
-})
-
-// Get statistics
-app.get('/api/stats', async (c) => {
-  try {
-    const totalDocs = await c.env.DB.prepare(`
-      SELECT COUNT(*) as count FROM documents
-    `).first()
-
-    const categoryCounts = await c.env.DB.prepare(`
-      SELECT category, COUNT(*) as count 
-      FROM documents 
-      WHERE category IS NOT NULL 
-      GROUP BY category 
-      ORDER BY count DESC
-    `).all()
-
-    return c.json({
-      total_documents: totalDocs?.count || 0,
-      categories: categoryCounts.results || []
-    })
-  } catch (error) {
-    console.error('Error fetching stats:', error)
-    return c.json({ error: 'Failed to fetch statistics' }, 500)
-  }
-})
-
-// ===== Frontend Route =====
+// Main Map View
 app.get('/', (c) => {
   return c.html(`
     <!DOCTYPE html>
@@ -209,353 +304,450 @@ app.get('/', (c) => {
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Weltenbibliothek - Die Bibliothek verborgenen Wissens</title>
+        <title>Weltenbibliothek - Interaktive Karte</title>
+        
+        <!-- Leaflet CSS -->
+        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+        
+        <!-- Tailwind CSS -->
         <script src="https://cdn.tailwindcss.com"></script>
+        
+        <!-- FontAwesome -->
         <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
+        
         <style>
+          * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+          }
+          
           body {
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-            min-height: 100vh;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #1a1a2e;
+            color: #fff;
+            overflow: hidden;
           }
-          .card {
-            background: rgba(255, 255, 255, 0.05);
+          
+          #map {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+          }
+          
+          /* Custom marker clusters */
+          .marker-cluster {
+            background: rgba(255, 215, 0, 0.6);
+            border-radius: 50%;
+            text-align: center;
+            color: #fff;
+            font-weight: bold;
+          }
+          
+          .marker-cluster div {
+            background: rgba(255, 215, 0, 0.8);
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            margin: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+          }
+          
+          /* Custom markers */
+          .custom-marker {
+            background: none;
+            border: none;
+          }
+          
+          .custom-marker i {
+            font-size: 24px;
+            text-shadow: 0 0 10px rgba(0,0,0,0.5);
+          }
+          
+          /* Top bar */
+          #top-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 60px;
+            background: rgba(26, 26, 46, 0.95);
             backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-bottom: 1px solid rgba(255, 215, 0, 0.3);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.5);
           }
-          .card:hover {
-            background: rgba(255, 255, 255, 0.08);
-            transform: translateY(-2px);
-            transition: all 0.3s ease;
-          }
-          .glow {
+          
+          #logo {
+            display: flex;
+            align-items: center;
+            font-size: 20px;
+            font-weight: bold;
+            color: #ffd700;
             text-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
           }
-          .search-box {
+          
+          #logo img {
+            width: 40px;
+            height: 40px;
+            margin-right: 10px;
+            border-radius: 8px;
+          }
+          
+          #search-container {
+            flex: 1;
+            max-width: 600px;
+            margin: 0 20px;
+          }
+          
+          #search-input {
+            width: 100%;
+            padding: 10px 40px 10px 15px;
             background: rgba(255, 255, 255, 0.1);
             border: 2px solid rgba(255, 215, 0, 0.3);
-          }
-          .search-box:focus {
-            border-color: rgba(255, 215, 0, 0.6);
+            border-radius: 25px;
+            color: #fff;
+            font-size: 14px;
             outline: none;
+            transition: all 0.3s;
+          }
+          
+          #search-input:focus {
+            border-color: rgba(255, 215, 0, 0.6);
+            background: rgba(255, 255, 255, 0.15);
+          }
+          
+          #search-input::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+          }
+          
+          /* Bottom Navigation */
+          #bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 70px;
+            background: rgba(26, 26, 46, 0.95);
+            backdrop-filter: blur(10px);
+            border-top: 1px solid rgba(255, 215, 0, 0.3);
+            z-index: 1000;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            padding: 0 20px;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.5);
+          }
+          
+          .nav-item {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            padding: 10px;
+            border-radius: 10px;
+          }
+          
+          .nav-item:hover {
+            background: rgba(255, 215, 0, 0.1);
+          }
+          
+          .nav-item.active {
+            background: rgba(255, 215, 0, 0.2);
+          }
+          
+          .nav-item i {
+            font-size: 24px;
+            margin-bottom: 5px;
+            color: rgba(255, 255, 255, 0.7);
+          }
+          
+          .nav-item.active i {
+            color: #ffd700;
+          }
+          
+          .nav-item span {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.7);
+          }
+          
+          .nav-item.active span {
+            color: #ffd700;
+          }
+          
+          /* Side panel */
+          #side-panel {
+            position: fixed;
+            right: -400px;
+            top: 60px;
+            bottom: 70px;
+            width: 400px;
+            background: rgba(26, 26, 46, 0.98);
+            backdrop-filter: blur(20px);
+            border-left: 1px solid rgba(255, 215, 0, 0.3);
+            z-index: 900;
+            transition: right 0.3s ease;
+            overflow-y: auto;
+            padding: 20px;
+          }
+          
+          #side-panel.open {
+            right: 0;
+          }
+          
+          #side-panel::-webkit-scrollbar {
+            width: 8px;
+          }
+          
+          #side-panel::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+          }
+          
+          #side-panel::-webkit-scrollbar-thumb {
+            background: rgba(255, 215, 0, 0.3);
+            border-radius: 4px;
+          }
+          
+          /* Filter panel */
+          .filter-section {
+            margin-bottom: 20px;
+          }
+          
+          .filter-section h3 {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #ffd700;
+          }
+          
+          .filter-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+          }
+          
+          .filter-chip {
+            padding: 6px 12px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 215, 0, 0.3);
+            border-radius: 15px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+          }
+          
+          .filter-chip:hover {
+            background: rgba(255, 215, 0, 0.2);
+          }
+          
+          .filter-chip.active {
+            background: rgba(255, 215, 0, 0.3);
+            border-color: #ffd700;
+          }
+          
+          /* Popup custom styles */
+          .leaflet-popup-content-wrapper {
+            background: rgba(26, 26, 46, 0.98);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 215, 0, 0.3);
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+          }
+          
+          .leaflet-popup-content {
+            margin: 15px;
+            color: #fff;
+            min-width: 250px;
+          }
+          
+          .leaflet-popup-tip {
+            background: rgba(26, 26, 46, 0.98);
+          }
+          
+          .popup-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #ffd700;
+            margin-bottom: 10px;
+          }
+          
+          .popup-meta {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.7);
+          }
+          
+          .popup-description {
+            font-size: 14px;
+            line-height: 1.6;
+            margin-bottom: 15px;
+          }
+          
+          .popup-button {
+            display: inline-block;
+            padding: 8px 16px;
+            background: rgba(255, 215, 0, 0.2);
+            border: 1px solid #ffd700;
+            border-radius: 5px;
+            color: #ffd700;
+            text-decoration: none;
+            font-size: 14px;
+            transition: all 0.3s;
+          }
+          
+          .popup-button:hover {
+            background: rgba(255, 215, 0, 0.3);
+          }
+          
+          /* Loading spinner */
+          .spinner {
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            border-top: 3px solid #ffd700;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+          }
+          
+          @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
+          
+          /* Mobile responsive */
+          @media (max-width: 768px) {
+            #side-panel {
+              width: 100%;
+              right: -100%;
+            }
+            
+            #search-container {
+              margin: 0 10px;
+            }
+            
+            #top-bar {
+              padding: 0 10px;
+            }
           }
         </style>
     </head>
-    <body class="text-gray-100">
-        <!-- Header -->
-        <div class="container mx-auto px-4 py-8">
-            <div class="text-center mb-12">
-                <h1 class="text-5xl font-bold mb-4 glow">
-                    <i class="fas fa-book-open mr-3"></i>
-                    Weltenbibliothek
-                </h1>
-                <p class="text-xl text-gray-300">
-                    Die Bibliothek des verborgenen Wissens, alter Weisheiten und mysteriöser Wahrheiten
-                </p>
+    <body>
+        <!-- Top Bar -->
+        <div id="top-bar">
+            <div id="logo">
+                <img src="/static/app_icon.png" alt="Weltenbibliothek" />
+                <span>Weltenbibliothek</span>
             </div>
+            <div id="search-container">
+                <input type="text" id="search-input" placeholder="Suche nach Ereignissen, Orten, Verschwörungen..." />
+            </div>
+            <button onclick="toggleFilters()" class="px-4 py-2 bg-yellow-600 hover:bg-yellow-700 rounded-lg transition">
+                <i class="fas fa-filter mr-2"></i>
+                Filter
+            </button>
+        </div>
 
-            <!-- Search Section -->
-            <div class="max-w-4xl mx-auto mb-12">
-                <div class="flex gap-4 mb-6">
-                    <input 
-                        type="text" 
-                        id="searchInput" 
-                        placeholder="Durchsuche alte Schriften, Verschwörungstheorien, mystisches Wissen..."
-                        class="flex-1 px-6 py-4 rounded-lg search-box text-white placeholder-gray-400"
-                    >
-                    <button 
-                        onclick="search()" 
-                        class="px-8 py-4 bg-yellow-600 hover:bg-yellow-700 rounded-lg font-semibold transition-all">
-                        <i class="fas fa-search mr-2"></i>
-                        Suchen
-                    </button>
-                </div>
-                
-                <div class="flex gap-4 flex-wrap" id="categories">
-                    <!-- Categories will be loaded here -->
+        <!-- Map Container -->
+        <div id="map"></div>
+
+        <!-- Side Panel (Filters) -->
+        <div id="side-panel">
+            <h2 class="text-2xl font-bold mb-6 text-yellow-400">
+                <i class="fas fa-sliders-h mr-2"></i>
+                Filter & Kategorien
+            </h2>
+            
+            <div class="filter-section">
+                <h3>Kategorien</h3>
+                <div id="categories-filter" class="filter-chips">
+                    <div class="spinner"></div>
                 </div>
             </div>
-
-            <!-- Statistics -->
-            <div class="max-w-6xl mx-auto mb-12">
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6" id="stats">
-                    <!-- Stats will be loaded here -->
+            
+            <div class="filter-section">
+                <h3>Event-Typen</h3>
+                <div id="types-filter" class="filter-chips">
+                    <div class="spinner"></div>
                 </div>
             </div>
-
-            <!-- Results -->
-            <div class="max-w-6xl mx-auto">
-                <h2 class="text-2xl font-bold mb-6 flex items-center">
-                    <i class="fas fa-scroll mr-3 text-yellow-500"></i>
-                    <span id="resultsTitle">Neueste Dokumente</span>
-                </h2>
-                <div id="results" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    <!-- Results will be loaded here -->
+            
+            <div class="filter-section">
+                <h3>Zeitraum</h3>
+                <div class="flex gap-4">
+                    <input type="number" id="year-from" placeholder="Von Jahr" class="flex-1 px-3 py-2 bg-gray-800 border border-gray-700 rounded" />
+                    <input type="number" id="year-to" placeholder="Bis Jahr" class="flex-1 px-3 py-2 bg-gray-800 border border-gray-700 rounded" />
                 </div>
-                
-                <div id="loading" class="text-center py-12 hidden">
-                    <i class="fas fa-spinner fa-spin text-4xl text-yellow-500"></i>
-                    <p class="mt-4 text-gray-300">Durchsuche die Archive...</p>
-                </div>
-                
-                <div id="noResults" class="text-center py-12 hidden">
-                    <i class="fas fa-search text-4xl text-gray-500 mb-4"></i>
-                    <p class="text-xl text-gray-400">Keine Dokumente gefunden</p>
-                </div>
+                <button onclick="applyFilters()" class="mt-3 w-full px-4 py-2 bg-yellow-600 hover:bg-yellow-700 rounded-lg transition">
+                    Anwenden
+                </button>
+            </div>
+            
+            <div class="filter-section">
+                <button onclick="clearFilters()" class="w-full px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg transition">
+                    Filter zurücksetzen
+                </button>
             </div>
         </div>
 
+        <!-- Bottom Navigation -->
+        <div id="bottom-nav">
+            <div class="nav-item active" onclick="switchTab('map')">
+                <i class="fas fa-map-marked-alt"></i>
+                <span>Karte</span>
+            </div>
+            <div class="nav-item" onclick="switchTab('list')">
+                <i class="fas fa-list"></i>
+                <span>Liste</span>
+            </div>
+            <div class="nav-item" onclick="switchTab('documents')">
+                <i class="fas fa-book"></i>
+                <span>Dokumente</span>
+            </div>
+            <div class="nav-item" onclick="switchTab('timeline')">
+                <i class="fas fa-clock"></i>
+                <span>Timeline</span>
+            </div>
+        </div>
+
+        <!-- Leaflet JS -->
+        <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+        
+        <!-- Axios -->
         <script src="https://cdn.jsdelivr.net/npm/axios@1.6.0/dist/axios.min.js"></script>
-        <script>
-            let currentCategory = '';
-
-            // Load initial data
-            loadCategories();
-            loadStats();
-            search();
-
-            async function loadCategories() {
-                try {
-                    const response = await axios.get('/api/categories');
-                    const categoriesDiv = document.getElementById('categories');
-                    
-                    const allButton = createCategoryButton('Alle', '', currentCategory === '');
-                    categoriesDiv.innerHTML = allButton;
-                    
-                    response.data.categories.forEach(cat => {
-                        const button = createCategoryButton(
-                            cat.category, 
-                            cat.category, 
-                            currentCategory === cat.category
-                        );
-                        categoriesDiv.innerHTML += button;
-                    });
-                } catch (error) {
-                    console.error('Error loading categories:', error);
-                }
-            }
-
-            function createCategoryButton(label, value, active) {
-                const activeClass = active ? 'bg-yellow-600' : 'bg-gray-700 hover:bg-gray-600';
-                return \`<button 
-                    onclick="selectCategory('\${value}')" 
-                    class="px-4 py-2 \${activeClass} rounded-lg transition-all">
-                    <i class="fas fa-tag mr-2"></i>\${label}
-                </button>\`;
-            }
-
-            function selectCategory(category) {
-                currentCategory = category;
-                loadCategories();
-                search();
-            }
-
-            async function loadStats() {
-                try {
-                    const response = await axios.get('/api/stats');
-                    const statsDiv = document.getElementById('stats');
-                    
-                    statsDiv.innerHTML = \`
-                        <div class="card p-6 rounded-lg text-center">
-                            <i class="fas fa-book text-4xl text-yellow-500 mb-3"></i>
-                            <div class="text-3xl font-bold">\${response.data.total_documents}</div>
-                            <div class="text-gray-400 mt-2">Dokumente</div>
-                        </div>
-                        <div class="card p-6 rounded-lg text-center">
-                            <i class="fas fa-tags text-4xl text-purple-500 mb-3"></i>
-                            <div class="text-3xl font-bold">\${response.data.categories.length}</div>
-                            <div class="text-gray-400 mt-2">Kategorien</div>
-                        </div>
-                        <div class="card p-6 rounded-lg text-center">
-                            <i class="fas fa-eye-slash text-4xl text-red-500 mb-3"></i>
-                            <div class="text-3xl font-bold">∞</div>
-                            <div class="text-gray-400 mt-2">Geheimnisse</div>
-                        </div>
-                    \`;
-                } catch (error) {
-                    console.error('Error loading stats:', error);
-                }
-            }
-
-            async function search() {
-                const query = document.getElementById('searchInput').value;
-                const resultsDiv = document.getElementById('results');
-                const loadingDiv = document.getElementById('loading');
-                const noResultsDiv = document.getElementById('noResults');
-                const resultsTitle = document.getElementById('resultsTitle');
-                
-                resultsDiv.classList.add('hidden');
-                noResultsDiv.classList.add('hidden');
-                loadingDiv.classList.remove('hidden');
-
-                try {
-                    const params = new URLSearchParams();
-                    if (query) params.append('q', query);
-                    if (currentCategory) params.append('category', currentCategory);
-                    
-                    const response = await axios.get(\`/api/search?\${params}\`);
-                    const documents = response.data.documents;
-
-                    loadingDiv.classList.add('hidden');
-                    
-                    if (documents.length === 0) {
-                        noResultsDiv.classList.remove('hidden');
-                        return;
-                    }
-
-                    // Update title
-                    if (query && currentCategory) {
-                        resultsTitle.textContent = \`Ergebnisse für "\${query}" in \${currentCategory}\`;
-                    } else if (query) {
-                        resultsTitle.textContent = \`Ergebnisse für "\${query}"\`;
-                    } else if (currentCategory) {
-                        resultsTitle.textContent = \`Dokumente in \${currentCategory}\`;
-                    } else {
-                        resultsTitle.textContent = 'Neueste Dokumente';
-                    }
-
-                    resultsDiv.innerHTML = documents.map(doc => \`
-                        <div class="card p-6 rounded-lg cursor-pointer" onclick="viewDocument(\${doc.id})">
-                            <div class="flex items-start justify-between mb-4">
-                                <div class="flex-1">
-                                    <h3 class="text-xl font-bold mb-2 text-yellow-400">\${doc.title}</h3>
-                                    \${doc.author ? \`<p class="text-sm text-gray-400 mb-2">
-                                        <i class="fas fa-user mr-2"></i>\${doc.author}
-                                    </p>\` : ''}
-                                </div>
-                                <i class="fas fa-file-pdf text-3xl text-red-400"></i>
-                            </div>
-                            \${doc.category ? \`
-                                <span class="inline-block px-3 py-1 bg-purple-600 rounded-full text-xs mb-3">
-                                    <i class="fas fa-tag mr-1"></i>\${doc.category}
-                                </span>
-                            \` : ''}
-                            \${doc.description ? \`
-                                <p class="text-gray-300 text-sm line-clamp-3">\${doc.description}</p>
-                            \` : ''}
-                            <div class="mt-4 text-xs text-gray-500">
-                                <i class="fas fa-clock mr-1"></i>
-                                \${new Date(doc.created_at).toLocaleDateString('de-DE')}
-                            </div>
-                        </div>
-                    \`).join('');
-                    
-                    resultsDiv.classList.remove('hidden');
-                } catch (error) {
-                    console.error('Error searching:', error);
-                    loadingDiv.classList.add('hidden');
-                    noResultsDiv.classList.remove('hidden');
-                }
-            }
-
-            function viewDocument(id) {
-                window.location.href = \`/document/\${id}\`;
-            }
-
-            // Search on Enter key
-            document.getElementById('searchInput').addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') search();
-            });
-        </script>
+        
+        <script src="/static/app.js"></script>
     </body>
     </html>
   `)
 })
 
-// Document detail page
-app.get('/document/:id', async (c) => {
-  const id = c.req.param('id')
-  
-  try {
-    const result = await c.env.DB.prepare(`
-      SELECT * FROM documents WHERE id = ?
-    `).bind(id).first()
+// List View
+app.get('/list', (c) => {
+  return c.html('<h1>List View - Coming Soon</h1>')
+})
 
-    if (!result) {
-      return c.html('<h1>Document not found</h1>', 404)
-    }
+// Documents View
+app.get('/documents', (c) => {
+  return c.html('<h1>Documents View - Coming Soon</h1>')
+})
 
-    return c.html(`
-      <!DOCTYPE html>
-      <html lang="de">
-      <head>
-          <meta charset="UTF-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <title>${result.title} - Weltenbibliothek</title>
-          <script src="https://cdn.tailwindcss.com"></script>
-          <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
-          <style>
-            body {
-              background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-              min-height: 100vh;
-            }
-            .card {
-              background: rgba(255, 255, 255, 0.05);
-              backdrop-filter: blur(10px);
-              border: 1px solid rgba(255, 255, 255, 0.1);
-            }
-            .glow {
-              text-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
-            }
-          </style>
-      </head>
-      <body class="text-gray-100">
-          <div class="container mx-auto px-4 py-8">
-              <a href="/" class="inline-block mb-6 text-yellow-500 hover:text-yellow-400">
-                  <i class="fas fa-arrow-left mr-2"></i>
-                  Zurück zur Bibliothek
-              </a>
-
-              <div class="card p-8 rounded-lg max-w-4xl mx-auto">
-                  <h1 class="text-4xl font-bold mb-4 glow">${result.title}</h1>
-                  
-                  ${result.author ? `
-                  <p class="text-lg text-gray-300 mb-4">
-                      <i class="fas fa-user mr-2"></i>
-                      ${result.author}
-                  </p>
-                  ` : ''}
-
-                  ${result.category ? `
-                  <span class="inline-block px-4 py-2 bg-purple-600 rounded-full mb-6">
-                      <i class="fas fa-tag mr-2"></i>${result.category}
-                  </span>
-                  ` : ''}
-
-                  ${result.description ? `
-                  <div class="mb-8">
-                      <h2 class="text-xl font-bold mb-3">Beschreibung</h2>
-                      <p class="text-gray-300 leading-relaxed">${result.description}</p>
-                  </div>
-                  ` : ''}
-
-                  <div class="mb-6 text-sm text-gray-400">
-                      <i class="fas fa-clock mr-2"></i>
-                      Hinzugefügt am ${new Date(result.created_at).toLocaleDateString('de-DE', {
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric'
-                      })}
-                  </div>
-
-                  ${result.file_path ? `
-                  <div class="mt-8">
-                      <a href="/api/files/${result.file_path}" 
-                         target="_blank"
-                         class="inline-block px-8 py-4 bg-yellow-600 hover:bg-yellow-700 rounded-lg font-semibold transition-all">
-                          <i class="fas fa-download mr-2"></i>
-                          Dokument öffnen
-                      </a>
-                  </div>
-                  ` : ''}
-              </div>
-          </div>
-      </body>
-      </html>
-    `)
-  } catch (error) {
-    console.error('Error loading document:', error)
-    return c.html('<h1>Error loading document</h1>', 500)
-  }
+// Timeline View
+app.get('/timeline', (c) => {
+  return c.html('<h1>Timeline View - Coming Soon</h1>')
 })
 
 export default app
