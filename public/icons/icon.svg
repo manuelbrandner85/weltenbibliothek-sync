@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!-- Background Circle -->
+  <circle cx="256" cy="256" r="256" fill="#0f172a"/>
+  
+  <!-- Gradient Definition -->
+  <defs>
+    <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#6366f1;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#8b5cf6;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Book Icon -->
+  <g transform="translate(256, 256)">
+    <!-- Book Spine -->
+    <rect x="-80" y="-100" width="20" height="200" fill="url(#grad1)" rx="4"/>
+    
+    <!-- Book Pages (Left) -->
+    <rect x="-60" y="-95" width="130" height="190" fill="#f1f5f9" rx="4"/>
+    
+    <!-- Page Lines -->
+    <line x1="-45" y1="-70" x2="50" y2="-70" stroke="#cbd5e1" stroke-width="3"/>
+    <line x1="-45" y1="-45" x2="50" y2="-45" stroke="#cbd5e1" stroke-width="3"/>
+    <line x1="-45" y1="-20" x2="50" y2="-20" stroke="#cbd5e1" stroke-width="3"/>
+    <line x1="-45" y1="5" x2="50" y2="5" stroke="#cbd5e1" stroke-width="3"/>
+    <line x1="-45" y1="30" x2="50" y2="30" stroke="#cbd5e1" stroke-width="3"/>
+    <line x1="-45" y1="55" x2="50" y2="55" stroke="#cbd5e1" stroke-width="3"/>
+    
+    <!-- Sparkle/Star (Knowledge Symbol) -->
+    <circle cx="85" cy="-85" r="25" fill="#fbbf24" opacity="0.9"/>
+    <polygon points="85,-110 88,-95 103,-92 88,-89 85,-74 82,-89 67,-92 82,-95" fill="#fff" opacity="0.9"/>
+    
+    <!-- Globe/World Symbol (Bottom Right) -->
+    <circle cx="85" cy="80" r="20" fill="#3b82f6" opacity="0.8"/>
+    <ellipse cx="85" cy="80" rx="20" ry="8" fill="none" stroke="#fff" stroke-width="2"/>
+    <ellipse cx="85" cy="80" rx="8" ry="20" fill="none" stroke="#fff" stroke-width="2"/>
+  </g>
+  
+  <!-- Title Text (optional, can be removed for cleaner icon) -->
+  <!-- <text x="256" y="420" font-family="Arial, sans-serif" font-size="48" font-weight="bold" fill="url(#grad1)" text-anchor="middle">WB</text> -->
+</svg>

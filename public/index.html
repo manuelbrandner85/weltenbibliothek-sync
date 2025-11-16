@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Weltenbibliothek - Deine Bibliothek des Wissens</title>
+    
+    <!-- PWA Meta Tags -->
+    <meta name="description" content="Deine Bibliothek des Wissens - Chat, Livestreaming, KI, und Karte">
+    <meta name="theme-color" content="#6366f1">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Weltenbib">
+    <meta name="mobile-web-app-capable" content="yes">
+    
+    <!-- Icons -->
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="apple-touch-icon" href="/icons/icon-192x192.png">
+    <link rel="manifest" href="/manifest.json">
+    
+    <link rel="stylesheet" href="/static/design-system.css">
+    <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            min-height: 100vh;
+            background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+        
+        .landing-container {
+            max-width: 600px;
+            text-align: center;
+        }
+        
+        .logo {
+            width: 150px;
+            height: 150px;
+            margin: 0 auto 2rem;
+            animation: float 3s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+        
+        .title {
+            font-size: 3rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 1rem;
+        }
+        
+        .subtitle {
+            font-size: 1.25rem;
+            color: var(--text-secondary);
+            margin-bottom: 3rem;
+            line-height: 1.6;
+        }
+        
+        .features {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.5rem;
+            margin-bottom: 3rem;
+        }
+        
+        .feature {
+            padding: 1.5rem;
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-lg);
+            transition: var(--transition);
+        }
+        
+        .feature:hover {
+            transform: translateY(-4px);
+            border-color: var(--primary);
+            box-shadow: var(--shadow-lg);
+        }
+        
+        .feature-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .feature-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+        
+        .feature-desc {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            padding: 1rem 2rem;
+            border-radius: var(--radius-lg);
+            font-size: 1.125rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+            border: none;
+        }
+        
+        .btn-primary:hover {
+            background: var(--primary-hover);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+        
+        .btn-secondary {
+            background: transparent;
+            color: var(--text-primary);
+            border: 2px solid var(--glass-border);
+        }
+        
+        .btn-secondary:hover {
+            border-color: var(--primary);
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+        }
+        
+        .install-prompt {
+            display: none;
+            margin-top: 2rem;
+            padding: 1.5rem;
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--primary);
+            border-radius: var(--radius-lg);
+            animation: slideInUp 0.5s ease-out;
+        }
+        
+        .install-prompt.show {
+            display: block;
+        }
+        
+        @keyframes slideInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .install-prompt h3 {
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+        
+        .install-prompt p {
+            color: var(--text-secondary);
+            margin-bottom: 1rem;
+        }
+        
+        @media (max-width: 640px) {
+            .title {
+                font-size: 2rem;
+            }
+            
+            .features {
+                grid-template-columns: 1fr;
+            }
+            
+            .action-buttons {
+                flex-direction: column;
+            }
+            
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="landing-container">
+        <img src="/icons/icon-192x192.png" alt="Weltenbibliothek Logo" class="logo">
+        
+        <h1 class="title">Weltenbibliothek</h1>
+        <p class="subtitle">
+            Deine Bibliothek des Wissens - Entdecke, Teile, Verbinde
+        </p>
+        
+        <div class="features">
+            <div class="feature">
+                <div class="feature-icon">💬</div>
+                <div class="feature-title">Chat</div>
+                <div class="feature-desc">Verbinde dich mit anderen</div>
+            </div>
+            
+            <div class="feature">
+                <div class="feature-icon">📹</div>
+                <div class="feature-title">Livestreaming</div>
+                <div class="feature-desc">Teile deine Momente live</div>
+            </div>
+            
+            <div class="feature">
+                <div class="feature-icon">🤖</div>
+                <div class="feature-title">KI-Chat</div>
+                <div class="feature-desc">Intelligente Unterstützung</div>
+            </div>
+            
+            <div class="feature">
+                <div class="feature-icon">🗺️</div>
+                <div class="feature-title">Weltkarte</div>
+                <div class="feature-desc">Erkunde Ereignisse</div>
+            </div>
+        </div>
+        
+        <div class="action-buttons">
+            <a href="/login.html" class="btn btn-primary">
+                <i class="fas fa-sign-in-alt"></i>
+                Login
+            </a>
+            <a href="/register.html" class="btn btn-secondary">
+                <i class="fas fa-user-plus"></i>
+                Registrieren
+            </a>
+        </div>
+        
+        <!-- PWA Install Prompt -->
+        <div id="install-prompt" class="install-prompt">
+            <h3>
+                <i class="fas fa-mobile-alt"></i>
+                Als App installieren
+            </h3>
+            <p>Installiere Weltenbibliothek auf deinem Handy für ein besseres Erlebnis!</p>
+            <button onclick="installPWA()" class="btn btn-primary" style="width: 100%;">
+                <i class="fas fa-download"></i>
+                Jetzt installieren
+            </button>
+        </div>
+    </div>
+    
+    <script>
+        // Check if already logged in
+        const token = localStorage.getItem('auth_token');
+        if (token) {
+            window.location.href = '/static/chat.html';
+        }
+        
+        // PWA Installation
+        let deferredPrompt;
+        
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            
+            // Show install prompt
+            document.getElementById('install-prompt').classList.add('show');
+        });
+        
+        function installPWA() {
+            if (!deferredPrompt) {
+                alert('Die App kann bereits installiert sein oder wird von deinem Browser nicht unterstützt.');
+                return;
+            }
+            
+            deferredPrompt.prompt();
+            
+            deferredPrompt.userChoice.then((choiceResult) => {
+                if (choiceResult.outcome === 'accepted') {
+                    console.log('✅ PWA installation accepted');
+                    document.getElementById('install-prompt').classList.remove('show');
+                } else {
+                    console.log('❌ PWA installation dismissed');
+                }
+                deferredPrompt = null;
+            });
+        }
+        
+        window.addEventListener('appinstalled', () => {
+            console.log('✅ PWA installed successfully');
+            document.getElementById('install-prompt').classList.remove('show');
+        });
+        
+        // Register Service Worker
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(registration => {
+                        console.log('✅ Service Worker registered:', registration.scope);
+                    })
+                    .catch(error => {
+                        console.error('❌ Service Worker registration failed:', error);
+                    });
+            });
+        }
+    </script>
+</body>
+</html>
