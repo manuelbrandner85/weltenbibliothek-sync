@@ -47,6 +47,22 @@ async function startLivestream(chatId) {
       return;
     }
     
+    // Check quota BEFORE starting stream
+    if (window.costMonitor) {
+      const quotaCheck = window.costMonitor.checkAgoraQuota();
+      
+      if (!quotaCheck.allowed) {
+        alert(`⚠️ KOSTENLIMIT ERREICHT!\n\nDein kostenloses Livestreaming-Kontingent ist aufgebraucht.\n\n📊 Verbrauch: ${quotaCheck.used} / ${quotaCheck.limit} Minuten\n🔄 Zurückgesetzt am: ${quotaCheck.resetDate}\n\nBitte warte bis zum nächsten Monat oder upgrade deinen Account.`);
+        return;
+      }
+      
+      // Show warning if less than 100 minutes remaining
+      if (quotaCheck.remaining < 100) {
+        const proceed = confirm(`⚠️ Niedriges Kontingent!\n\nNur noch ${quotaCheck.remaining} kostenlose Minuten verfügbar.\n\nStream trotzdem starten?`);
+        if (!proceed) return;
+      }
+    }
+    
     currentStreamChatId = chatId;
     
     // Initialize client
@@ -81,6 +97,12 @@ async function startLivestream(chatId) {
     // Show livestream UI
     showLivestreamUI();
     
+    // Start cost tracking (monitors usage per minute)
+    if (window.costMonitor) {
+      window.costMonitor.startAgoraTracking();
+      console.log('[Agora] Cost tracking started');
+    }
+    
     console.log('Livestream started successfully');
   } catch (error) {
     console.error('Error starting livestream:', error);
@@ -112,6 +134,12 @@ async function stopLivestream() {
     
     isLivestreaming = false;
     currentStreamChatId = null;
+    
+    // Stop cost tracking
+    if (window.costMonitor) {
+      window.costMonitor.stopAgoraTracking();
+      console.log('[Agora] Cost tracking stopped');
+    }
     
     // Hide livestream UI
     hideLivestreamUI();

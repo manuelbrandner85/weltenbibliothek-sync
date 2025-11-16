@@ -92,6 +92,16 @@ async function sendMessageToAI(message) {
       throw new Error('Nachricht darf nicht leer sein');
     }
     
+    // Check quota BEFORE making API call
+    if (window.costMonitor) {
+      const quotaCheck = window.costMonitor.checkGeminiQuota();
+      
+      if (!quotaCheck.allowed) {
+        addMessageToAIChat('error', `⚠️ TAGES-LIMIT ERREICHT!\n\nDu hast dein kostenloses Gemini API Limit für heute erreicht.\n\n🔄 Zurückgesetzt: Täglich um Mitternacht\n\nBitte versuche es morgen erneut.`);
+        return;
+      }
+    }
+    
     // Add user message to chat
     addMessageToAIChat('user', message);
     
@@ -127,6 +137,11 @@ async function sendMessageToAI(message) {
     const data = await response.json();
     const aiResponse = data.candidates[0]?.content?.parts[0]?.text || 'Keine Antwort erhalten';
     
+    // Record successful usage
+    if (window.costMonitor) {
+      window.costMonitor.recordGeminiUsage();
+    }
+    
     // Remove loading indicator
     removeLoadingFromAIChat(loadingId);
     
@@ -151,6 +166,16 @@ async function sendMessageToAI(message) {
 // Analyze Image with Gemini Vision
 async function analyzeImageWithAI(imageDataUrl, prompt = "Was siehst du in diesem Bild?") {
   try {
+    // Check quota BEFORE making API call
+    if (window.costMonitor) {
+      const quotaCheck = window.costMonitor.checkGeminiQuota();
+      
+      if (!quotaCheck.allowed) {
+        addMessageToAIChat('error', `⚠️ TAGES-LIMIT ERREICHT!\n\nBildanalyse nicht verfügbar - Limit erreicht.\n\n🔄 Zurückgesetzt: Täglich um Mitternacht`);
+        return;
+      }
+    }
+    
     // Remove data:image/jpeg;base64, prefix
     const base64Data = imageDataUrl.split(',')[1];
     
@@ -184,6 +209,11 @@ async function analyzeImageWithAI(imageDataUrl, prompt = "Was siehst du in diese
     
     const data = await response.json();
     const aiResponse = data.candidates[0]?.content?.parts[0]?.text || 'Keine Analyse möglich';
+    
+    // Record successful usage
+    if (window.costMonitor) {
+      window.costMonitor.recordGeminiUsage();
+    }
     
     // Remove loading
     removeLoadingFromAIChat(loadingId);

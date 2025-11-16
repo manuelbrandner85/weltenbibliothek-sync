@@ -536,6 +536,9 @@
                 </div>
             </div>
             <div class="flex gap-sm">
+                <button id="btn-quota-dashboard" class="btn-icon btn-ghost" onclick="window.costMonitor.showQuotaDashboard()" title="Kostenlose Kontingente">
+                    <i class="fas fa-chart-bar"></i>
+                </button>
                 <button id="btn-ai-chat" class="btn-icon btn-ghost" onclick="openAIChatPanel()" title="AI Assistant">
                     <i class="fas fa-robot"></i>
                 </button>
@@ -723,6 +726,7 @@
     </div>
     
     <script src="https://cdn.jsdelivr.net/npm/axios@1.6.0/dist/axios.min.js"></script>
+    <script src="/static/cost-monitor.js"></script>
     <script src="/static/livestream.js"></script>
     <script src="/static/ai-chat.js"></script>
     <script src="/static/chat.js"></script>
