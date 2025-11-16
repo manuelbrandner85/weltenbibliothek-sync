@@ -18,6 +18,9 @@
     "git:status": "git status"
   },
   "dependencies": {
+    "@capacitor/android": "^7.4.4",
+    "@capacitor/cli": "^7.4.4",
+    "@capacitor/core": "^7.4.4",
     "agora-rtc-sdk-ng": "^4.24.0",
     "hono": "^4.10.6"
   },
