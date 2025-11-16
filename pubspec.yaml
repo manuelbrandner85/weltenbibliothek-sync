@@ -2,7 +2,7 @@ name: weltenbibliothek
 description: "Weltenbibliothek - Chroniken der verborgenen Pfade. Progressive App für alternative Geschichte, verborgenes Wissen und paranormale Phänomene."
 publish_to: 'none'
 
-version: 3.1.0+91  # ✅ Alle 4 Features: File-Upload, User Auth, Push Notifications, Offline-Mode
+version: 3.2.0+92  # ✅ New: Agora RTC Video/Audio Calls + Enhanced UI
 
 environment:
   sdk: ^3.9.2
@@ -67,6 +67,13 @@ dependencies:
   # Web + Android kompatibel via HTTP
   # Verwendet Telegram Bot API über REST
   # API-ID: 25697241 | API-Hash: 19cfb3819684da4571a91874ee22603a
+  
+  # 🎥 Video/Audio Calls (Phase 7 - Ready for Agora Integration)
+  # agora_rtc_engine: ^6.3.0  # Uncomment when Agora App ID is available
+  # Note: Agora SDK native libraries already included in APK (libagora-rtc-sdk.so)
+  # Service structure ready: lib/services/agora_rtc_service.dart
+  # Screens ready: lib/screens/video_call_screen.dart, audio_call_screen.dart
+  # Firestore collection 'calls' for call management
   
   # Utils
   intl: 0.20.2  # Updated from 0.20.1 - Internationalization fixes
