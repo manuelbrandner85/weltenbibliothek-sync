@@ -2,9 +2,9 @@
 // Requires: agora-rtc-sdk-ng
 // Note: This is for browser-based import, use CDN version
 
-// ⚠️ WICHTIG: Agora App ID wird benötigt!
-// Erstelle kostenlos bei: https://console.agora.io
-const AGORA_APP_ID = "YOUR_AGORA_APP_ID"; // TODO: User muss eigene App ID eintragen
+// ✅ Agora App ID konfiguriert
+// Account: https://console.agora.io
+const AGORA_APP_ID = "7f9011a9b696435aac64bb04b87c0919";
 
 let agoraClient = null;
 let localAudioTrack = null;
